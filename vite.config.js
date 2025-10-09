@@ -10,4 +10,8 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    build: {
+    outDir: 'public/build', // Đảm bảo đường dẫn này đúng
+    manifest: true, // Bật tạo manifest.json
+  },
 });
