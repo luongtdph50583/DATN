@@ -3,18 +3,15 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\HomeController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Trang chủ/Dashboard
+  Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
- Route::prefix('admin')->middleware(['auth'])->group(function () {
-         Route::resource('users', UserController::class)->names('admin.users');
-     });
+  // Route cho quản lý người dùng
+  Route::prefix('admin')->middleware(['auth'])->group(function () {
+      Route::resource('users', UserController::class)->names('admin.users');
+  });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

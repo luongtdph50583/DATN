@@ -18,13 +18,32 @@
              return null;
          }
 
-         public function index()
+         public function index(Request $request)
          {
-             if ($redirect = $this->checkAdmin()) {
-                 return $redirect;
-             }
-             $users = User::paginate(10); // Hiển thị 10 bản ghi mỗi trang
-             return view('admin.users.index', compact('users'));
+              if ($redirect = $this->checkAdmin()) {
+              return $redirect;
+          }
+
+          $query = User::query();
+
+          // Lọc theo tên
+          if ($request->filled('name')) {
+              $query->where('name', 'like', '%' . $request->name . '%');
+          }
+
+          // Lọc theo email
+          if ($request->filled('email')) {
+              $query->where('email', 'like', '%' . $request->email . '%');
+          }
+
+          // Lọc theo vai trò
+          if ($request->filled('role')) {
+              $query->where('role', $request->role);
+          }
+
+          $users = $query->paginate(10)->withQueryString();
+
+          return view('admin.users.index', compact('users'));
          }
 
          public function create()
