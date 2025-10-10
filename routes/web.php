@@ -5,8 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\HomeController;
 
-// Trang chủ/Dashboard
-  Route::get('/', [HomeController::class, 'index'])->name('home');
+ // Trang dashboard
+  Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
   // Route cho quản lý người dùng
   Route::prefix('admin')->middleware(['auth'])->group(function () {
