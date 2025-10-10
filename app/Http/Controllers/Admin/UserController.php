@@ -46,6 +46,22 @@
           return view('admin.users.index', compact('users'));
          }
 
+          public function toggleStatus(Request $request, User $user)
+      {
+          if ($redirect = $this->checkAdmin()) {
+              return $redirect;
+          }
+
+          $newStatus = $user->status === 'active' ? 'inactive' : 'active';
+          $user->update(['status' => $newStatus]);
+
+          return response()->json([
+              'success' => true,
+              'status' => $newStatus,
+              'message' => "Tài khoản đã được cập nhật trạng thái thành '$newStatus'.",
+          ]);
+      }
+
          public function create()
          {
              if ($redirect = $this->checkAdmin()) {

@@ -11,6 +11,7 @@ use App\Http\Controllers\HomeController;
   // Route cho quản lý người dùng
   Route::prefix('admin')->middleware(['auth'])->group(function () {
       Route::resource('users', UserController::class)->names('admin.users');
+      Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggleStatus');
   });
 
 Route::middleware('auth')->group(function () {

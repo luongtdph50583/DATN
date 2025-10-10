@@ -47,8 +47,16 @@
                               <td>{{ $user->name }}</td>
                               <td>{{ $user->email }}</td>
                               <td>{{ $user->role }}</td>
-                              <td>{{ $user->status }}</td>
                               <td>
+                                  <span class="badge {{ $user->status === 'active' ? 'badge-success' : 'badge-danger' }}">
+                                      {{ $user->status === 'active' ? 'Hoạt động' : 'Khóa' }}
+                                  </span>
+                              </td>
+                              <td>
+                                  <button class="btn btn-info btn-sm toggle-status" data-id="{{ $user->id }}"
+                                          data-status="{{ $user->status }}">
+                                      {{ $user->status === 'active' ? 'Khóa' : 'Mở khóa' }}
+                                  </button>
                                   <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning btn-sm">Sửa</a>
                                   <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" style="display:inline;"
                                         onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản này?');">
@@ -74,4 +82,45 @@
               </div>
           @endif
       </div>
+
+      <!-- Script cho AJAX -->
+      <script>
+          document.addEventListener('DOMContentLoaded', function () {
+              document.querySelectorAll('.toggle-status').forEach(button => {
+                  button.addEventListener('click', function () {
+                      const userId = this.getAttribute('data-id');
+                      const currentStatus = this.getAttribute('data-status');
+
+                      fetch(`{{ route('admin.users.toggleStatus', ['user' => ':id']) }}`.replace(':id', userId), {
+                          method: 'POST',
+                          headers: {
+                              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                              'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ status: currentStatus }),
+                      })
+                      .then(response => response.json())
+                      .then(data => {
+                          if (data.success) {
+                              // Cập nhật giao diện
+                              const badge = this.parentElement.previousElementSibling.querySelector('.badge');
+                              badge.textContent = data.status === 'active' ? 'Hoạt động' : 'Khóa';
+                              badge.className = `badge ${data.status === 'active' ? 'badge-success' : 'badge-danger'}`;
+                              this.textContent = data.status === 'active' ? 'Khóa' : 'Mở khóa';
+                              this.setAttribute('data-status', data.status);
+
+                              // Hiển thị thông báo
+                              alert(data.message);
+                          } else {
+                              alert('Có lỗi xảy ra. Vui lòng thử lại.');
+                          }
+                      })
+                      .catch(error => {
+                          console.error('Error:', error);
+                          alert('Có lỗi xảy ra khi gửi yêu cầu.');
+                      });
+                  });
+              });
+          });
+      </script>
   @endsection
