@@ -5,13 +5,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\HomeController;
 
- // Trang dashboard
-  Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
-  // Route cho quản lý người dùng
   Route::prefix('admin')->middleware(['auth'])->group(function () {
       Route::resource('users', UserController::class)->names('admin.users');
       Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggleStatus');
+      
   });
 
 Route::middleware('auth')->group(function () {

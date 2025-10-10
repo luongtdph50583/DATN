@@ -44,6 +44,8 @@
           $users = $query->paginate(10)->withQueryString();
 
           return view('admin.users.index', compact('users'));
+          $users = User::all();
+            return view('admin.users.index', compact('users'));
          }
 
           public function toggleStatus(Request $request, User $user)
