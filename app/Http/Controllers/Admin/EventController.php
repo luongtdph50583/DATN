@@ -51,7 +51,7 @@ class EventController extends Controller
         if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
             return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
         }
-        $event = Event::findOrFail($id);
+        $event = Event::findOrFail($id); // Đảm bảo tìm bản ghi hoặc ném 404 nếu không tồn tại
         return view('index', compact('event'))->with('activeTab', 'events-edit');
     }
 

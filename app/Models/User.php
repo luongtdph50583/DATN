@@ -20,4 +20,13 @@
             'email_verified_at' => 'datetime',
             'status' => 'string', 
         ];
+         public function managedClubs()
+        {
+            return $this->hasMany(Club::class, 'manager_id');
+        }
+
+        public function memberships()
+        {
+            return $this->hasMany(ClubMember::class, 'user_id');
+        }
     }
