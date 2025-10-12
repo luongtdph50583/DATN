@@ -3,8 +3,7 @@
      @section('content')
          <div class="card shadow mb-4">
              <div class="card-header py-3">
-                 <h6 class="m-0 font-weight-bold text-primary">Quản lý Sự kiện</h6>
-                 <a href="#" class="btn btn-primary btn-sm">Thêm mới</a>
+                 <h6 class="m-0 font-weight-bold text-primary">Lịch sử tham gia</h6>
              </div>
              <div class="card-body">
                  <div class="table-responsive">
@@ -12,20 +11,17 @@
                          <thead>
                              <tr>
                                  <th>ID</th>
-                                 <th>Tên sự kiện</th>
-                                 <th>Ngày diễn ra</th>
-                                 <th>Hành động</th>
+                                 <th>Tên thành viên</th>
+                                 <th>Sự kiện</th>
+                                 <th>Ngày tham gia</th>
                              </tr>
                          </thead>
                          <tbody>
                              <tr>
                                  <td>1</td>
-                                 <td>Sự kiện tháng 10</td>
-                                 <td>15/10/2025</td>
-                                 <td>
-                                     <a href="#" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
-                                     <a href="#" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
-                                 </td>
+                                 <td>Nguyen Van A</td>
+                                 <td>Sự kiện 1</td>
+                                 <td>11/10/2025</td>
                              </tr>
                          </tbody>
                      </table>
