@@ -611,99 +611,123 @@
                         </div>
                     </div>
 
-                    <!-- Members -->
-                    <div id="members" class="tab-content content-area">
-                        <div class="section-header">
-                            <h2><i class="fas fa-users"></i> Quản lý Thành viên</h2>
-                            <button class="btn-new"><i class="fas fa-plus"></i> Thêm thành viên</button>
-                        </div>
 
-                        <!-- Filter -->
-                        <div style="background: var(--light); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; animation: slideUp 0.6s ease;">
-                            <form action="{{ route('admin.members.index') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                                <input type="hidden" name="activeTab" value="members">
-                                <div>
-                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tên thành viên</label>
-                                    <input type="text" name="search_name" value="{{ $searchName ?? '' }}" placeholder="Nhập tên..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">CLB</label>
-                                    <select name="club_id" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
-                                        <option value="">Tất cả CLB</option>
-                                        @foreach (\App\Models\Club::all() as $club)
-                                            <option value="{{ $club->id }}" {{ ($clubId ?? '') == $club->id ? 'selected' : '' }}>
-                                                {{ $club->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Vai trò</label>
-                                    <select name="role" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
-                                        <option value="">Tất cả</option>
-                                        <option value="admin" {{ ($role ?? '') == 'admin' ? 'selected' : '' }}>Admin</option>
-                                        <option value="member" {{ ($role ?? '') == 'member' ? 'selected' : '' }}>Member</option>
-                                    </select>
-                                </div>
-                                <div style="display: flex; align-items: flex-end;">
-                                    <button class="btn-new" style="width: 100%;"><i class="fas fa-search"></i> Tìm kiếm</button>
-                                </div>
-                            </form>
-                        </div>
+<!-- (Giữ nguyên phần đầu của file HTML đến section-header của tab "Members") -->
 
-                        <!-- Members Table -->
-                        <div style="overflow-x: auto;">
-                            <table class="table table-hover">
-                                <thead style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Tên</th>
-                                        <th>Email</th>
-                                        <th>Vai trò</th>
-                                        <th>CLB</th>
-                                        <th>Ngày tham gia</th>
-                                        <th>Hành động</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($clubs as $club)
-                                        @forelse ($club->members as $member)
-                                            <tr style="animation: slideUp 0.6s ease backwards;" :style="'animation-delay: ' . ($loop->index * 0.1) . 's'">
-                                                <td><strong>#{{ $member->user->id }}</strong></td>
-                                                <td>{{ $member->user->name }}</td>
-                                                <td>{{ $member->user->email }}</td>
-                                                <td>
-                                                    <span style="background: {{ $member->role == 'admin' ? 'var(--primary)' : 'var(--success)' }}; color: white; padding: 0.35rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
-                                                        {{ ucfirst($member->role) }}
-                                                    </span>
-                                                </td>
-                                                <td>{{ $club->name }}</td>
-                                                <td>
-                                                    @if ($member->joined_at instanceof \Carbon\Carbon)
-                                                        {{ $member->joined_at->format('d/m/Y') }}
-                                                    @else
-                                                        {{ $member->joined_at ?: 'Chưa xác định' }}
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <button class="btn-icon" style="width: 32px; height: 32px;"><i class="fas fa-edit"></i></button>
-                                                    <button class="btn-icon" style="width: 32px; height: 32px;"><i class="fas fa-trash"></i></button>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="7" class="text-center text-muted">Không có thành viên trong CLB này.</td>
-                                            </tr>
-                                        @endforelse
-                                    @empty
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted">Không có câu lạc bộ nào.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+<!-- Members -->
+<div id="members" class="tab-content content-area">
+    <div class="section-header">
+        <h2><i class="fas fa-users"></i> Quản lý Thành viên</h2>
+        <div style="display: flex; gap: 1rem;">
+            <form action="{{ route('admin.members.export.excel') }}" method="GET" style="display: inline;">
+                @csrf
+                <input type="hidden" name="search_name" value="{{ $searchName ?? '' }}">
+                <input type="hidden" name="club_id" value="{{ $clubId ?? '' }}">
+                <input type="hidden" name="role" value="{{ $role ?? '' }}">
+                <button type="submit" class="btn-new" style="padding: 0.8rem 1.5rem;"><i class="fas fa-file-excel"></i> Xuất Excel</button>
+            </form>
+            <button class="btn-new" style="padding: 0.8rem 1.5rem;"><i class="fas fa-plus"></i> Thêm thành viên</button>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div style="background: var(--light); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; animation: slideUp 0.6s ease;">
+        <form action="{{ route('admin.members.index') }}" method="GET" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <input type="hidden" name="activeTab" value="members">
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Tên thành viên</label>
+                <input type="text" name="search_name" value="{{ $searchName ?? '' }}" placeholder="Nhập tên..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">CLB</label>
+                <select name="club_id" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
+                    <option value="">Tất cả CLB</option>
+                    @foreach (\App\Models\Club::all() as $club)
+                        <option value="{{ $club->id }}" {{ ($clubId ?? '') == $club->id ? 'selected' : '' }}>
+                            {{ $club->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Vai trò</label>
+                <select name="role" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px;">
+                    <option value="">Tất cả</option>
+                    <option value="admin" {{ ($role ?? '') == 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="member" {{ ($role ?? '') == 'member' ? 'selected' : '' }}>Member</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button class="btn-new" style="width: 100%;"><i class="fas fa-search"></i> Tìm kiếm</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Members Table -->
+    <div style="overflow-x: auto;">
+        <table class="table table-hover">
+            <thead style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white;">
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>CLB</th>
+                    <th>Ngày tham gia</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $clubs = $clubs ?? collect();
+                    $hasClubs = $clubs->isNotEmpty();
+                @endphp
+                @if ($hasClubs)
+                    @foreach ($clubs as $club)
+                        @php
+                            $members = $club->members ?? collect();
+                            \Log::info('Club: ' . $club->name . ', Members: ', $members->toArray());
+                        @endphp
+                        @forelse ($members as $member)
+                            <tr style="animation: slideUp 0.6s ease backwards;" :style="'animation-delay: ' . ($loop->parent->index * 0.1 + $loop->index * 0.1) . 's'">
+                                <td><strong>#{{ $member->user->id }}</strong></td>
+                                <td>{{ $member->user->name }}</td>
+                                <td>{{ $member->user->email }}</td>
+                                <td>
+                                    <span style="background: {{ $member->role == 'admin' ? 'var(--primary)' : 'var(--success)' }}; color: white; padding: 0.35rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+                                        {{ ucfirst($member->role) }}
+                                    </span>
+                                </td>
+                                <td>{{ $club->name }}</td>
+                                <td>
+                                    @if ($member->joined_at instanceof \Carbon\Carbon)
+                                        {{ $member->joined_at->format('d/m/Y') }}
+                                    @else
+                                        {{ $member->joined_at ?: 'Chưa xác định' }}
+                                    @endif
+                                </td>
+                                <td>
+                                    <button class="btn-icon" style="width: 32px; height: 32px;"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-icon" style="width: 32px; height: 32px;"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Không có thành viên trong CLB {{ $club->name ?? 'này' }}.</td>
+                            </tr>
+                        @endforelse
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Không có câu lạc bộ nào.</td>
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- (Giữ nguyên phần còn lại của file HTML từ tab "documents" trở đi) -->
                 </div>
             </div>
         </div>

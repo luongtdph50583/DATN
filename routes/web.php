@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\MemberController;
 use Illuminate\Support\Facades\Route;
 
+
 // Route cho trang dashboard (không yêu cầu admin)
 Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
@@ -21,6 +22,8 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 
     // Quản lý thành viên
     Route::get('/members', [MemberController::class, 'index'])->name('admin.members.index');
+    Route::get('/admin/members', [MemberController::class, 'index'])->name('admin.members.index');
+    Route::get('/admin/members/export/excel', [MemberController::class, 'exportExcel'])->name('admin.members.export.excel');
 });
 
 // Nhóm route cho người dùng đã đăng nhập (không phải admin)
