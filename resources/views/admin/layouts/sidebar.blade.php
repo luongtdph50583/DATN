@@ -42,6 +42,21 @@
                     </div>
                 </div>
             </li>
+            <!-- Nav Item - Clubs Collapse Menu -->
+<li class="nav-item">
+    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseClubs" aria-expanded="true" aria-controls="collapseClubs">
+        <i class="fas fa-fw fa-club"></i>
+        <span>Quản lý CLB</span>
+    </a>
+    <div id="collapseClubs" class="collapse" aria-labelledby="headingClubs" data-parent="#accordionSidebar">
+        <div class="bg-white py-2 collapse-inner rounded">
+            <h6 class="collapse-header">Câu lạc bộ:</h6>
+            <a class="collapse-item" href="{{ route('admin.clubs.index') }}">Danh sách CLB</a>
+            <a class="collapse-item" href="{{ route('admin.clubs.create') }}">Thêm mới CLB</a>
+            <a class="collapse-item" href="{{ route('admin.club-requests.index') }}">Yêu cầu thành lập</a>
+        </div>
+    </div>
+</li>
 
             <!-- Nav Item - Utilities Collapse Menu -->
             <li class="nav-item">
@@ -61,7 +76,7 @@
                     </div>
                 </div>
             </li>
-
+            
             <!-- Divider -->
             <hr class="sidebar-divider">
 

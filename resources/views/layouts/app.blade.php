@@ -53,6 +53,7 @@
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUsers" aria-expanded="true" aria-controls="collapseUsers">
                         <i class="fas fa-fw fa-users"></i>
                         <span>Quản lý Tài khoản</span>
+                        
                     </a>
                     <div id="collapseUsers" class="collapse" aria-labelledby="headingUsers" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
@@ -62,6 +63,8 @@
                         </div>
                     </div>
                 </li>
+
+                
 
                 <!-- Divider -->
                 <hr class="sidebar-divider d-none d-md-block">
