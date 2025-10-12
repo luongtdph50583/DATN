@@ -17,7 +17,7 @@ class EventController extends Controller
         } catch (\Exception $e) {
             \Log::error('Lỗi truy vấn events: ' . $e->getMessage());
         }
-        return view('index', compact('events'))->with('activeTab', 'events');
+        return view('admin.events.index', compact('events'))->with('activeTab', 'events');
     }
 
     public function create()

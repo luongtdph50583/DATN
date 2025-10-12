@@ -52,7 +52,7 @@ class MemberController extends Controller
 
         $activeTab = $request->input('activeTab', 'members');
 
-        return view('index', compact('clubs', 'searchName', 'clubId', 'role'))->with('activeTab', $activeTab);
+        return view('admin.members.index', compact('clubs', 'searchName', 'clubId', 'role'))->with('activeTab', $activeTab);
     }
 
     public function exportExcel(Request $request)
