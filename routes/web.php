@@ -14,6 +14,7 @@ use App\Http\Controllers\{
     HomeController,
     ProfileController
 };
+use App\Http\Controllers\Admin\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -118,6 +119,11 @@ Route::prefix('admin')
                 Route::post('/{clubJoinRequest}', 'handleJoinRequest')->name('handle');
             });
         });
+        // Notification Management
+          Route::controller(NotificationController::class)->group(function () {
+              Route::get('/notifications/create', 'create')->name('notifications.create');
+              Route::post('/notifications', 'store')->name('notifications.store');
+          });
     });
 
 // === Authentication Routes ===
