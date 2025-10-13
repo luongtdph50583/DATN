@@ -92,16 +92,18 @@ Route::prefix('admin')
         });
 
         // Club Management
-        Route::prefix('clubs')->as('clubs.')->group(function () {
-            Route::controller(ClubController::class)->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('/create', 'create')->name('create');
-                Route::post('/', 'store')->name('store');
-                Route::put('/{club}', 'update')->name('update');
-                Route::delete('/{club}', 'destroy')->name('destroy');
-                Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
-            });
-        });
+      Route::prefix('clubs')->as('clubs.')->group(function () {
+    Route::controller(ClubController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{club}/edit', 'edit')->name('edit');        // <-- thêm
+        Route::put('/{club}', 'update')->name('update');
+        Route::delete('/{club}', 'destroy')->name('destroy');
+        Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
+    });
+});
+
 
         // Club Request Management
         Route::prefix('club-requests')->as('club-requests.')->group(function () {
