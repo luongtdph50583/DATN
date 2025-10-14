@@ -5,7 +5,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                       <span>Copyright &copy; Solvis 2025</span>
+                       <span>Copyright &copy; HỆ THỐNG QUẢN LÝ CÁC CÂU LẠC BỘ SINH VIÊN LBTH</span>
                     </div>
                 </div>
             </footer>
