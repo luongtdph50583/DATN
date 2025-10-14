@@ -31,6 +31,9 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 
     // Tin tức & Bài viết
     Route::get('/posts', [PostController::class, 'index'])->name('admin.posts.index');
+    Route::patch('/posts/{id}/toggle', [PostController::class, 'toggle'])->name('admin.posts.toggle');
+    Route::delete('/posts/{id}', [PostController::class, 'destroy'])->name('admin.posts.destroy');
+    Route::get('/posts/{id}', [PostController::class, 'show'])->name('admin.posts.show');
 
     // Tài liệu
     Route::get('/documents', [DocumentController::class, 'index'])->name('admin.documents.index');
