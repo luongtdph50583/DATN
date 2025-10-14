@@ -87,12 +87,24 @@
                 </a>
             </li>
 
-             <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.clubs.index') }}" 
-                    <i class="fas fa-fw fa-wrench"></i>
-                    <span>Quản lý CLB</span>
-                </a>
-            </li>
+
+
+            <li class="nav-item">
+    <a class="nav-link" href="{{ route('admin.clubs.index') }}">
+        <i class="fas fa-layer-group"></i> Quản lý CLB
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{{ route('admin.club-requests.index') }}">
+        <i class="fas fa-file-signature"></i> Yêu cầu thành lập CLB
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="{{ route('admin.club-join-requests.index') }}">
+        <i class="fas fa-user-friends"></i> Yêu cầu tham gia CLB
+    </a>
+</li>
+
             <!-- Divider -->
             <hr class="sidebar-divider">
             <!-- Heading -->

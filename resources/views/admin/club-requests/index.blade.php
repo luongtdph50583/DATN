@@ -1,59 +1,70 @@
-@extends('layouts.app')
+@extends('admin.layouts.app')
 
 @section('content')
 <div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Yêu cầu thành lập CLB</h1>
+    <h1 class="h3 mb-4 text-gray-800">Yêu cầu thành lập câu lạc bộ</h1>
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Danh sách yêu cầu</h6>
-        </div>
+    <div class="card shadow">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Tên</th>
-                            <th>Mô tả</th>
-                            <th>Lĩnh vực</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($clubRequests as $request)
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
+            @if($clubRequests->isEmpty())
+                <p class="text-muted">Không có yêu cầu thành lập nào.</p>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle text-center">
+                        <thead class="table-light">
                             <tr>
-                                <td>{{ $request->id }}</td>
-                                <td>{{ $request->name }}</td>
-                                <td>{{ $request->description }}</td>
-                                <td>{{ $request->field }}</td>
-                                <td>
-                                    @if($request->status === 'pending') Chờ duyệt
-                                    @elseif($request->status === 'approved') Đã duyệt
-                                    @else Từ chối @endif
-                                </td>
-                                <td>
-                                    <form action="{{ route('admin.club-requests.handle', $request) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
-                                    </form>
-                                    <form action="{{ route('admin.club-requests.handle', $request) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
-                                    </form>
-                                </td>
+                                <th>ID</th>
+                                <th>Tên CLB</th>
+                                <th>Mô tả</th>
+                                <th>Lĩnh vực</th>
+                                <th>Người gửi</th>
+                                <th>Trạng thái</th>
+                                <th>Hành động</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            @foreach($clubRequests as $req)
+                                <tr>
+                                    <td>{{ $req->id }}</td>
+                                    <td>{{ $req->name }}</td>
+                                    <td>{{ Str::limit($req->description, 60) }}</td>
+                                    <td>{{ $req->field }}</td>
+                                    <td>{{ $req->creator->name ?? '—' }}</td>
+                                    <td>
+                                        @if($req->status === 'pending')
+                                            <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                        @elseif($req->status === 'approved')
+                                            <span class="badge bg-success">Đã duyệt</span>
+                                        @else
+                                            <span class="badge bg-danger">Từ chối</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($req->status === 'pending')
+                                            <form action="{{ route('admin.club-requests.handle', $req) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <input type="hidden" name="action" value="approve">
+                                                <button class="btn btn-sm btn-success" title="Duyệt"><i class="fas fa-check"></i></button>
+                                            </form>
+                                            <form action="{{ route('admin.club-requests.handle', $req) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <input type="hidden" name="action" value="reject">
+                                                <button class="btn btn-sm btn-danger" title="Từ chối"><i class="fas fa-times"></i></button>
+                                            </form>
+                                        @else
+                                            <span class="text-muted">Đã xử lý</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
     </div>
 </div>

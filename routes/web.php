@@ -103,23 +103,21 @@ Route::prefix('admin')
         Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
     });
 });
+   // 👉 Gán chủ nhiệm - hiển thị form
+    Route::get('/clubs/{club}/assign-manager', [ClubController::class, 'showAssignForm'])
+        ->name('clubs.showAssignForm');
+
+    // 👉 Gán chủ nhiệm - xử lý form
+    Route::post('/clubs/{club}/assign-manager', [ClubController::class, 'assignManager'])
+        ->name('clubs.assignManager');
 
 
-        // Club Request Management
-        Route::prefix('club-requests')->as('club-requests.')->group(function () {
-            Route::controller(ClubController::class)->group(function () {
-                Route::get('/', 'showRequests')->name('index');
-                Route::post('/{clubRequest}', 'handleRequest')->name('handle');
-            });
-        });
+ Route::get('/club-requests', [ClubController::class, 'showRequests'])->name('club-requests.index');
+    Route::post('/club-requests/{clubRequest}/handle', [ClubController::class, 'handleRequest'])->name('club-requests.handle');
 
-        // Club Join Request Management
-        Route::prefix('club-join-requests')->as('club-join-requests.')->group(function () {
-            Route::controller(ClubController::class)->group(function () {
-                Route::get('/', 'showJoinRequests')->name('index');
-                Route::post('/{clubJoinRequest}', 'handleJoinRequest')->name('handle');
-            });
-        });
+    // Yêu cầu tham gia CLB
+    Route::get('/club-join-requests', [ClubController::class, 'showJoinRequests'])->name('club-join-requests.index');
+    Route::post('/club-join-requests/{clubJoinRequest}/handle', [ClubController::class, 'handleJoinRequest'])->name('club-join-requests.handle');
     });
 
 // === Authentication Routes ===

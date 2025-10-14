@@ -108,21 +108,28 @@ class ClubController extends Controller
     /**
      * Gán chủ nhiệm cho CLB.
      */
-    public function assignManager(Request $request, Club $club)
-    {
-        $request->validate([
-            'manager_id' => 'required|exists:users,id',
-        ], [
-            'manager_id.required' => 'Vui lòng chọn chủ nhiệm.',
-            'manager_id.exists' => 'Chủ nhiệm không tồn tại.',
-        ]);
+   // app/Http/Controllers/Admin/ClubController.php
 
-        $club->update(['manager_id' => $request->manager_id]);
+public function showAssignForm(Club $club)
+{
+    // Lấy danh sách sinh viên
+    $students = User::where('role', 'student')->get();
 
-        return redirect()
-            ->route('admin.clubs.index')
-            ->with('success', 'Gán chủ nhiệm thành công');
-    }
+    return view('admin.clubs.assign_manager', compact('club', 'students'));
+}
+
+public function assignManager(Request $request, Club $club)
+{
+    $request->validate([
+        'manager_id' => 'required|exists:users,id',
+    ]);
+
+    $club->manager_id = $request->manager_id;
+    $club->save();
+
+    return redirect()->route('admin.clubs.index')->with('success', 'Đã gán/chỉnh chủ nhiệm cho CLB thành công!');
+}
+
 
     /**
      * Hiển thị danh sách yêu cầu thành lập CLB.
@@ -164,11 +171,11 @@ class ClubController extends Controller
     /**
      * Hiển thị danh sách yêu cầu tham gia CLB.
      */
-    public function showJoinRequests()
-    {
-        $clubJoinRequests = ClubJoinRequest::with('user', 'club')->get();
-        return view('admin.club-join-requests.index', compact('clubJoinRequests'));
-    }
+  public function showJoinRequests()
+{
+    $joinRequests = ClubJoinRequest::with('user', 'club')->get();
+    return view('admin.club-join-requests.index', compact('joinRequests'));
+}
 
     /**
      * Duyệt hoặc từ chối yêu cầu tham gia CLB.
