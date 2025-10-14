@@ -82,6 +82,10 @@ Route::prefix('admin')
 
         // 💬 Comment Management
         Route::get('comments', [CommentController::class, 'index'])->name('comments.index');
+        Route::get('comments/{comment}', [CommentController::class, 'show'])->name('comments.show');
+        Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name
+('comments.destroy');
+        Route::post('comments/{comment}/toggle-status', [CommentController::class, 'toggleStatus'])->name('comments.toggleStatus');
 
         // 🏛 Club Management
         Route::prefix('clubs')->as('clubs.')->group(function () {
