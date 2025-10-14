@@ -21,6 +21,298 @@
     <link href="{{ asset('/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
     <link href="{{ asset('/css/sb-admin-2.min.css') }}" rel="stylesheet">
 
+    <style>
+    :root {
+        --blue: #4e73df;
+        --indigo: #6610f2;
+        --purple: #6f42c1;
+        --pink: #e83e8c;
+        --red: #e74a3b;
+        --orange: #fd7e14;
+        --yellow: #f6c23e;
+        --green: #1cc88a;
+        --teal: #20c9a6;
+        --cyan: #36b9cc;
+        --white: #fff;
+        --gray: #858796;
+        --gray-dark: #5a5c69;
+        --primary: #4e73df;
+        --secondary: #858796;
+        --success: #1cc88a;
+        --info: #36b9cc;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --light: #f8f9fc;
+        --dark: #5a5c69;
+        --breakpoint-xs: 0;
+        --breakpoint-sm: 576px;
+        --breakpoint-md: 768px;
+        --breakpoint-lg: 992px;
+        --breakpoint-xl: 1200px;
+        --font-family-sans-serif: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: var(--font-family-sans-serif);
+        height: 100%;
+        background-color: #f8f9fc;
+    }
+
+    #wrapper {
+        display: flex;
+        width: 100%;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 250px;
+        min-height: 100vh;
+        background-color: var(--primary);
+        transition: all 0.3s ease-in-out;
+    }
+
+    .sidebar .sidebar-brand {
+        padding: 1.5rem;
+        text-decoration: none;
+        color: var(--white);
+        font-weight: 800;
+        transition: transform 0.5s ease;
+    }
+
+    .sidebar .sidebar-brand:hover {
+        transform: scale(1.05);
+        animation: bounce 0.5s;
+    }
+
+    .sidebar .sidebar-brand .sidebar-brand-icon {
+        margin-right: 0.5rem;
+    }
+
+    .sidebar .sidebar-brand .sidebar-brand-text {
+        display: flex;
+        align-items: center;
+    }
+
+    .sidebar hr.sidebar-divider {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 0.5rem 0;
+        opacity: 0;
+        animation: fadeIn 1s forwards 0.5s;
+    }
+
+    .sidebar .nav-item {
+        padding: 0.5rem 1rem;
+    }
+
+    .sidebar .nav-item .nav-link {
+        display: flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.8);
+        padding: 0.75rem;
+        border-radius: 0.35rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar .nav-item .nav-link i {
+        margin-right: 0.5rem;
+        width: 1.25rem;
+        text-align: center;
+    }
+
+    .sidebar .nav-item .nav-link:hover {
+        color: var(--white);
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: translateX(5px);
+        animation: slideRight 0.3s ease;
+    }
+
+    .sidebar .nav-item .nav-link.active {
+        color: var(--white);
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .sidebar .sidebar-heading {
+        padding: 0.75rem 1rem;
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        animation: fadeInUp 0.5s ease;
+    }
+
+    .sidebar .sidebar-card {
+        padding: 1rem;
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 0.35rem;
+        margin: 1rem;
+        text-align: center;
+        animation: zoomIn 0.5s ease;
+    }
+
+    .sidebar .sidebar-card img {
+        max-width: 100%;
+    }
+
+    .sidebar .sidebar-card .btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    #sidebarToggle {
+        width: 2.5rem;
+        height: 2.5rem;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    #sidebarToggle:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: rotate(90deg);
+        animation: spin 0.5s ease;
+    }
+
+    /* Topbar */
+    .topbar {
+        height: 4rem;
+        padding: 0 1rem;
+        background-color: var(--white);
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .topbar #sidebarToggleTop {
+        color: var(--gray-dark);
+        padding: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .topbar #sidebarToggleTop:hover {
+        color: var(--primary);
+        animation: pulse 0.5s;
+    }
+
+    .topbar .navbar-search {
+        width: 25rem;
+    }
+
+    .topbar .navbar-search .form-control {
+        border: 1px solid var(--gray-200);
+        padding: 0.5rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .topbar .navbar-search .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        animation: glow 0.5s ease;
+    }
+
+    .topbar .navbar-nav .nav-item .nav-link {
+        padding: 0.5rem 1rem;
+        color: var(--gray-600);
+        transition: all 0.3s ease;
+    }
+
+    .topbar .navbar-nav .nav-item .nav-link:hover {
+        color: var(--primary);
+        animation: fadeIn 0.3s ease;
+    }
+
+    .topbar .navbar-nav .nav-item .dropdown-menu {
+        min-width: 12rem;
+        padding: 0.5rem;
+        animation: slideDown 0.3s ease;
+    }
+
+    .topbar .navbar-nav .nav-item .dropdown-menu .dropdown-item {
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .topbar .navbar-nav .nav-item .dropdown-menu .dropdown-item:hover {
+        background-color: var(--gray-100);
+        animation: bounce 0.3s ease;
+    }
+
+    .topbar .navbar-nav .nav-item .img-profile {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideRight {
+        from { transform: translateX(0); }
+        to { transform: translateX(5px); }
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes zoomIn {
+        from { opacity: 0; transform: scale(0.5); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes glow {
+        0% { box-shadow: 0 0 0 0 rgba(78, 115, 223, 0.25); }
+        50% { box-shadow: 0 0 0 0.4rem rgba(78, 115, 223, 0.25); }
+        100% { box-shadow: 0 0 0 0 rgba(78, 115, 223, 0.25); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .sidebar {
+            margin-left: -250px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar.active {
+            margin-left: 0;
+        }
+
+        #content-wrapper {
+            margin-left: 0;
+        }
+    }
+</style>
+
 
 </head>
 
@@ -43,12 +335,6 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item active">
-                <a class="nav-link" href="index.html">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
-            </li>
 
             <!-- Divider -->
             <hr class="sidebar-divider">

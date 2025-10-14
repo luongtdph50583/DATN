@@ -14,10 +14,6 @@ class MemberController extends Controller
 {
     public function index(Request $request)
     {
-        if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
-            return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
-        }
-
         $clubs = collect();
         $searchName = $request->input('search_name', '');
         $clubId = $request->input('club_id', '');

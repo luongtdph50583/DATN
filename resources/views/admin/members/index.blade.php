@@ -6,7 +6,20 @@
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
-        <a href="{{ route('admin.members.create') }}" class="btn btn-primary mb-3">Thêm mới</a>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="{{ route('admin.members.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Thêm mới
+            </a>
+            <form action="{{ route('admin.members.export.excel') }}" method="GET" class="d-inline">
+                @csrf
+                <input type="hidden" name="search_name" value="{{ request('search_name') }}">
+                <input type="hidden" name="club_id" value="{{ request('club_id') }}">
+                <input type="hidden" name="role" value="{{ request('role') }}">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i> Xuất Excel
+                </button>
+            </form>
+        </div>
         <div class="card shadow mb-4">
             <div class="card-body">
                 <div class="table-responsive">
@@ -23,7 +36,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($members as $member)
+                            @forelse ($members as $member)
                                 <tr>
                                     <td>{{ $member->id }}</td>
                                     <td>{{ $member->name }}</td>
@@ -51,7 +64,20 @@
                                         </form>
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center">
+                                        <div class="empty-state">
+                                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                            <h5>Chưa có thành viên nào</h5>
+                                            <p class="text-muted">Hãy thêm thành viên đầu tiên để bắt đầu quản lý.</p>
+                                            <a href="{{ route('admin.members.create') }}" class="btn btn-primary">
+                                                <i class="fas fa-plus"></i> Thêm thành viên
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
