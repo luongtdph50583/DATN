@@ -12,7 +12,7 @@ class CreateClubsTable extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('logo')->nullable();
-            $table->string('field');
+            $table->string('field');    
             $table->enum('status', ['active', 'pending', 'inactive'])->default('pending');
             $table->foreignId('manager_id')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();

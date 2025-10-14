@@ -17,7 +17,21 @@ class Club extends Model
     {
         return $this->hasMany(ClubMember::class, 'club_id');
     }
+
     protected $casts = [
           'description' => 'string',
       ];
+      public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
 }
+
+
+     
+
+    
+
+
+    
+
