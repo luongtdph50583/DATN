@@ -8,22 +8,12 @@
      use Illuminate\Support\Facades\Hash;
      use Illuminate\Support\Facades\Storage;
 
-     class UserController extends Controller
-     {
-         protected function checkAdmin()
-         {
-             if (!Auth::check() || Auth::user()->role !== 'admin') {
-                 return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
-             }
-             return null;
-         }
-
-         public function index(Request $request)
-         {
-              if ($redirect = $this->checkAdmin()) {
-              return $redirect;
-          }
-
+    class UserController extends Controller
+    {
+        
+        public function index(Request $request)
+        {
+            
           $query = User::query();
 
           // Lọc theo tên
@@ -46,38 +36,33 @@
           return view('admin.users.index', compact('users'));
           $users = User::all();
             return view('admin.users.index', compact('users'));
-         }
+        
+        }
 
           public function toggleStatus(Request $request, User $user)
-      {
-          if ($redirect = $this->checkAdmin()) {
-              return $redirect;
-          }
+            {
+                
 
-          $newStatus = $user->status === 'active' ? 'inactive' : 'active';
-          $user->update(['status' => $newStatus]);
+                $newStatus = $user->status === 'active' ? 'inactive' : 'active';
+                $user->update(['status' => $newStatus]);
 
-          return response()->json([
-              'success' => true,
-              'status' => $newStatus,
-              'message' => "Tài khoản đã được cập nhật trạng thái thành '$newStatus'.",
-          ]);
-      }
+                return response()->json([
+                    'success' => true,
+                    'status' => $newStatus,
+                    'message' => "Tài khoản đã được cập nhật trạng thái thành '$newStatus'.",
+                ]);
+            }
 
          public function create()
          {
-             if ($redirect = $this->checkAdmin()) {
-                 return $redirect;
-             }
+            
 
              return view('admin.users.create');
          }
 
          public function store(Request $request)
          {
-             if ($redirect = $this->checkAdmin()) {
-                 return $redirect;
-             }
+             
 
              $validated = $request->validate([
                  'name' => 'required|string|max:255',
@@ -104,18 +89,14 @@
 
          public function edit(User $user)
          {
-             if ($redirect = $this->checkAdmin()) {
-                 return $redirect;
-             }
+             
 
              return view('admin.users.edit', compact('user'));
          }
 
          public function update(Request $request, User $user)
          {
-             if ($redirect = $this->checkAdmin()) {
-                 return $redirect;
-             }
+             
 
              $validated = $request->validate([
                  'name' => 'required|string|max:255',
@@ -150,9 +131,7 @@
 
          public function destroy(User $user)
          {
-             if ($redirect = $this->checkAdmin()) {
-                 return $redirect;
-             }
+             
 
              if ($user->avatar) {
                  Storage::disk('public')->delete($user->avatar);
@@ -160,4 +139,5 @@
              $user->delete();
              return redirect()->route('admin.users.index')->with('success', 'Tài khoản đã được xóa.');
          }
-     }
+    }
+     

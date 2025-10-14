@@ -8,15 +8,12 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Club;
 use App\Exports\MembersExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Member;
 
 class MemberController extends Controller
 {
     public function index(Request $request)
     {
-        if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
-            return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
-        }
-
         $clubs = collect();
         $searchName = $request->input('search_name', '');
         $clubId = $request->input('club_id', '');
@@ -52,7 +49,8 @@ class MemberController extends Controller
 
         $activeTab = $request->input('activeTab', 'members');
 
-        return view('admin.members.index', compact('clubs', 'searchName', 'clubId', 'role'))->with('activeTab', $activeTab);
+         $members = Member::all();
+             return view('admin.members.index', compact('members'));
     }
 
     public function exportExcel(Request $request)
@@ -85,4 +83,63 @@ class MemberController extends Controller
 
         return Excel::download(new MembersExport($clubs), 'danh_sach_thanh_vien_' . now()->format('YmdHis') . '.xlsx');
     }
+    
+        
+        
+         public function create()
+         {
+             return view('admin.members.create');
+         }
+
+         
+         public function store(Request $request)
+         {
+             $request->validate([
+                 'name' => 'required|string|max:255',
+                 'email' => 'required|email|unique:members,email',
+                 'phone' => 'nullable|string|max:15',
+                 'address' => 'nullable|string|max:500',
+                 'status' => 'required|in:active,inactive',
+             ]);
+
+             Member::create($request->all());
+
+             return redirect()->route('admin.members.index')->with('success', 'Thành viên đã được tạo thành công.');
+         }
+
+        
+         public function show(Member $member)
+         {
+             return view('admin.members.show', compact('member'));
+         }
+
+         
+         public function edit(Member $member)
+         {
+             return view('admin.members.edit', compact('member'));
+         }
+
+       
+         public function update(Request $request, Member $member)
+         {
+             $request->validate([
+                 'name' => 'required|string|max:255',
+                 'email' => 'required|email|unique:members,email,' . $member->id,
+                 'phone' => 'nullable|string|max:15',
+                 'address' => 'nullable|string|max:500',
+                 'status' => 'required|in:active,inactive',
+             ]);
+
+             $member->update($request->all());
+
+             return redirect()->route('admin.members.index')->with('success', 'Thành viên đã được cập nhật thành công.');
+         }
+
+         
+         public function destroy(Member $member)
+         {
+             $member->delete();
+
+             return redirect()->route('admin.members.index')->with('success', 'Thành viên đã được xóa thành công.');
+         }
 }
