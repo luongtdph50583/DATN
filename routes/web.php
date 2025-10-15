@@ -15,7 +15,8 @@ use App\Http\Controllers\Admin\{
     CommentController,
     ClubController,
     NotificationController,
-    
+    StatisticsController,
+    ClubReportController
 };
 
 /*
@@ -27,92 +28,118 @@ use App\Http\Controllers\Admin\{
 */
 
 // === 🏠 Public Routes ===
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
+Route::get('/', [HomeController::class, 'index'])->name('dashboard');
+
 
 // === 👤 Authenticated User Routes ===
 Route::middleware(['auth'])->group(function () {
     // Profile Management
-    Route::controller(ProfileController::class)->group(function () {
-        Route::get('/profile', 'edit')->name('profile.edit');
-        Route::patch('/profile', 'update')->name('profile.update');
-        Route::delete('/profile', 'destroy')->name('profile.destroy');
+    Route::controller(ProfileController::class)->prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', 'edit')->name('edit');
+        Route::patch('/', 'update')->name('update');
+        Route::delete('/', 'destroy')->name('destroy');
     });
 });
 
 // === 🔐 Admin Routes ===
-Route::prefix('admin')
-    ->middleware(['auth'])
-    ->as('admin.')
-    ->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->as('admin.')->group(function () {
+    // 👥 User Management
+    Route::resource('users', UserController::class);
+    Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
 
-        // 👥 User Management
-        Route::resource('users', UserController::class);
-        Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggleStatus');
+    // 📅 Event Management
+    Route::resource('events', EventController::class);
+    Route::post('events/{event}/approve', [EventController::class, 'approve'])->name('events.approve');
+    Route::post('events/{event}/reject', [EventController::class, 'reject'])->name('events.reject');
 
-        // 📅 Event Management
-        Route::resource('events', EventController::class);
-        Route::post('events/{event}/approve', [EventController::class, 'approve'])->name('events.approve');
-        Route::post('events/{event}/reject', [EventController::class, 'reject'])->name('events.reject');
-
-        // 👨‍👩‍👧‍👦 Member Management
-        Route::get('members', [MemberController::class, 'index'])->name('members.index');
-        Route::post('members/{member}/toggle-status', [MemberController::class, 'toggleStatus'])->name('members.toggleStatus');
-        Route::get('members/create', [MemberController::class, 'create'])->name('members.create');
-        Route::post('members', [MemberController::class, 'store'])->name('members.store');
-        Route::get('members/{member}', [MemberController::class, 'show'])->name('members.show');
-        Route::get('members/{member}/edit', [MemberController::class, 'edit'])->name('members.edit');
-        Route::put('members/{member}', [MemberController::class, 'update'])->name('members.update');
-        Route::delete('members/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
-        Route::get('members/export/excel', [MemberController::class, 'exportExcel'])->name('members.export.excel');
-
-        // 📰 Post Management
-        Route::prefix('posts')->as('posts.')->group(function () {
-            Route::get('/', [PostController::class, 'index'])->name('index');
-            Route::patch('/{id}/toggle', [PostController::class, 'toggle'])->name('toggle');
-            Route::delete('/{id}', [PostController::class, 'destroy'])->name('destroy');
-            Route::get('/{id}', [PostController::class, 'show'])->name('show');
-        });
-
-        // 📚 Document Management
-        Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
-
-        // 🕓 History Management
-        Route::get('history', [HistoryController::class, 'index'])->name('history.index');
-
-        // 💬 Comment Management
-        Route::get('comments', [CommentController::class, 'index'])->name('comments.index');
-        Route::get('comments/{comment}', [CommentController::class, 'show'])->name('comments.show');
-        Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name
-('comments.destroy');
-        Route::post('comments/{comment}/toggle-status', [CommentController::class, 'toggleStatus'])->name('comments.toggleStatus');
-
-        // 🏛 Club Management
-        Route::prefix('clubs')->as('clubs.')->group(function () {
-            Route::get('/', [ClubController::class, 'index'])->name('index');
-            Route::get('/create', [ClubController::class, 'create'])->name('create');
-            Route::post('/', [ClubController::class, 'store'])->name('store');
-            Route::put('/{club}', [ClubController::class, 'update'])->name('update');
-            Route::delete('/{club}', [ClubController::class, 'destroy'])->name('destroy');
-            Route::post('/{club}/assign-manager', [ClubController::class, 'assignManager'])->name('assignManager');
-        });
-
-        // 📝 Club Request Management
-        Route::prefix('club-requests')->as('club-requests.')->group(function () {
-            Route::get('/', [ClubController::class, 'showRequests'])->name('index');
-            Route::post('/{clubRequest}', [ClubController::class, 'handleRequest'])->name('handle');
-        });
-
-        // 🙋‍♂️ Club Join Request Management
-        Route::prefix('club-join-requests')->as('club-join-requests.')->group(function () {
-            Route::get('/', [ClubController::class, 'showJoinRequests'])->name('index');
-            Route::post('/{clubJoinRequest}', [ClubController::class, 'handleJoinRequest'])->name('handle');
-        });
-
-        // 🔔 Notification Management
-        Route::get('/notifications/create', [NotificationController::class, 'create'])->name('notifications.create');
-        Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
+    // 👨‍👩‍👧‍👦 Member Management
+    Route::controller(MemberController::class)->prefix('members')->as('members.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/{member}/toggle-status', 'toggleStatus')->name('toggleStatus');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{member}', 'show')->name('show');
+        Route::get('/{member}/edit', 'edit')->name('edit');
+        Route::put('/{member}', 'update')->name('update');
+        Route::delete('/{member}', 'destroy')->name('destroy');
+        Route::get('/export/excel', 'exportExcel')->name('export.excel');
     });
 
-// === Auth Routes (Laravel Breeze / Jetstream / Fortify etc.) ===
+    // 📰 Post Management
+    Route::controller(PostController::class)->prefix('posts')->as('posts.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::patch('/{id}/toggle', 'toggle')->name('toggle');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+        Route::get('/{id}', 'show')->name('show');
+    });
+
+    // 📚 Document Management
+    Route::controller(DocumentController::class)->prefix('documents')->as('documents.')->group(function () {
+        Route::get('/', 'index')->name('index');
+    });
+
+    // 🕓 History Management
+    Route::controller(HistoryController::class)->prefix('history')->as('history.')->group(function () {
+        Route::get('/', 'index')->name('index');
+    });
+
+    // 💬 Comment Management
+    Route::controller(CommentController::class)->prefix('comments')->as('comments.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{comment}', 'show')->name('show');
+        Route::delete('/{comment}', 'destroy')->name('destroy');
+        Route::post('/{comment}/toggle-status', 'toggleStatus')->name('toggleStatus');
+    });
+
+    // 🏛 Club Management
+    Route::controller(ClubController::class)->prefix('clubs')->as('clubs.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::put('/{club}', 'update')->name('update');
+        Route::delete('/{club}', 'destroy')->name('destroy');
+        Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
+    });
+
+    // 📝 Club Request Management
+    Route::controller(ClubController::class)->prefix('club-requests')->as('club-requests.')->group(function () {
+        Route::get('/', 'showRequests')->name('index');
+        Route::post('/{clubRequest}', 'handleRequest')->name('handle');
+    });
+
+    // 🙋‍♂️ Club Join Request Management
+    Route::controller(ClubController::class)->prefix('club-join-requests')->as('club-join-requests.')->group(function () {
+        Route::get('/', 'showJoinRequests')->name('index');
+        Route::post('/{clubJoinRequest}', 'handleJoinRequest')->name('handle');
+    });
+
+    // 🔔 Notification Management
+    Route::controller(NotificationController::class)->prefix('notifications')->as('notifications.')->group(function () {
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+    });
+
+    // 📊 Statistics Management
+    Route::controller(StatisticsController::class)->prefix('stats')->as('stats.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/events', 'events')->name('events');
+        Route::get('/clubs', 'clubs')->name('clubs');
+        Route::get('/members', 'members')->name('members');
+    });
+
+    // 📋 Club Report Management
+    Route::controller(ClubReportController::class)->prefix('clubs/{id}/report')->as('clubs.report.')->group(function () {
+        Route::get('/', 'show')->name('show');
+        Route::get('/pdf', 'exportPdf')->name('pdf');
+    });
+
+    // 📈 Statistics and Reports Management
+    Route::controller(StatisticsController::class)->prefix('statistics-and-reports')->as('statistics-and-reports.')->group(function () {
+        Route::get('/statistics', 'index')->name('statistics');
+        Route::get('/reports', 'reports')->name('reports');
+        
+    });
+});
+
+// === Auth Routes ===
 require __DIR__ . '/auth.php';
