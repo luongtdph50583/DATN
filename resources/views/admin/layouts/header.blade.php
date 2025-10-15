@@ -379,6 +379,13 @@
                     <span>Quản lý CLB</span>
                 </a>
             </li>
+           <li class="nav-item">
+    <a class="nav-link" href="{{ route('admin.admin.stats') }}">
+        <i class="fas fa-fw fa-chart-bar"></i>
+        <span>Thống kê</span>
+    </a>
+</li>
+
             <!-- Divider -->
             <hr class="sidebar-divider">
             <!-- Heading -->

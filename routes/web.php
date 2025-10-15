@@ -8,13 +8,15 @@ use App\Http\Controllers\Admin\{
     DocumentController,
     HistoryController,
     CommentController,
-    ClubController
+    ClubController,
+    ClubReportController
 };
 use App\Http\Controllers\{
     HomeController,
     ProfileController
 };
 use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\StatisticsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -124,7 +126,28 @@ Route::prefix('admin')
               Route::get('/notifications/create', 'create')->name('notifications.create');
               Route::post('/notifications', 'store')->name('notifications.store');
           });
-    });
+        // Statistics
+      
+
+    Route::controller(StatisticsController::class)->group(function () {
+        // Trang tổng quan thống kê
+        Route::get('/stats', 'index')->name('admin.stats');
+
+        // Thống kê theo sự kiện
+        Route::get('/stats/events', 'events')->name('admin.stats.events');
+
+        // Thống kê theo câu lạc bộ
+        Route::get('/stats/clubs', 'clubs')->name('admin.stats.clubs');
+
+        // Nếu muốn thêm thống kê theo thành viên
+        Route::get('/stats/members', 'members')->name('admin.stats.members');
+ 
+});
+  Route::get('/clubs/{id}/report', [ClubReportController::class, 'show'])->name('clubs.report');
+// PDF Export for Club Report
+  Route::get('/clubs/{id}/report/pdf', [ClubReportController::class, 'exportPdf'])
+    ->name('clubs.report.pdf');
+});
 
 // === Authentication Routes ===
 require __DIR__ . '/auth.php';
