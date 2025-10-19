@@ -31,11 +31,3 @@ class Club extends Model
 
 }
 
-
-
-
-
-
-
-
-

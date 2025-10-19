@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
 class Event extends Model
 {
     protected $fillable = [
@@ -30,4 +31,5 @@ class Event extends Model
         return $this->hasMany(EventRegistration::class);
     }
 }
+
 
