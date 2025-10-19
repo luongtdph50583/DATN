@@ -50,7 +50,7 @@ class PostController extends Controller
     }
     public function show($id)
 {
-    
+
 
     $post = Post::with(['club', 'user', 'media'])->findOrFail($id);
 

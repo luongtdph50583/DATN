@@ -10,10 +10,10 @@
 
     class UserController extends Controller
     {
-        
+
         public function index(Request $request)
         {
-            
+
           $query = User::query();
 
           // Lọc theo tên
@@ -36,12 +36,12 @@
           return view('admin.users.index', compact('users'));
           $users = User::all();
             return view('admin.users.index', compact('users'));
-        
+
         }
 
           public function toggleStatus(Request $request, User $user)
             {
-                
+
 
                 $newStatus = $user->status === 'active' ? 'inactive' : 'active';
                 $user->update(['status' => $newStatus]);
@@ -55,14 +55,14 @@
 
          public function create()
          {
-            
+
 
              return view('admin.users.create');
          }
 
          public function store(Request $request)
          {
-             
+
 
              $validated = $request->validate([
                  'name' => 'required|string|max:255',
@@ -89,14 +89,14 @@
 
          public function edit(User $user)
          {
-             
+
 
              return view('admin.users.edit', compact('user'));
          }
 
          public function update(Request $request, User $user)
          {
-             
+
 
              $validated = $request->validate([
                  'name' => 'required|string|max:255',
@@ -131,7 +131,7 @@
 
          public function destroy(User $user)
          {
-             
+
 
              if ($user->avatar) {
                  Storage::disk('public')->delete($user->avatar);

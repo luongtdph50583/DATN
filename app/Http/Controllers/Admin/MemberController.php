@@ -83,15 +83,15 @@ class MemberController extends Controller
 
         return Excel::download(new MembersExport($clubs), 'danh_sach_thanh_vien_' . now()->format('YmdHis') . '.xlsx');
     }
-    
-        
-        
+
+
+
          public function create()
          {
-             return view('admin.members.create');
+            return view('admin.members.create');
          }
 
-         
+
          public function store(Request $request)
          {
              $request->validate([
@@ -107,19 +107,19 @@ class MemberController extends Controller
              return redirect()->route('admin.members.index')->with('success', 'Thành viên đã được tạo thành công.');
          }
 
-        
+
          public function show(Member $member)
          {
              return view('admin.members.show', compact('member'));
          }
 
-         
+
          public function edit(Member $member)
          {
              return view('admin.members.edit', compact('member'));
          }
 
-       
+
          public function update(Request $request, Member $member)
          {
              $request->validate([
@@ -135,7 +135,7 @@ class MemberController extends Controller
              return redirect()->route('admin.members.index')->with('success', 'Thành viên đã được cập nhật thành công.');
          }
 
-         
+
          public function destroy(Member $member)
          {
              $member->delete();

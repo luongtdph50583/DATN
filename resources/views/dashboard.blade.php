@@ -1,5 +1,23 @@
-@include('admin.layouts.header')
-<link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+
+
+
+
+@extends('admin.layouts.app')
+@section('title')
+    Dashboard
+@endsection
+
+@section('card-title')
+    Dashboard
+@endsection
+
+@section('card-header')
+        Dashboard
+
+@endsection
+
+@section('card-body')
+     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
 
 <div class="container-fluid">
     <!-- Page Heading -->
@@ -60,8 +78,10 @@
                 <div class="card-footer text-center">
                     <a href="#" class="small stretched-link text-success">Quản lý Quản lý CLB</a> <!-- Chưa có route, cần thêm -->
                 </div>
+
             </div>
         </div>
+
 
         <!-- Tổng số Sự kiện -->
         <div class="col-xl-3 col-md-6 mb-4">
@@ -176,4 +196,4 @@
     </div>
 </div>
 
-@include('admin.layouts.footer')
+@endsection

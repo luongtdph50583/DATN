@@ -1,13 +1,21 @@
-@extends('dashboard')
 
-@section('content')
-<div class="card shadow mb-4">
-    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h6 class="m-0 font-weight-bold text-primary">Chi tiết bài viết</h6>
-        <a href="{{ route('admin.posts.index') }}" class="btn btn-secondary btn-sm">← Quay lại danh sách</a>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive mb-4">
+
+
+@extends('admin.layouts.app')
+@section('title')
+    trang admin
+@endsection
+
+@section('card-title')
+    Quản lý bai viet
+@endsection
+
+@section('card-header')
+    chi tiet bai viet
+@endsection
+
+@section('card-body')
+      <div class="table-responsive mb-4">
             <table class="table table-bordered">
                 <tr>
                     <th>ID</th>
@@ -44,44 +52,80 @@
             </table>
         </div>
 
-       <h6 class="font-weight-bold text-primary">Media đính kèm</h6>
+<h6 class="font-weight-bold text-primary">Media đính kèm</h6>
 <div class="row">
     @forelse($post->media as $media)
+        @php
+            $mime = strtolower($media->file_type);
+            $extension = pathinfo($media->file_name, PATHINFO_EXTENSION);
+            $type = $extension ?: explode('/', $mime)[1] ?? '';
+            $type = strtolower($type);
+
+            // Do trong DB lưu kiểu "images/img1.jpg" => thêm "storage/"
+            $path = asset('storage/' . $media->file_path);
+        @endphp
+
         <div class="col-md-4 mb-4">
-            <div class="border p-2 rounded">
-                <p class="mb-1"><strong>{{ $media->file_name }}</strong></p>
-                <p class="text-muted">Loại: {{ $media->file_type }}</p>
-                <p class="text-muted">Ngày tải lên: {{ $media->created_at->format('d/m/Y H:i') }}</p>
+            <div class="border p-3 rounded shadow-sm text-center bg-light">
+                <p class="mb-1 fw-bold text-dark">{{ $media->file_name }}</p>
+                <p class="text-muted mb-1">Loại: {{ strtoupper($type) }}</p>
+                <p class="text-muted mb-2">Tải lên: {{ $media->created_at->format('d/m/Y H:i') }}</p>
 
-                @php
-                    $type = strtolower($media->file_type);
-                @endphp
+                {{-- 🖼️ Hình ảnh --}}
+                @if(in_array($type, ['jpg','jpeg','png','gif','webp']))
+                    <img src="{{ $path }}"
+                         alt="{{ $media->file_name }}"
+                         class="img-fluid rounded mb-2"
+                         style="max-height:250px;object-fit:cover;">
 
-                @if(Str::startsWith($type, 'image'))
-                    <img src="{{ asset($media->file_path) }}" alt="{{ $media->file_name }}" class="img-fluid rounded">
-                @elseif(Str::startsWith($type, 'video'))
-                    <video controls class="w-100">
-                        <source src="{{ asset($media->file_path) }}" type="{{ $media->file_type }}">
+                {{-- 🎬 Video --}}
+                @elseif(in_array($type, ['mp4','mov','avi','mkv']))
+                    <video controls class="w-100 rounded mb-2" style="max-height:250px;">
+                        <source src="{{ $path }}" type="video/{{ $type }}">
                         Trình duyệt của bạn không hỗ trợ video.
                     </video>
-                @elseif(Str::endsWith($type, 'pdf'))
-                    <iframe src="{{ asset($media->file_path) }}" width="100%" height="400px"></iframe>
-                @elseif(Str::endsWith($type, 'doc') || Str::endsWith($type, 'docx') || Str::endsWith($type, 'xls') || Str::endsWith($type, 'xlsx') || Str::endsWith($type, 'cgi'))
-                    <a href="{{ asset($media->file_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">Tải về</a>
+
+                {{-- 🎧 Audio --}}
+                @elseif(in_array($type, ['mp3','wav','ogg','m4a']))
+                    <audio controls class="w-100 mb-2">
+                        <source src="{{ $path }}" type="audio/{{ $type }}">
+                        Trình duyệt của bạn không hỗ trợ audio.
+                    </audio>
+
+                {{-- 📄 PDF --}}
+                @elseif($type === 'pdf')
+                    <iframe src="{{ $path }}" width="100%" height="250px" class="rounded mb-2"></iframe>
+
+                {{-- 🧾 File văn bản / Office --}}
+                @elseif(in_array($type, ['doc','docx','xls','xlsx','ppt','pptx','txt']))
+                    <div class="text-center my-3">
+                        <i class="bi bi-file-earmark-text fs-1 text-secondary"></i>
+                        <p class="mb-1">Tài liệu {{ strtoupper($type) }}</p>
+                    </div>
+
+                {{-- 📦 Các loại khác --}}
                 @else
-                    <p class="text-muted">Không thể hiển thị trực tiếp. <a href="{{ asset($media->file_path) }}" target="_blank">Tải về</a></p>
+                    <div class="text-center my-3">
+                        <i class="bi bi-file-earmark fs-1 text-muted"></i>
+                        <p class="mb-1">Không thể hiển thị trực tiếp</p>
+                    </div>
                 @endif
+
+                {{-- ⬇️ Nút tải xuống --}}
+                <div class="text-center mt-2">
+                    <a href="{{ $path }}" download class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download me-1"></i> Tải xuống
+                    </a>
+                </div>
             </div>
         </div>
     @empty
-        <div class="col-12">
-            <p>Không có media đính kèm.</p>
+        <div class="col-12 text-center">
+            <p class="text-muted">Không có media đính kèm.</p>
         </div>
     @endforelse
 </div>
-<pre>{{ print_r($post->media->toArray(), true) }}</pre>
 
-        </div>
-    </div>
-</div>
+
 @endsection
+

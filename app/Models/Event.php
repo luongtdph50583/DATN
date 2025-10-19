@@ -1,48 +1,33 @@
 <?php
 
-     namespace App\Models;
+namespace App\Models;
 
-     use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
-<<<<<<< HEAD
 class Event extends Model
 {
-    protected $fillable = ['title', 'description', 'event_date', 'location'];
+    protected $fillable = [
+        'club_id', 'name', 'description', 'event_date', 'location', 'status', 'created_by'
+    ];
 
-      public function club()
+    protected $casts = [
+        'event_date' => 'datetime',
+        'status' => 'string',
+    ];
+
+    public function club()
     {
         return $this->belongsTo(Club::class);
     }
 
-    public function creator()
+    public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    
+    public function registrations()
+    {
+        return $this->hasMany(EventRegistration::class);
+    }
 }
-=======
-     class Event extends Model
-     {
-         protected $fillable = [
-             'club_id', 'name', 'description', 'event_date', 'location', 'status', 'created_by',
-         ];
 
-         protected $casts = [
-             'event_date' => 'datetime',
-             'status' => 'string',
-         ];
-
-         // Quan hệ với Club
-         public function club()
-         {
-             return $this->belongsTo(Club::class);
-         }
-
-         // Quan hệ với User (người tạo)
-         public function createdBy()
-         {
-             return $this->belongsTo(User::class, 'created_by');
-         }
-     }
->>>>>>> 675c4230ea64f1035d7bdbe4c4f0ea59d095342f
