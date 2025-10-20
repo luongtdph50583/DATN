@@ -1,113 +1,110 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
+
 use App\Http\Controllers\Controller;
-use App\Models\Club;
-use App\Models\ClubRequest;
-use App\Models\ClubJoinRequest;
-use App\Models\User;
-use App\Http\Requests\ClubFormRequest;
 use Illuminate\Http\Request;
+use App\Models\Club;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
 class ClubController extends Controller
 {
-  public function index()
-{
-    $clubs = Club::with('manager')->get();
-    $clubRequests = ClubRequest::all();
-    $clubJoinRequests = ClubJoinRequest::with('user', 'club')->get();
-    $users = User::all();
-    return view('admin.clubs.index', compact('clubs', 'clubRequests', 'clubJoinRequests', 'users'));
-}
+    // === Hiển thị danh sách CLB ===
+    public function index()
+    {
+        $clubs = Club::with('manager')->get();
+        return view('admin.clubs.index', compact('clubs'));
+    }
 
+    // === Form tạo mới CLB ===
     public function create()
     {
         return view('admin.clubs.create');
     }
 
-    public function store(ClubFormRequest $request)
+    // === Lưu CLB mới ===
+    public function store(Request $request)
     {
-        $data = $request->validated();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'logo' => 'nullable|image|max:2048',
+            'field' => 'nullable|string|max:255',
+            'status' => 'required|string|in:active,pending,inactive',
+        ]);
+
         if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('uploads', 'public');
+            $validated['logo'] = $request->file('logo')->store('logos', 'public');
         }
-        Club::create($data);
-        return redirect()->route('admin.clubs.index')->with('success', 'Thêm CLB thành công');
+
+        Club::create($validated);
+
+        return redirect()->route('admin.clubs.index')->with('success', 'Thêm Câu lạc bộ thành công!');
+    }
+    //show
+public function show(Club $club)
+{
+    $club->load(['manager', 'members.user']); // lấy thêm thông tin người quản lý và thành viên
+    return view('admin.clubs.show', compact('club'));
+}
+
+    // === Form chỉnh sửa CLB ===
+    public function edit(Club $club)
+    {
+        return view('admin.clubs.edit', compact('club'));
     }
 
-    public function update(ClubFormRequest $request, Club $club)
+    // === Cập nhật CLB ===
+    public function update(Request $request, Club $club)
     {
-        $data = $request->validated();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'logo' => 'nullable|image|max:2048',
+            'field' => 'nullable|string|max:255',
+            'status' => 'required|string|in:active,pending,inactive',
+        ]);
+
         if ($request->hasFile('logo')) {
-            if ($club->logo) {
+            if ($club->logo && Storage::disk('public')->exists($club->logo)) {
                 Storage::disk('public')->delete($club->logo);
             }
-            $data['logo'] = $request->file('logo')->store('uploads', 'public');
+            $validated['logo'] = $request->file('logo')->store('logos', 'public');
         }
-        $club->update($data);
-        return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật CLB thành công');
+
+        $club->update($validated);
+
+        return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật CLB thành công!');
     }
 
+    // === Xóa CLB ===
     public function destroy(Club $club)
     {
-        if ($club->logo) {
+        if ($club->logo && Storage::disk('public')->exists($club->logo)) {
             Storage::disk('public')->delete($club->logo);
         }
+
         $club->delete();
-        return redirect()->route('admin.clubs.index')->with('success', 'Xóa CLB thành công');
+        return redirect()->route('admin.clubs.index')->with('success', 'Xóa CLB thành công!');
     }
 
-    public function assignManager(Request $request, Club $club)
+    // === Form gán chủ nhiệm ===
+    public function assign(Club $club)
     {
-        $request->validate([
+        $users = User::all();
+        return view('admin.clubs.assign', compact('club', 'users'));
+    }
+
+    // === Lưu chủ nhiệm ===
+    public function assignStore(Request $request, Club $club)
+    {
+        $validated = $request->validate([
             'manager_id' => 'required|exists:users,id',
-        ], [
-            'manager_id.required' => 'Vui lòng chọn chủ nhiệm.',
-            'manager_id.exists' => 'Chủ nhiệm không tồn tại.',
         ]);
-        $club->update(['manager_id' => $request->manager_id]);
-        return redirect()->route('admin.clubs.index')->with('success', 'Gán chủ nhiệm thành công');
-    }
 
-    public function showRequests()
-    {
-        $clubRequests = ClubRequest::all();
-        return view('admin.club-requests.index', compact('clubRequests'));
-    }
+        $club->update(['manager_id' => $validated['manager_id']]);
 
-    public function handleRequest(Request $request, ClubRequest $clubRequest)
-    {
-        $request->validate([
-            'action' => 'required|in:approve,reject',
-        ]);
-        $status = $request->action === 'approve' ? 'approved' : 'rejected';
-        $clubRequest->update(['status' => $status]);
-
-        if ($status === 'approved') {
-            Club::create([
-                'name' => $clubRequest->name,
-                'description' => $clubRequest->description,
-                'field' => $clubRequest->field,
-                'status' => 'active',
-            ]);
-        }
-
-        return redirect()->route('admin.club-requests.index')->with('success', $status === 'approved' ? 'Duyệt CLB thành công' : 'Từ chối CLB thành công');
-    }
-
-    public function showJoinRequests()
-    {
-        $clubJoinRequests = ClubJoinRequest::with('user', 'club')->get();
-        return view('admin.club-join-requests.index', compact('clubJoinRequests'));
-    }
-
-    public function handleJoinRequest(Request $request, ClubJoinRequest $clubJoinRequest)
-    {
-        $request->validate([
-            'action' => 'required|in:approve,reject',
-        ]);
-        $status = $request->action === 'approve' ? 'approved' : 'rejected';
-        $clubJoinRequest->update(['status' => $status]);
-        return redirect()->route('admin.club-join-requests.index')->with('success', $status === 'approved' ? 'Duyệt yêu cầu tham gia thành công' : 'Từ chối yêu cầu tham gia thành công');
+        return redirect()->route('admin.clubs.index')->with('success', 'Gán chủ nhiệm thành công!');
     }
 }
