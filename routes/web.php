@@ -16,7 +16,10 @@ use App\Http\Controllers\Admin\{
     ClubController,
     NotificationController,
     StatisticsController,
-    ClubReportController
+    ClubReportController,
+    ClubRequestController,
+
+    ClubJoinRequestController
 };
 use App\Http\Middleware\CheckRole;
 
@@ -120,34 +123,43 @@ Route::prefix('admin')
 
     // 🏛 Club Management
     Route::controller(ClubController::class)
-        ->prefix('clubs')
-        ->as('clubs.')
-        ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::put('/{club}', 'update')->name('update');
-            Route::delete('/{club}', 'destroy')->name('destroy');
-            Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
-        });
+    ->prefix('clubs')
+    ->as('clubs.')
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{club}/edit', 'edit')->name('edit');
+        Route::get('/{club}', 'show')->name('show');
+        Route::put('/{club}', 'update')->name('update');
+        Route::delete('/{club}', 'destroy')->name('destroy');
+
+        // 👇 Gán chủ nhiệm
+        Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
+        Route::get('/{club}/assign', 'assign')->name('assign');
+        Route::post('/{club}/assign', 'assignStore')->name('assign.store');
+    });
 
     // 📝 Club Request Management
-    Route::controller(ClubController::class)
-        ->prefix('club-requests')
-        ->as('club-requests.')
-        ->group(function () {
-            Route::get('/', 'showRequests')->name('index');
-            Route::post('/{clubRequest}', 'handleRequest')->name('handle');
-        });
+    Route::controller(ClubRequestController::class)
+    ->prefix('club-requests')
+    ->as('club-requests.')
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{clubRequest}', 'show')->name('show');
+        Route::post('/{clubRequest}/handle', 'handle')->name('handle');
+    });
+
 
     // 🙋‍♂️ Club Join Request Management
-    Route::controller(ClubController::class)
-        ->prefix('club-join-requests')
-        ->as('club-join-requests.')
-        ->group(function () {
-            Route::get('/', 'showJoinRequests')->name('index');
-            Route::post('/{clubJoinRequest}', 'handleJoinRequest')->name('handle');
-        });
+    Route::controller(ClubJoinRequestController::class)
+    ->prefix('club-join-requests')
+    ->as('club-join-requests.')
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/{joinRequest}', 'handle')->name('handle');
+    });
+
 
     // 🔔 Notification Management
     Route::controller(NotificationController::class)
