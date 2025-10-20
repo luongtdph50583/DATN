@@ -20,6 +20,24 @@
         </div>
 
         <div class="card-body table-responsive">
+
+            {{-- === FORM TÌM KIẾM === --}}
+    <form method="GET" action="{{ route('admin.clubs.index') }}" class="mb-3 d-flex justify-content-between align-items-center">
+        <div class="input-group" style="max-width: 300px;">
+            <input type="text" name="search" class="form-control" placeholder="Tìm tên CLB..."
+                   value="{{ request('search') }}">
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-search"></i> Tìm
+                </button>
+            </div>
+        </div>
+
+        {{-- Nút reset --}}
+        @if(request('search'))
+            <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">Reset</a>
+        @endif
+    </form>
             <table class="table table-bordered text-center align-middle">
                 <thead class="thead-light">
                     <tr>

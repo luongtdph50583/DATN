@@ -11,17 +11,20 @@ use Illuminate\Support\Facades\Storage;
 class ClubController extends Controller
 {
     // === Hiển thị danh sách CLB ===
-    public function index()
-    {
-        $clubs = Club::with('manager')->get();
-        return view('admin.clubs.index', compact('clubs'));
+    public function index(Request $request)
+{
+    $query = Club::query();
+
+    // Nếu có từ khóa tìm kiếm
+    if ($request->filled('search')) {
+        $query->where('name', 'like', '%' . $request->search . '%');
     }
 
-    // === Form tạo mới CLB ===
-    public function create()
-    {
-        return view('admin.clubs.create');
-    }
+    $clubs = $query->orderBy('id', 'desc')->get();
+
+    return view('admin.clubs.index', compact('clubs'));
+}
+
 
     // === Lưu CLB mới ===
     public function store(Request $request)
