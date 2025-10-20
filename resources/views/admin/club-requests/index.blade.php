@@ -1,60 +1,54 @@
 @extends('admin.layouts.app')
 
-@section('content')
-<div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Yêu cầu thành lập CLB</h1>
+@section('title', 'Danh sách yêu cầu tạo CLB')
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+@section('card-body')
+<div class="container mt-4">
+    <h2>📋 Danh sách yêu cầu tạo Câu lạc bộ</h2>
+
+    @if(session('success'))
+        <div class="alert alert-success mt-2">{{ session('success') }}</div>
     @endif
 
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Danh sách yêu cầu</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Tên</th>
-                            <th>Mô tả</th>
-                            <th>Lĩnh vực</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($clubRequests as $request)
-                            <tr>
-                                <td>{{ $request->id }}</td>
-                                <td>{{ $request->name }}</td>
-                                <td>{{ $request->description }}</td>
-                                <td>{{ $request->field }}</td>
-                                <td>
-                                    @if($request->status === 'pending') Chờ duyệt
-                                    @elseif($request->status === 'approved') Đã duyệt
-                                    @else Từ chối @endif
-                                </td>
-                                <td>
-                                    <form action="{{ route('admin.club-requests.handle', $request) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
-                                    </form>
-                                    <form action="{{ route('admin.club-requests.handle', $request) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr class="table-dark text-center">
+                <th>#</th>
+                <th>Tên CLB</th>
+                <th>Lĩnh vực</th>
+                <th>Mô tả</th>
+                <th>Trạng thái</th>
+                <th>Ngày gửi</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($requests as $index => $req)
+                <tr>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td>{{ $req->name }}</td>
+                    <td>{{ $req->field }}</td>
+                    <td>{{ Str::limit($req->description, 50) }}</td>
+                    <td class="text-center">
+                        @if ($req->status === 'pending')
+                            <span class="badge bg-warning text-dark">Đang chờ</span>
+                        @elseif ($req->status === 'approved')
+                            <span class="badge bg-success">Đã duyệt</span>
+                        @elseif ($req->status === 'rejected')
+                            <span class="badge bg-danger">Từ chối</span>
+                        @endif
+                    </td>
+                    <td>{{ $req->created_at->format('d/m/Y H:i') }}</td>
+                    <td class="text-center">
+                        <a href="{{ route('admin.club-requests.show', $req->id) }}" class="btn btn-primary btn-sm">Xem</a>
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Không có yêu cầu nào.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 </div>
 @endsection
