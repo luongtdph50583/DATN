@@ -22,9 +22,12 @@ class Club extends Model
     {
         return $this->hasMany(Post::class);
     }
-
-
-
+    public function memberUsers()
+    {
+        return $this->belongsToMany(User::class, 'club_members')
+                    ->withPivot('role', 'joined_at')
+                    ->withTimestamps();
+    }
     protected $casts = [
           'description' => 'string',
       ];

@@ -58,18 +58,23 @@
                         <li class="menu-title"><span data-key="t-menu">Menu</span></li>
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="#quanlitk" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="quanlitk">
-                                <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí tài khoản</span>
+                                <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí nội dung clb</span>
                             </a>
                             <div class="collapse menu-dropdown" id="quanlitk">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="dashboard-analytics.html" class="nav-link" data-key="t-analytics"> Analytics </a>
+                                        <a href="{{ route('admin.posts.index') }}" class="nav-link" data-key="t-analytics">
+                                            <i class="fas fa-newspaper me-2"></i> Bài viết
+                                        </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="dashboard-crm.html" class="nav-link" data-key="t-crm"> CRM </a>
+                                        <a href="{{ route('admin.documents.index') }}" class="nav-link" data-key="t-crm">
+                                            <i class="fas fa-folder-open me-2"></i> Tài liệu
+                                        </a>
                                     </li>
                                 </ul>
                             </div>
+
                         </li> <!-- end Dashboard Menu -->
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="#quanlidk" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="quanlidk">

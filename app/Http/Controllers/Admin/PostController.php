@@ -56,6 +56,24 @@ class PostController extends Controller
 
     return view('admin.posts.show', compact('post'));
 }
+    public function filter(Request $request)
+    {
+        $keyword = $request->input('keyword');
+
+        $query = Post::with(['club', 'user'])->latest();
+
+        if (!empty($keyword)) {
+            $query->where('title', 'like', "%{$keyword}%")
+                ->orWhereHas('user', function ($q) use ($keyword) {
+                    $q->where('name', 'like', "%{$keyword}%");
+                });
+        }
+
+        $posts = $query->get();
+
+        return response()->json(['data' => $posts]);
+    }
+
 
 
     /**
@@ -68,4 +86,5 @@ class PostController extends Controller
         }
         return null;
     }
+
 }

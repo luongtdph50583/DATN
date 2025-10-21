@@ -20,42 +20,49 @@
             'email_verified_at' => 'datetime',
             'status' => 'string',
         ];
+         public function clubs()
+    {
+        return $this->belongsToMany(Club::class, 'club_members')
+                    ->withPivot('role', 'joined_at')
+                    ->withTimestamps();
+    }
+
+    // Một user có thể upload nhiều file
 
 
-    // // ✅ CLB do người dùng quản lý
-    // public function managedClubs(): HasMany
-    // {
-    //     return $this->hasMany(Club::class, 'manager_id');
-    // }
+    public function managedClubs()
+    {
+        return $this->hasMany(Club::class, 'manager_id');
+    }
 
-    // // ✅ Thành viên của các CLB (nếu có bảng trung gian ClubMember)
-    // public function memberships(): HasMany
-    // {
-    //     return $this->hasMany(ClubMember::class, 'user_id');
-    // }
+    // ✅ Thành viên của các CLB (nếu có bảng trung gian ClubMember)
+    public function memberships()
+    {
+        return $this->hasMany(ClubMember::class, 'user_id');
+    }
 
-    // // ✅ Bài viết do người dùng đăng
-    // public function posts(): HasMany
-    // {
-    //     return $this->hasMany(Post::class, 'user_id');
-    // }
+    // ✅ Bài viết do người dùng đăng
+    public function posts()
+    {
+        return $this->hasMany(Post::class, 'user_id');
+    }
 
-    // // ✅ Thông báo do người dùng tạo
-    // public function notifications()
-    // {
-    //     return $this->hasMany(Notification::class, 'created_by');
-    // }
+    // ✅ Thông báo do người dùng tạo
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'created_by');
+    }
 
-    // // ✅ Tài liệu do người dùng tải lên
-    // public function uploadedMedia()
-    // {
-    //     return $this->hasMany(Media::class, 'uploaded_by');
-    // }
+    // ✅ Tài liệu do người dùng tải lên
+    public function uploadedMedia()
+    {
+        return $this->hasMany(Media::class, 'uploaded_by');
+    }
 
-    // // ✅ Sự kiện do người dùng tạo
-    // public function events()
-    // {
-    //     return $this->hasMany(Event::class, 'created_by');
+    // ✅ Sự kiện do người dùng tạo
+    public function events()
+    {
+        return $this->hasMany(Event::class, 'created_by');
 
-    // }
+    }
 }

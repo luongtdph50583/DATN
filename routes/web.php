@@ -81,22 +81,38 @@ Route::prefix('admin')
         });
 
     // 📰 Post Management
-    Route::controller(PostController::class)
-        ->prefix('posts')
-        ->as('posts.')
-        ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::patch('/{id}/toggle', 'toggle')->name('toggle');
-            Route::delete('/{id}', 'destroy')->name('destroy');
-            Route::get('/{id}', 'show')->name('show');
-        });
+
+Route::controller(PostController::class)
+    ->prefix('posts')
+    ->as('posts.')
+    ->group(function () {
+        // Trang danh sách bài viết
+        Route::get('/', 'index')->name('index');
+
+        // Lọc bài viết realtime (AJAX)
+        Route::post('/filter', 'filter')->name('filter');
+
+        // Ẩn / Hiện bài viết
+        Route::patch('/{id}/toggle', 'toggle')->name('toggle');
+
+        // Xóa bài viết
+        Route::delete('/{id}', 'destroy')->name('destroy');
+
+        // Xem chi tiết bài viết
+        Route::get('/{id}', 'show')->name('show');
+    });
 
     // 📚 Document Management
     Route::controller(DocumentController::class)
         ->prefix('documents')
         ->as('documents.')
         ->group(function () {
+            // Trang danh sách tài liệu
             Route::get('/', 'index')->name('index');
+
+            // API lọc tài liệu (AJAX)
+            Route::post('/filter', 'filter')->name('filter');
+
         });
 
     // 🕓 History Management
