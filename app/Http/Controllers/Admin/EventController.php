@@ -12,33 +12,57 @@ class EventController extends Controller
 
     public function index()
     {
-        $events = Event::with('club', 'createdBy')->orderBy('event_date', 'desc')->get();
-        return view('admin.events.index', compact('events'));
+        $events = [];
+        try {
+            $events = Event::orderBy('event_date', 'desc')->get();
+        } catch (\Exception $e) {
+            \Log::error('Lỗi truy vấn events: ' . $e->getMessage());
+        }
+         $events = Event::with(['club', 'createdBy'])->get();
+             return view('admin.events.index', compact('events'));
     }
 
     public function create()
     {
+        if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
+            return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
+        }
         $clubs = Club::all();
-        return view('admin.events.create', compact('clubs'));
+             $users = User::where('role', 'admin')->orWhere('role', 'member')->get();
+             return view('admin.events.create', compact('clubs', 'users'));
+
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'event_date' => 'required|date',
-            'location' => 'required|string|max:255',
-            'club_id' => 'nullable|exists:clubs,id',
-            'status' => 'required|in:pending,approved,rejected',
-        ]);
+        if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
+            return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
+        }
 
-        $validated['created_by'] = auth()->id();
+         $request->validate([
+                 'club_id' => 'required|exists:clubs,id',
+                 'name' => 'required|string|max:255',
+                 'description' => 'nullable|string',
+                 'event_date' => 'required|date',
+                 'location' => 'required|string|max:255',
+                 'status' => 'required|in:pending,approved,rejected',
+                 'created_by' => 'required|exists:users,id',
+             ]);
 
-        Event::create($validated);
+             Event::create($request->all());
 
-        return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được thêm thành công!');
+             return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được tạo thành công.');
+         
     }
+    // chi tiết sự kiện
+    public function show(Event $event)
+         {
+             if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
+            return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
+        }
+             $event->load(['club', 'createdBy']);
+             return view('admin.events.show', compact('event'));
+         }
 
     public function show(Event $event)
     {
@@ -68,7 +92,6 @@ class EventController extends Controller
 
         $event->update($validated);
 
-        return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được cập nhật thành công!');
     }
 
     public function destroy(Event $event)
@@ -95,5 +118,9 @@ class EventController extends Controller
 
         $event->update(['status' => 'rejected', 'updated_by' => auth()->id()]);
         return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã bị từ chối!');
+       $event->delete();
+
+             return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được xóa thành công.');
+
     }
 }

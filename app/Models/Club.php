@@ -34,3 +34,11 @@ class Club extends Model
 
 }
 
+    public function events()
+{
+    return $this->hasMany(\App\Models\Event::class, 'club_id');
+}
+    protected $casts = [
+          'description' => 'string',
+      ];
+}

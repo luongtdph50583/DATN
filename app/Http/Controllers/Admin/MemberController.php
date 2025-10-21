@@ -108,18 +108,21 @@ class MemberController extends Controller
          }
 
 
+        
          public function show(Member $member)
          {
              return view('admin.members.show', compact('member'));
          }
 
 
+         
          public function edit(Member $member)
          {
              return view('admin.members.edit', compact('member'));
          }
 
 
+       
          public function update(Request $request, Member $member)
          {
              $request->validate([
@@ -136,10 +139,12 @@ class MemberController extends Controller
          }
 
 
+         
          public function destroy(Member $member)
          {
              $member->delete();
 
              return redirect()->route('admin.members.index')->with('success', 'Thành viên đã được xóa thành công.');
          }
+}
 }
