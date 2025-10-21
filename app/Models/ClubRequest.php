@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ClubRequest extends Model
 {
+    use HasFactory;
+
     protected $table = 'club_requests';
 
     protected $fillable = [
@@ -16,7 +19,7 @@ class ClubRequest extends Model
         'status',
     ];
 
-    // Mối quan hệ: mỗi yêu cầu thuộc về 1 user
+    // Mỗi yêu cầu thuộc về 1 user
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

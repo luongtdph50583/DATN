@@ -1,58 +1,114 @@
- @extends('admin.layouts.app')
+@extends('admin.layouts.app')
 
- @section('content')
-<div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Yêu cầu tham gia CLB</h1>
+@section('title', 'Quản lý yêu cầu tạo Câu lạc bộ')
 
+@section('card-body')
+<div class="container-fluid py-4">
+    <h1 class="h3 mb-4 text-gray-800">Danh sách yêu cầu tạo Câu lạc bộ</h1>
+
+    {{-- Thông báo thành công --}}
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
     @endif
 
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Danh sách yêu cầu tham gia</h6>
+    <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Danh sách yêu cầu</h5>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
+
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover align-middle text-center mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th width="50">ID</th>
+                        <th>Người gửi</th>
+                        <th>Tên CLB</th>
+                        <th>Lĩnh vực</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày gửi</th>
+                        <th width="180">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($requests as $request)
                         <tr>
-                            <th>ID</th>
-                            <th>Người dùng</th>
-                            <th>CLB</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
+                            <td>{{ $request->id }}</td>
+                            <td>{{ $request->user->name ?? 'Không rõ' }}</td>
+                            <td class="text-start">{{ $request->name }}</td>
+                            <td>{{ $request->field ?? '—' }}</td>
+                            <td>
+                                <span class="badge-status {{ $request->status }}">
+                                    @switch($request->status)
+                                        @case('approved')
+                                            Đã duyệt
+                                            @break
+                                        @case('rejected')
+                                            Từ chối
+                                            @break
+                                        @default
+                                            Chờ duyệt
+                                    @endswitch
+                                </span>
+                            </td>
+                            <td>{{ $request->created_at->format('d/m/Y H:i') }}</td>
+                            <td>
+                                <a href="{{ route('admin.club-requests.show', $request->id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i> Xem
+                                </a>
+
+                                <form action="{{ route('admin.club-requests.handle', $request->id) }}" method="POST" style="display:inline-block;">
+                                    @csrf
+                                    <button type="submit" name="action" value="approve" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($clubJoinRequests as $joinRequest)
-                            <tr>
-                                <td>{{ $joinRequest->id }}</td>
-                                <td>{{ $joinRequest->user->name }}</td>
-                                <td>{{ $joinRequest->club->name }}</td>
-                                <td>
-                                    @if($joinRequest->status === 'pending') Chờ duyệt
-                                    @elseif($joinRequest->status === 'approved') Đã duyệt
-                                    @else Từ chối @endif
-                                </td>
-                                <td>
-                                    <form action="{{ route('admin.club-join-requests.handle', $joinRequest) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
-                                    </form>
-                                    <form action="{{ route('admin.club-join-requests.handle', $joinRequest) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-muted py-4">Không có yêu cầu nào</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+
+{{-- CSS cho badge trạng thái --}}
+<style>
+.badge-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+    min-width: 100px;
+}
+.badge-status.pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+.badge-status.approved {
+    background-color: #28a745;
+    color: #fff;
+}
+.badge-status.rejected {
+    background-color: #dc3545;
+    color: #fff;
+}
+.table td {
+    vertical-align: middle;
+    word-wrap: break-word;
+    max-width: 250px;
+}
+</style>
 @endsection
