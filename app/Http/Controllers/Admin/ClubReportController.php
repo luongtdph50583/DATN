@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use PDF;
 use App\Models\Club;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class ClubReportController extends Controller
 {
@@ -17,7 +18,7 @@ class ClubReportController extends Controller
         $totalMembers = $club->members()->count();
 
         // Nếu bảng club_members chưa có cột status -> tạm đặt mặc định
-        $activeMembers = 0;   
+        $activeMembers = 0;
         $inactiveMembers = 0;
 
         // --- THỐNG KÊ SỰ KIỆN ---
@@ -54,7 +55,7 @@ class ClubReportController extends Controller
     $pendingOrRejected = $club->events()->whereIn('status', ['pending', 'rejected'])->count();
 
     // --- XUẤT PDF ---
-    $pdf = \PDF::loadView('admin.statistics-and-reports.report_pdf', [
+    $pdf = PDF::loadView('admin.statistics-and-reports.report_pdf', [
         'club' => $club,
         'totalMembers' => $totalMembers,
         'activeMembers' => $activeMembers,

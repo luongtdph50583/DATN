@@ -36,6 +36,7 @@
           return view('admin.users.index', compact('users'));
           $users = User::all();
             return view('admin.users.index', compact('users'));
+
         
         }
 
@@ -55,6 +56,7 @@
 
          public function create()
          {
+
             
 
              return view('admin.users.create');
@@ -62,6 +64,7 @@
 
          public function store(Request $request)
          {
+
              
 
              $validated = $request->validate([
@@ -89,6 +92,7 @@
 
          public function edit(User $user)
          {
+
              
 
              return view('admin.users.edit', compact('user'));
@@ -96,6 +100,7 @@
 
          public function update(Request $request, User $user)
          {
+
              
 
              $validated = $request->validate([
@@ -131,6 +136,7 @@
 
          public function destroy(User $user)
          {
+
              
 
              if ($user->avatar) {

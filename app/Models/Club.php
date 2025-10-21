@@ -17,6 +17,23 @@ class Club extends Model
     {
         return $this->hasMany(ClubMember::class, 'club_id');
     }
+
+     public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
+    public function memberUsers()
+    {
+        return $this->belongsToMany(User::class, 'club_members')
+                    ->withPivot('role', 'joined_at')
+                    ->withTimestamps();
+    }
+    protected $casts = [
+          'description' => 'string',
+      ];
+
+}
+
     public function events()
 {
     return $this->hasMany(\App\Models\Event::class, 'club_id');
