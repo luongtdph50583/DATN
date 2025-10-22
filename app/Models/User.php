@@ -20,12 +20,12 @@
             'email_verified_at' => 'datetime',
             'status' => 'string',
         ];
-         public function clubs()
-    {
-        return $this->belongsToMany(Club::class, 'club_members')
-                    ->withPivot('role', 'joined_at')
-                    ->withTimestamps();
-    }
+    //      public function clubs()
+    // {
+    //     return $this->belongsToMany(Club::class, 'club_members')
+    //                 ->withPivot('role', 'joined_at')
+    //                 ->withTimestamps();
+    // }
 
     // Một user có thể upload nhiều file
 
@@ -34,6 +34,15 @@
     {
         return $this->hasMany(Club::class, 'manager_id');
     }
+public function clubs()
+{
+    return $this->belongsToMany(Club::class, 'club_members');
+}
+    // // ✅ CLB do người dùng quản lý
+    // public function managedClubs(): HasMany
+    // {
+    //     return $this->hasMany(Club::class, 'manager_id');
+    // }
 
     // ✅ Thành viên của các CLB (nếu có bảng trung gian ClubMember)
     public function memberships()
@@ -45,6 +54,7 @@
     public function posts()
     {
         return $this->hasMany(Post::class, 'user_id');
+        
     }
 
     // ✅ Thông báo do người dùng tạo

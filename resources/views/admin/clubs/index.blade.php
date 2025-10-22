@@ -1,208 +1,125 @@
 @extends('admin.layouts.app')
 
-@section('content')
-<div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Quản lý Câu lạc bộ</h1>
+@section('title', 'Quản lý Câu lạc bộ')
 
+@section('card-body')
+<div class="container-fluid py-4">
+    <h1 class="h3 mb-4 text-gray-800">📋 Quản lý Câu lạc bộ</h1>
+
+    {{-- Thông báo --}}
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
 
-
-
-    <!-- Danh sách CLB -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Danh sách CLB</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Tên</th>
-                            <th>Mô tả</th>
-                            <th>Logo</th>
-                            <th>Lĩnh vực</th>
-                            <th>Trạng thái</th>
-                            <th>Chủ nhiệm</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($clubs as $club)
-                            <tr>
-                                <td>{{ $club->id }}</td>
-                                <td>{{ $club->name }}</td>
-                                <td>{{ $club->description }}</td>
-                                <td>@if($club->logo) <img src="{{ Storage::url($club->logo) }}" width="50"> @endif</td>
-                                <td>{{ $club->field }}</td>
-                                <td>
-                                    @if($club->status === 'active') Hoạt động
-                                    @elseif($club->status === 'pending') Chờ duyệt
-                                    @else Không hoạt động @endif
-                                </td>
-                                <td>{{ $club->manager->name ?? 'Chưa gán' }}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-warning" onclick='editClub({{ json_encode($club) }})'>Sửa</button>
-                                    <form action="{{ route('admin.clubs.destroy', $club) }}" method="POST" style="display:inline">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
-                                    </form>
-                                    <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#assignManagerModal" onclick="openAssignManager({{ $club->id }})">Gán chủ nhiệm</button>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    {{-- Nút thêm mới + Tìm kiếm --}}
+    <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
+        <a href="{{ route('admin.clubs.create') }}" class="btn btn-primary mb-2">➕ Thêm CLB mới</a>
+        <form method="GET" action="{{ route('admin.clubs.index') }}" class="d-flex mb-2">
+            <input type="text" name="search" class="form-control me-2" placeholder="🔍 Tìm tên CLB..."
+                   value="{{ request('search') }}">
+            <button class="btn btn-outline-primary">Tìm</button>
+            @if(request('search'))
+                <a href="{{ route('admin.clubs.index') }}" class="btn btn-outline-secondary ms-2">Reset</a>
+            @endif
+        </form>
     </div>
 
-    <!-- Yêu cầu thành lập CLB -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Yêu cầu thành lập CLB</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
+    {{-- Bảng dữ liệu --}}
+    <div class="card shadow-lg rounded-3">
+        <div class="card-body table-responsive" style="max-height: 600px; overflow-y: auto;">
+            <table class="table table-bordered align-middle text-center" style="min-width: 1100px;">
+                <thead class="table-primary">
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th style="width: 200px;">Tên CLB</th>
+                        <th style="width: 150px;">Lĩnh vực</th>
+                        <th style="width: 160px;">Chủ nhiệm</th>
+                        <th style="width: 140px;">Trạng thái</th>
+                        <th style="width: 140px;">Ngày tạo</th>
+                        <th style="width: 260px;">Mô tả</th>
+                        <th style="width: 220px;" class="sticky-col bg-white shadow-sm">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($clubs as $club)
                         <tr>
-                            <th>ID</th>
-                            <th>Tên</th>
-                            <th>Mô tả</th>
-                            <th>Lĩnh vực</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($clubRequests as $request)
-                            <tr>
-                                <td>{{ $request->id }}</td>
-                                <td>{{ $request->name }}</td>
-                                <td>{{ $request->description }}</td>
-                                <td>{{ $request->field }}</td>
-                                <td>
-                                    @if($request->status === 'pending') Chờ duyệt
-                                    @elseif($request->status === 'approved') Đã duyệt
-                                    @else Từ chối @endif
-                                </td>
-                                <td>
-                                    <form action="{{ route('admin.club-requests.handle', $request) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
-                                    </form>
-                                    <form action="{{ route('admin.club-requests.handle', $request) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+                            <td>{{ $club->id }}</td>
+                            <td class="fw-bold">{{ $club->name }}</td>
+                            <td>{{ $club->field ?? '—' }}</td>
 
-    <!-- Yêu cầu tham gia CLB -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Yêu cầu tham gia CLB</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered" width="100%" cellspacing="0">
-                    <thead>
+                            {{-- Chủ nhiệm --}}
+                            <td>
+                                @if ($club->leader)
+                                    👤 {{ $club->leader->name }}
+                                @else
+                                    <span class="text-muted fst-italic">Chưa gán</span>
+                                @endif
+                            </td>
+
+                            {{-- Trạng thái --}}
+                            <td>
+                                @switch($club->status)
+                                    @case('active')
+                                        <span class="badge bg-success">Đang hoạt động</span>
+                                        @break
+                                    @case('pending')
+                                        <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                        @break
+                                    @case('inactive')
+                                        <span class="badge bg-secondary">Ngừng hoạt động</span>
+                                        @break
+                                    @default
+                                        <span class="badge bg-light text-dark">Không xác định</span>
+                                @endswitch
+                            </td>
+
+                            {{-- Ngày tạo --}}
+                            <td>{{ $club->created_at->format('d/m/Y') }}</td>
+
+                            {{-- Mô tả --}}
+                            <td class="text-start">{{ Str::limit($club->description, 60) }}</td>
+
+                            {{-- Hành động (CỐ ĐỊNH) --}}
+                            <td class="sticky-col bg-white text-nowrap" style="right: 0;">
+                                <a href="{{ route('admin.clubs.show', $club->id) }}" class="btn btn-info btn-sm mb-1">👁️</a>
+                                <a href="{{ route('admin.clubs.edit', $club->id) }}" class="btn btn-warning btn-sm mb-1">✏️</a>
+                                <a href="{{ route('admin.clubs.assign', $club->id) }}" class="btn btn-primary btn-sm mb-1">👤</a>
+                                <form action="{{ route('admin.clubs.destroy', $club->id) }}" method="POST" class="d-inline">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-danger btn-sm" onclick="return confirm('Xóa CLB này?')">🗑️</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
                         <tr>
-                            <th>ID</th>
-                            <th>Người dùng</th>
-                            <th>CLB</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
+                            <td colspan="8" class="text-muted py-4">Không có dữ liệu câu lạc bộ nào</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($clubJoinRequests as $joinRequest)
-                            <tr>
-                                <td>{{ $joinRequest->id }}</td>
-                                <td>{{ $joinRequest->user->name }}</td>
-                                <td>{{ $joinRequest->club->name }}</td>
-                                <td>
-                                    @if($joinRequest->status === 'pending') Chờ duyệt
-                                    @elseif($joinRequest->status === 'approved') Đã duyệt
-                                    @else Từ chối @endif
-                                </td>
-                                <td>
-                                    <form action="{{ route('admin.club-join-requests.handle', $joinRequest) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="approve">
-                                        <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
-                                    </form>
-                                    <form action="{{ route('admin.club-join-requests.handle', $joinRequest) }}" method="POST" style="display:inline">
-                                        @csrf
-                                        <input type="hidden" name="action" value="reject">
-                                        <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal gán chủ nhiệm -->
-    <div class="modal fade" id="assignManagerModal" tabindex="-1" aria-labelledby="assignManagerModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form id="assignManagerForm" method="POST">
-                    @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="assignManagerModalLabel">Gán chủ nhiệm CLB</h5>
-                        <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="club_id" id="assign_club_id">
-                        <div class="form-group">
-                            <label for="manager_id">Chọn chủ nhiệm</label>
-                            <select name="manager_id" id="manager_id" class="form-control" required>
-                                @foreach ($users as $user)
-                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->student_id }})</option>
-                                @endforeach
-                            </select>
-                            @error('manager_id') <span class="text-danger">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
-                        <button type="submit" class="btn btn-primary">Lưu</button>
-                    </div>
-                </form>
-            </div>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<script>
-function editClub(club) {
-    document.querySelector('form').action = `/admin/clubs/${club.id}`;
-    document.querySelector('input[name="_method"]').value = 'PUT';
-    document.querySelector('#name').value = club.name;
-    document.querySelector('#description').value = club.description || '';
-    document.querySelector('#field').value = club.field;
-    document.querySelector('#status').value = club.status;
-}
+{{-- CSS giữ cột Hành động cố định --}}
+<style>
+    .sticky-col {
+        position: sticky;
+        right: 0;
+        z-index: 5;
+    }
 
-function openAssignManager(clubId) {
-    document.querySelector('#assign_club_id').value = clubId;
-    document.querySelector('#assignManagerForm').action = `/admin/clubs/${clubId}/assign-manager`;
-}
-</script>
+    /* Giữ nền trắng để không bị che */
+    .table .sticky-col {
+        background: #fff;
+    }
+
+    /* Hiệu ứng bóng nhẹ */
+    .shadow-sm {
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    }
+</style>
 @endsection
