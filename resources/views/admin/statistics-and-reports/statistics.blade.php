@@ -1,6 +1,12 @@
-@include('admin.layouts.header')
-<link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+@extends('admin.layouts.app')
 
+@section('title', 'Thống kê tổng quan')
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+@endpush
+
+@section('card-body')
 <div class="container-fluid">
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -28,7 +34,7 @@
                     </div>
                 </div>
                 <div class="card-footer text-center">
-                    <a href="{{ route('admin.admin.stats.clubs') }}" class="small stretched-link text-warning">Xem</a>
+                    <a href="{{ route('admin.stats.clubs') }}" class="small stretched-link text-warning">Xem</a>
                 </div>
             </div>
         </div>
@@ -52,7 +58,7 @@
                     </div>
                 </div>
                 <div class="card-footer text-center">
-                    <a href="{{ route('admin.admin.stats.members') }}" class="small stretched-link text-primary">Xem</a>
+                    <a href="{{ route('admin.stats.members') }}" class="small stretched-link text-primary">Xem</a>
                 </div>
             </div>
         </div>
@@ -76,7 +82,7 @@
                     </div>
                 </div>
                 <div class="card-footer text-center">
-                    <a href="{{ route('admin.admin.stats.events') }}" class="small stretched-link text-info">Xem</a>
+                    <a href="{{ route('admin.stats.events') }}" class="small stretched-link text-info">Xem</a>
                 </div>
             </div>
         </div>
@@ -87,56 +93,89 @@
         <div class="col-xl-12 col-lg-12">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Biểu đồ số lượng CLB, Thành viên, Sự kiện theo tháng</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Biểu đồ số lượng CLB, Thành viên, Sự kiện theo tháng
+                    </h6>
                 </div>
                 <div class="card-body">
                     <canvas id="statsChart"></canvas>
-                    <script>
-                        const ctx = document.getElementById('statsChart').getContext('2d');
-                        const statsChart = new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-                                         'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'],
-                                datasets: [
-                                    {
-                                        label: 'CLB',
-                                        data: @json($clubsPerMonth),
-                                        backgroundColor: 'rgba(255, 206, 86, 0.5)',
-                                        borderColor: 'rgba(255, 206, 86, 1)',
-                                        borderWidth: 1
-                                    },
-                                    {
-                                        label: 'Thành viên',
-                                        data: @json($membersPerMonth),
-                                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                                        borderColor: 'rgba(54, 162, 235, 1)',
-                                        borderWidth: 1
-                                    },
-                                    {
-                                        label: 'Sự kiện',
-                                        data: @json($eventsPerMonth),
-                                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
-                                        borderColor: 'rgba(75, 192, 192, 1)',
-                                        borderWidth: 1
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true,
-                                scales: {
-                                    y: {
-                                        beginAtZero: true
-                                    }
-                                }
-                            }
-                        });
-                    </script>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
+<!-- Bộ lọc thời gian (from / to) -->
+ <form method="GET" action="{{ route('admin.stats.index') }}" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label for="start_date" class="form-label">Từ ngày</label>
+        <input type="date" name="start_date" id="start_date" class="form-control"
+               value="{{ $startDate }}">
+    </div>
+    <div class="col-md-3">
+        <label for="end_date" class="form-label">Đến ngày</label>
+        <input type="date" name="end_date" id="end_date" class="form-control"
+               value="{{ $endDate }}">
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Lọc</button>
+        
+    </div>
+     <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" name="reset" value="true" class="btn btn-secondary w-100">
+            Đặt lại
+        </button>
+        
+    </div>
 
-@include('admin.layouts.footer')
+</form>
+
+
+    <!-- Vùng biểu đồ -->
+    <canvas id="statsChart" height="120"></canvas>
+
+@endsection
+
+@push('scripts')
+<script>
+const ctx = document.getElementById('statsChart').getContext('2d');
+const statsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: @json($labels),
+        datasets: [
+            {
+                label: 'CLB',
+                data: @json($clubsPerMonth),
+                borderColor: 'rgba(255, 206, 86, 1)',
+                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                tension: 0.3,
+                fill: true
+            },
+            {
+                label: 'Thành viên',
+                data: @json($membersPerMonth),
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.3,
+                fill: true
+            },
+            {
+                label: 'Sự kiện',
+                data: @json($eventsPerMonth),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.3,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        stacked: false,
+        scales: { y: { beginAtZero: true } }
+    }
+});
+</script>
+@endpush
+

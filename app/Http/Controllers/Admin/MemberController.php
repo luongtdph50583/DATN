@@ -147,4 +147,3 @@ class MemberController extends Controller
              return redirect()->route('admin.members.index')->with('success', 'Thành viên đã được xóa thành công.');
          }
 }
-}

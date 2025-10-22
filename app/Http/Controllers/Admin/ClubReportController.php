@@ -12,14 +12,14 @@ class ClubReportController extends Controller
     public function show($id)
     {
         // Lấy thông tin CLB + quan hệ members, events
-        $club = Club::with(['members', 'events'])->findOrFail($id);
+        $club = Club::with(['manager','members', 'events.createdBy'])->findOrFail($id);
+
 
         // --- THỐNG KÊ THÀNH VIÊN ---
         $totalMembers = $club->members()->count();
 
-        // Nếu bảng club_members chưa có cột status -> tạm đặt mặc định
-        $activeMembers = 0;
-        $inactiveMembers = 0;
+          $activeMembers = $club->members->where('status', 'active')->count();
+    $inactiveMembers = $club->members->where('status', 'inactive')->count();
 
         // --- THỐNG KÊ SỰ KIỆN ---
         $totalEvents = $club->events()->count();
@@ -28,15 +28,19 @@ class ClubReportController extends Controller
         $approvedEvents = $club->events()->where('status', 'approved')->count();
         $pendingOrRejected = $club->events()->whereIn('status', ['pending', 'rejected'])->count();
 
-        return view('admin.statistics-and-reports.clubsReport', compact(
-            'club',
-            'totalMembers',
-            'activeMembers',
-            'inactiveMembers',
-            'totalEvents',
-            'approvedEvents',
-            'pendingOrRejected'
-        ));
+     
+        return view('admin.statistics-and-reports.clubsReport', [
+    'club' => $club,
+    'members' => $club->members, // Quan hệ hasManyThrough hoặc belongsToMany
+    'events' => $club->events,   // Quan hệ hasMany
+    'totalMembers' => $club->members->count(),
+   'activeMembers' => $activeMembers,
+        'inactiveMembers' => $inactiveMembers,
+    'totalEvents' => $club->events->count(),
+    'approvedEvents' => $club->events->where('status', 'approved')->count(),
+    'pendingOrRejected' => $club->events->whereIn('status', ['pending','rejected'])->count(),
+]);
+
     }
 
     // --- (TÙY CHỌN) XUẤT PDF ---
@@ -46,8 +50,8 @@ class ClubReportController extends Controller
 
     // --- THỐNG KÊ THÀNH VIÊN ---
     $totalMembers = $club->members()->count();
-    $activeMembers = 0;
-    $inactiveMembers = 0;
+     $activeMembers = $club->members->where('status', 'active')->count();
+    $inactiveMembers = $club->members->where('status', 'inactive')->count();
 
     // --- THỐNG KÊ SỰ KIỆN ---
     $totalEvents = $club->events()->count();
@@ -57,6 +61,8 @@ class ClubReportController extends Controller
     // --- XUẤT PDF ---
     $pdf = PDF::loadView('admin.statistics-and-reports.report_pdf', [
         'club' => $club,
+        'members' => $club->members,
+        'events' => $club->events,
         'totalMembers' => $totalMembers,
         'activeMembers' => $activeMembers,
         'inactiveMembers' => $inactiveMembers,

@@ -48,10 +48,10 @@
     }
 
     // ✅ Thông báo do người dùng tạo
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class, 'created_by');
-    }
+    // public function notifications()
+    // {
+    //     return $this->hasMany(Notification::class, 'created_by');
+    // }
 
     // ✅ Tài liệu do người dùng tải lên
     public function uploadedMedia()

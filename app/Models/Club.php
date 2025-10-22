@@ -8,37 +8,35 @@ class Club extends Model
 {
     protected $fillable = ['name', 'description', 'logo', 'field', 'status', 'manager_id'];
 
-    public function manager()
+      public function manager()
     {
-        return $this->belongsTo(User::class, 'manager_id');
+        return $this->belongsTo(User::class, 'manager_id'); 
+        // manager_id là khóa ngoại trong bảng clubs trỏ tới id của users
     }
 
-    public function members()
-    {
-        return $this->hasMany(ClubMember::class, 'club_id');
-    }
+// Trong Club model
+public function members()
+{
+    return $this->belongsToMany(User::class, 'club_members', 'club_id', 'user_id')
+                ->withPivot('role', 'created_at')
+                ->withTimestamps();
+}
+
+
 
      public function posts()
     {
         return $this->hasMany(Post::class);
     }
-    public function memberUsers()
-    {
-        return $this->belongsToMany(User::class, 'club_members')
-                    ->withPivot('role', 'joined_at')
-                    ->withTimestamps();
-    }
-    protected $casts = [
-          'description' => 'string',
-      ];
-
-}
-
     public function events()
-{
-    return $this->hasMany(\App\Models\Event::class, 'club_id');
-}
+    {
+        return $this->hasMany(Event::class, 'club_id');
+    }
+
+
     protected $casts = [
           'description' => 'string',
       ];
+
 }
+

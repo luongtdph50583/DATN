@@ -1,0 +1,28 @@
+* [33mb2fda78[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mtam[m[33m, [m[1;32mmain[m[33m, [m[1;32mdevelop[m[33m)[m Thống kê-báo cáo
+* [33m675c423[m update role auth admin & execl
+*   [33mf88f898[m Refactor club management features: enhance ClubController, improve views, and add form partials
+[32m|[m[33m\[m  
+[32m|[m * [33ma6847b6[m[33m ([m[1;31morigin/dam[m[33m, [m[1;32mdam[m[33m)[m quan li clb
+[32m|[m * [33m373e180[m .
+* [33m|[m [33m22347f8[m notification
+* [33m|[m [33m385df69[m update giao dien admin
+[33m|[m[33m/[m  
+* [33m80c2e51[m cred events
+* [33mb9f6bfe[m[33m ([m[1;31morigin/dunghq[m[33m)[m crud quan ly thanh vien
+*   [33m224e86c[m update quan li CLB
+[34m|[m[35m\[m  
+[34m|[m * [33m6aa7e06[m[33m ([m[1;31morigin/tuan[m[33m, [m[1;32mtuan[m[33m)[m phan quyen role va chia blade admin
+[34m|[m * [33me340770[m xuat execl danh sach thanh vien
+* [35m|[m [33m0f1cf37[m .
+[35m|[m[35m/[m  
+* [33mdcf2f27[m loc, tim kiem thanh vien
+* [33mecdb18e[m check danh sach tv clb
+* [33mff6cd96[m events
+* [33md67d450[m update giao dien qltk
+* [33m488a24b[m update giao dien admin
+* [33m18e90cb[m mo, khoa tai khoan
+* [33m8af22cd[m tim kiem, loc tai khoan
+* [33mecd21ea[m tai khoan nguoi dung
+* [33m30cf816[m giao dien admin
+* [33m987e901[m Migration and seeder done
+* [33m2f75ae2[m First commit - upload Laravel project
