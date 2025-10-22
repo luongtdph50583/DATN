@@ -157,6 +157,7 @@ Route::prefix('admin')
     ->as('club-join-requests.')
     ->group(function () {
         Route::get('/', 'index')->name('index');
+          Route::get('/{joinRequest}', 'show')->name('show'); 
         Route::post('/{joinRequest}', 'handle')->name('handle');
     });
 

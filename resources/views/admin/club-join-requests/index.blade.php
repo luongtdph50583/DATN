@@ -1,10 +1,10 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Quản lý yêu cầu tạo Câu lạc bộ')
+@section('title', 'Quản lý yêu cầu tham gia Câu lạc bộ')
 
 @section('card-body')
 <div class="container-fluid py-4">
-    <h1 class="h3 mb-4 text-gray-800">Danh sách yêu cầu tạo Câu lạc bộ</h1>
+    <h1 class="h3 mb-4 text-gray-800">Danh sách yêu cầu tham gia CLB</h1>
 
     {{-- Thông báo thành công --}}
     @if (session('success'))
@@ -15,6 +15,17 @@
             </button>
         </div>
     @endif
+
+    {{-- Thanh tìm kiếm --}}
+    <form method="GET" action="{{ route('admin.club-join-requests.index') }}" class="mb-3">
+        <div class="input-group w-50">
+            <input type="text" name="search" value="{{ request('search') }}" class="form-control"
+                placeholder="Tìm theo tên người dùng hoặc tên CLB...">
+            <button class="btn btn-primary" type="submit">
+                <i class="fas fa-search"></i> Tìm kiếm
+            </button>
+        </div>
+    </form>
 
     <div class="card shadow-lg border-0 rounded-3">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
@@ -28,22 +39,20 @@
                         <th width="50">ID</th>
                         <th>Người gửi</th>
                         <th>Tên CLB</th>
-                        <th>Lĩnh vực</th>
                         <th>Trạng thái</th>
                         <th>Ngày gửi</th>
                         <th width="180">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($requests as $request)
+                    @forelse ($requests as $req)
                         <tr>
-                            <td>{{ $request->id }}</td>
-                            <td>{{ $request->user->name ?? 'Không rõ' }}</td>
-                            <td class="text-start">{{ $request->name }}</td>
-                            <td>{{ $request->field ?? '—' }}</td>
+                            <td>{{ $req->id }}</td>
+                            <td>{{ $req->user->name ?? 'Không rõ' }}</td>
+                            <td class="text-start">{{ $req->club->name ?? 'Không rõ' }}</td>
                             <td>
-                                <span class="badge-status {{ $request->status }}">
-                                    @switch($request->status)
+                                <span class="badge-status {{ $req->status }}">
+                                    @switch($req->status)
                                         @case('approved')
                                             Đã duyệt
                                             @break
@@ -55,13 +64,15 @@
                                     @endswitch
                                 </span>
                             </td>
-                            <td>{{ $request->created_at->format('d/m/Y H:i') }}</td>
+                            <td>{{ $req->created_at->format('d/m/Y H:i') }}</td>
                             <td>
-                                <a href="{{ route('admin.club-requests.show', $request->id) }}" class="btn btn-sm btn-info">
+                                <a href="{{ route('admin.club-join-requests.show', $req->id) }}" 
+                                   class="btn btn-sm btn-info">
                                     <i class="fas fa-eye"></i> Xem
                                 </a>
 
-                                <form action="{{ route('admin.club-requests.handle', $request->id) }}" method="POST" style="display:inline-block;">
+                                <form action="{{ route('admin.club-join-requests.handle', $req->id) }}" 
+                                      method="POST" style="display:inline-block;">
                                     @csrf
                                     <button type="submit" name="action" value="approve" class="btn btn-sm btn-success">
                                         <i class="fas fa-check"></i>
@@ -74,11 +85,16 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-muted py-4">Không có yêu cầu nào</td>
+                            <td colspan="6" class="text-muted py-4">Không có yêu cầu nào</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+
+            {{-- Phân trang --}}
+            <div class="mt-3 d-flex justify-content-center">
+                {{ $requests->links() }}
+            </div>
         </div>
     </div>
 </div>

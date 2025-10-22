@@ -4,79 +4,49 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClubJoinRequest;
-use App\Models\Club;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class ClubJoinRequestController extends Controller
 {
-    /**
-     * Hiển thị danh sách yêu cầu tham gia CLB.
-     */
-    public function index()
+    // === Danh sách yêu cầu ===
+    public function index(Request $request)
     {
-        $requests = ClubJoinRequest::with(['user', 'club'])
-            ->orderByDesc('created_at')
-            ->paginate(10);
+        $query = ClubJoinRequest::with(['user', 'club.leader']);
+
+        // Tìm kiếm theo tên người dùng hoặc tên CLB
+        if ($search = $request->input('search')) {
+            $query->whereHas('user', fn($q) => $q->where('name', 'like', "%$search%"))
+                  ->orWhereHas('club', fn($q) => $q->where('name', 'like', "%$search%"));
+        }
+
+        $requests = $query->orderBy('created_at', 'desc')->paginate(10);
 
         return view('admin.club-join-requests.index', compact('requests'));
     }
 
-    /**
-     * Hiển thị chi tiết 1 yêu cầu.
-     */
-    public function show($id)
+    // === Xem chi tiết yêu cầu ===
+    public function show(ClubJoinRequest $joinRequest)
     {
-        $request = ClubJoinRequest::with(['user', 'club'])->findOrFail($id);
-        return view('admin.club-join-requests.show', compact('request'));
+        $joinRequest->load(['user', 'club.leader']);
+
+        return view('admin.club-join-requests.show', compact('joinRequest'));
     }
 
-    /**
-     * Cập nhật trạng thái yêu cầu (duyệt hoặc từ chối).
-     */
-    public function update(Request $request, $id)
+    // === Xử lý duyệt hoặc từ chối ===
+    public function handle(Request $request, ClubJoinRequest $joinRequest)
     {
-        $joinRequest = ClubJoinRequest::findOrFail($id);
-
         $action = $request->input('action');
+
         if ($action === 'approve') {
-            $joinRequest->status = 'approved';
-            $joinRequest->save();
-
-            // Nếu cần thêm người dùng vào CLB (nếu có bảng trung gian)
-            if (method_exists($joinRequest->club, 'members')) {
-                $joinRequest->club->members()->syncWithoutDetaching([$joinRequest->user_id]);
-            }
-
-            return redirect()
-                ->route('admin.club-join-requests.show', $id)
-                ->with('success', 'Đã duyệt yêu cầu tham gia CLB thành công.');
+            $joinRequest->update(['status' => 'approved']);
+            return back()->with('success', '✅ Đã duyệt yêu cầu tham gia!');
         }
 
         if ($action === 'reject') {
-            $joinRequest->status = 'rejected';
-            $joinRequest->save();
-
-            return redirect()
-                ->route('admin.club-join-requests.show', $id)
-                ->with('success', 'Đã từ chối yêu cầu tham gia CLB.');
+            $joinRequest->update(['status' => 'rejected']);
+            return back()->with('success', '❌ Đã từ chối yêu cầu!');
         }
 
-        return redirect()
-            ->route('admin.club-join-requests.show', $id)
-            ->with('error', 'Hành động không hợp lệ.');
-    }
-
-    /**
-     * Xóa yêu cầu tham gia CLB.
-     */
-    public function destroy($id)
-    {
-        $request = ClubJoinRequest::findOrFail($id);
-        $request->delete();
-
-        return redirect()
-            ->route('admin.club-join-requests.index')
-            ->with('success', 'Đã xóa yêu cầu tham gia CLB.');
+        return back()->with('error', 'Hành động không hợp lệ!');
     }
 }

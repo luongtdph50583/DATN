@@ -21,7 +21,10 @@
             'status' => 'string',
         ];
 
-
+public function clubs()
+{
+    return $this->belongsToMany(Club::class, 'club_members');
+}
     // // ✅ CLB do người dùng quản lý
     // public function managedClubs(): HasMany
     // {

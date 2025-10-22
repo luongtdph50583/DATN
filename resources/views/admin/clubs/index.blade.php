@@ -3,137 +3,123 @@
 @section('title', 'Quản lý Câu lạc bộ')
 
 @section('card-body')
-<div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Quản lý Câu lạc bộ</h1>
+<div class="container-fluid py-4">
+    <h1 class="h3 mb-4 text-gray-800">📋 Quản lý Câu lạc bộ</h1>
 
+    {{-- Thông báo --}}
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
 
-    <div class="mb-3">
-        <a href="{{ route('admin.clubs.create') }}" class="btn btn-primary">+ Thêm CLB mới</a>
+    {{-- Nút thêm mới + Tìm kiếm --}}
+    <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
+        <a href="{{ route('admin.clubs.create') }}" class="btn btn-primary mb-2">➕ Thêm CLB mới</a>
+        <form method="GET" action="{{ route('admin.clubs.index') }}" class="d-flex mb-2">
+            <input type="text" name="search" class="form-control me-2" placeholder="🔍 Tìm tên CLB..."
+                   value="{{ request('search') }}">
+            <button class="btn btn-outline-primary">Tìm</button>
+            @if(request('search'))
+                <a href="{{ route('admin.clubs.index') }}" class="btn btn-outline-secondary ms-2">Reset</a>
+            @endif
+        </form>
     </div>
 
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Danh sách Câu lạc bộ</h6>
-        </div>
-
-        <div class="card-body table-responsive">
-
-            {{-- === FORM TÌM KIẾM === --}}
-    <form method="GET" action="{{ route('admin.clubs.index') }}" class="mb-3 d-flex justify-content-between align-items-center">
-        <div class="input-group" style="max-width: 300px;">
-            <input type="text" name="search" class="form-control" placeholder="Tìm tên CLB..."
-                   value="{{ request('search') }}">
-            <div class="input-group-append">
-                <button class="btn btn-primary" type="submit">
-                    <i class="fas fa-search"></i> Tìm
-                </button>
-            </div>
-        </div>
-
-        {{-- Nút reset --}}
-        @if(request('search'))
-            <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">Reset</a>
-        @endif
-    </form>
-            <table class="table table-bordered text-center align-middle">
-                <thead class="thead-light">
+    {{-- Bảng dữ liệu --}}
+    <div class="card shadow-lg rounded-3">
+        <div class="card-body table-responsive" style="max-height: 600px; overflow-y: auto;">
+            <table class="table table-bordered align-middle text-center" style="min-width: 1100px;">
+                <thead class="table-primary">
                     <tr>
-                        <th>ID</th>
-                        <th>Tên</th>
-                        <th>Mô tả</th>
-                        <th>Logo</th>
-                        <th>Lĩnh vực</th>
-                        <th>Trạng thái</th>
-                        <th>Chủ nhiệm</th>
-                        <th>Hành động</th>
+                        <th style="width: 60px;">ID</th>
+                        <th style="width: 200px;">Tên CLB</th>
+                        <th style="width: 150px;">Lĩnh vực</th>
+                        <th style="width: 160px;">Chủ nhiệm</th>
+                        <th style="width: 140px;">Trạng thái</th>
+                        <th style="width: 140px;">Ngày tạo</th>
+                        <th style="width: 260px;">Mô tả</th>
+                        <th style="width: 220px;" class="sticky-col bg-white shadow-sm">Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($clubs as $club)
+                    @forelse ($clubs as $club)
                         <tr>
                             <td>{{ $club->id }}</td>
-                            <td>{{ $club->name }}</td>
-                            <td>{{ $club->description }}</td>
+                            <td class="fw-bold">{{ $club->name }}</td>
+                            <td>{{ $club->field ?? '—' }}</td>
+
+                            {{-- Chủ nhiệm --}}
                             <td>
-                                @if($club->logo)
-                                    <img src="{{ Storage::url($club->logo) }}" width="50" alt="Logo CLB">
+                                @if ($club->leader)
+                                    👤 {{ $club->leader->name }}
+                                @else
+                                    <span class="text-muted fst-italic">Chưa gán</span>
                                 @endif
                             </td>
-                            <td>{{ $club->field }}</td>
+
+                            {{-- Trạng thái --}}
                             <td>
-                                <span class="badge-status {{ $club->status }}">
-                                    @switch($club->status)
-                                        @case('active')
-                                            Hoạt động
-                                            @break
-                                        @case('pending')
-                                            Chờ duyệt
-                                            @break
-                                        @default
-                                            Không hoạt động
-                                    @endswitch
-                                </span>
+                                @switch($club->status)
+                                    @case('active')
+                                        <span class="badge bg-success">Đang hoạt động</span>
+                                        @break
+                                    @case('pending')
+                                        <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                        @break
+                                    @case('inactive')
+                                        <span class="badge bg-secondary">Ngừng hoạt động</span>
+                                        @break
+                                    @default
+                                        <span class="badge bg-light text-dark">Không xác định</span>
+                                @endswitch
                             </td>
-                            <td>{{ $club->manager->name ?? 'Chưa gán' }}</td>
-                            <td>
-                                <a href="{{ route('admin.clubs.edit', $club) }}" class="btn btn-sm btn-warning">Sửa</a>
-                                <a href="{{ route('admin.clubs.show', $club->id) }}" class="btn btn-sm btn-info">Xem chi tiết</a>
 
-                                <form action="{{ route('admin.clubs.destroy', $club) }}" method="POST" style="display:inline">
+                            {{-- Ngày tạo --}}
+                            <td>{{ $club->created_at->format('d/m/Y') }}</td>
+
+                            {{-- Mô tả --}}
+                            <td class="text-start">{{ Str::limit($club->description, 60) }}</td>
+
+                            {{-- Hành động (CỐ ĐỊNH) --}}
+                            <td class="sticky-col bg-white text-nowrap" style="right: 0;">
+                                <a href="{{ route('admin.clubs.show', $club->id) }}" class="btn btn-info btn-sm mb-1">👁️</a>
+                                <a href="{{ route('admin.clubs.edit', $club->id) }}" class="btn btn-warning btn-sm mb-1">✏️</a>
+                                <a href="{{ route('admin.clubs.assign', $club->id) }}" class="btn btn-primary btn-sm mb-1">👤</a>
+                                <form action="{{ route('admin.clubs.destroy', $club->id) }}" method="POST" class="d-inline">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Xóa CLB này?')">Xóa</button>
+                                    <button class="btn btn-danger btn-sm" onclick="return confirm('Xóa CLB này?')">🗑️</button>
                                 </form>
-
-                                <a href="{{ route('admin.clubs.assign', $club->id) }}" class="btn btn-sm btn-info">
-                                    Gán chủ nhiệm
-                                </a>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-muted py-4">Không có dữ liệu câu lạc bộ nào</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-{{-- === CSS cho badge trạng thái === --}}
+{{-- CSS giữ cột Hành động cố định --}}
 <style>
-.badge-status {
-    padding: 6px 12px;
-    border-radius: 30px;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: capitalize;
-    display: inline-block;
-    min-width: 110px;
-    text-align: center;
-    transition: 0.2s ease;
-}
+    .sticky-col {
+        position: sticky;
+        right: 0;
+        z-index: 5;
+    }
 
-.badge-status.active {
-    background-color: #28a745;
-    color: #fff;
-    box-shadow: 0 0 5px rgba(40, 167, 69, 0.4);
-}
+    /* Giữ nền trắng để không bị che */
+    .table .sticky-col {
+        background: #fff;
+    }
 
-.badge-status.pending {
-    background-color: #ffc107;
-    color: #212529;
-    box-shadow: 0 0 5px rgba(255, 193, 7, 0.4);
-}
-
-.badge-status.inactive {
-    background-color: #6c757d;
-    color: #fff;
-    box-shadow: 0 0 5px rgba(108, 117, 125, 0.4);
-}
-
-/* Hiệu ứng hover nhẹ */
-.badge-status:hover {
-    transform: scale(1.05);
-}
+    /* Hiệu ứng bóng nhẹ */
+    .shadow-sm {
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    }
 </style>
 @endsection
