@@ -20,6 +20,7 @@
                ClubLeaveRequestSeeder::class,
                CommentSeeder::class,
                SessionSeeder::class,
+               FundTransactionSeeder::class,
            ]);
        }
    }

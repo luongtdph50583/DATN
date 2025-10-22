@@ -18,9 +18,14 @@ class Club extends Model
         return $this->hasMany(ClubMember::class, 'club_id');
     }
 
-     public function posts()
+    public function posts()
     {
         return $this->hasMany(Post::class);
+    }
+
+    public function fundTransactions()
+    {
+        return $this->hasMany(FundTransaction::class);
     }
 
 
