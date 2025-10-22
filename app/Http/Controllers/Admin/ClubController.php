@@ -124,4 +124,19 @@ class ClubController extends Controller
 
         return redirect()->route('admin.clubs.index')->with('success', 'Gán chủ nhiệm thành công!');
     }
+
+    public function approve(Club $club)
+{
+    // Chỉ duyệt nếu đang ở trạng thái pending
+    if ($club->status !== 'pending') {
+        return redirect()->back()->with('warning', 'CLB này đã được duyệt hoặc bị vô hiệu hóa.');
+    }
+
+    $club->update(['status' => 'active']);
+
+    return redirect()
+        ->route('admin.clubs.index')
+        ->with('success', "CLB '{$club->name}' đã được duyệt thành công!");
+}
+
 }

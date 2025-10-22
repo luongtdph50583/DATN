@@ -41,20 +41,34 @@ public function show(ClubRequest $clubRequest)
 }
 
 
-    public function handle(Request $request, ClubRequest $clubRequest)
-    {
-        $action = $request->input('action');
+ public function handle(Request $request, \App\Models\ClubRequest $clubRequest)
+{
+    $action = $request->input('action');
 
-        if ($action === 'approve') {
-            $clubRequest->status = 'approved';
-            // Có thể tạo CLB mới từ yêu cầu ở đây nếu muốn
-        } elseif ($action === 'reject') {
-            $clubRequest->status = 'rejected';
-        }
+    if ($action === 'approve') {
+        // ✅ 1. Cập nhật trạng thái yêu cầu
+        $clubRequest->update(['status' => 'approved']);
 
-        $clubRequest->save();
+        // ✅ 2. Tạo CLB mới từ yêu cầu
+        \App\Models\Club::create([
+            'name'        => $clubRequest->name,
+            'description' => $clubRequest->description,
+            'field'       => $clubRequest->field,
+            'logo'        => $clubRequest->logo ?? null,
+            'leader_id'   => $clubRequest->user_id,
+            'status'      => 'active', // hoặc 'pending' nếu bạn muốn duyệt 2 bước
+        ]);
 
-        return redirect()->route('admin.club-requests.index')
-                         ->with('success', 'Đã xử lý yêu cầu thành công!');
+        // (Tùy chọn) Xóa yêu cầu sau khi tạo CLB
+        // $clubRequest->delete();
+
+    } elseif ($action === 'reject') {
+        $clubRequest->update(['status' => 'rejected']);
     }
+
+    return redirect()
+        ->route('admin.club-requests.index')
+        ->with('success', 'Đã xử lý yêu cầu thành công!');
+}
+
 }

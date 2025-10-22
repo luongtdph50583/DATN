@@ -133,6 +133,8 @@ Route::prefix('admin')
         Route::get('/{club}', 'show')->name('show');
         Route::put('/{club}', 'update')->name('update');
         Route::delete('/{club}', 'destroy')->name('destroy');
+        Route::post('/{club}/approve', 'approve')->name('approve');
+
 
         // 👇 Gán chủ nhiệm
         Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
