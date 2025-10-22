@@ -6,6 +6,8 @@ use App\Models\Event;
 use App\Models\Club;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Container\Attributes\Auth;
 
 class EventController extends Controller
 {
@@ -24,20 +26,19 @@ class EventController extends Controller
 
     public function create()
     {
-        if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
-            return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
-        }
+        // if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
+        //     return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
+        // }
         $clubs = Club::all();
              $users = User::where('role', 'admin')->orWhere('role', 'member')->get();
              return view('admin.events.create', compact('clubs', 'users'));
-
     }
 
     public function store(Request $request)
     {
-        if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
-            return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
-        }
+    //     if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
+    //         return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
+    //     }
 
          $request->validate([
                  'club_id' => 'required|exists:clubs,id',
@@ -57,19 +58,19 @@ class EventController extends Controller
     // chi tiết sự kiện
     public function show(Event $event)
          {
-             if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
-            return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
-        }
+        //      if (!Auth::check() || (Auth::check() && Auth::user()->role !== 'admin')) {
+        //     return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
+        // }
              $event->load(['club', 'createdBy']);
              return view('admin.events.show', compact('event'));
          }
 
-    public function show(Event $event)
-    {
-        $registrations = $event->registrations()->with('user')->get();
-        $totalRegistrations = $event->registrations()->count();
-        return view('admin.events.show', compact('event', 'registrations', 'totalRegistrations'));
-    }
+    // public function show(Event $event)
+    // {
+    //     $registrations = $event->registrations()->with('user')->get();
+    //     $totalRegistrations = $event->registrations()->count();
+    //     return view('admin.events.show', compact('event', 'registrations', 'totalRegistrations'));
+    // }
 
     public function edit(Event $event)
     {

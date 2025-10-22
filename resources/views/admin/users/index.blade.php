@@ -1,6 +1,8 @@
 @extends('admin.layouts.app')
 
-@section('content')
+@section('title', 'Quản lý Tài Khoản')
+
+@section('card-body')
 <div class="modern-container">
     <!-- Header Section -->
     <div class="header-section">
@@ -128,6 +130,10 @@
                                         <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-action btn-edit" title="Chỉnh sửa">
                                             ✏️
                                         </a>
+                                        <a href="{{ route('admin.users.show', $user->id) }}" 
+   class="btn btn-action btn-view" title="Xem chi tiết">
+   👁️
+</a>
                                         <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" style="display:inline;"
                                               onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản này?');">
                                             @csrf

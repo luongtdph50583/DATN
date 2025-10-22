@@ -20,23 +20,38 @@
             'email_verified_at' => 'datetime',
             'status' => 'string',
         ];
-    //      public function clubs()
-    // {
-    //     return $this->belongsToMany(Club::class, 'club_members')
-    //                 ->withPivot('role', 'joined_at')
-    //                 ->withTimestamps();
-    // }
 
-    // Một user có thể upload nhiều file
-
-
-    public function managedClubs()
-    {
-        return $this->hasMany(Club::class, 'manager_id');
-    }
+// public function clubs()
+// {
+//     return $this->belongsToMany(Club::class, 'club_members');
+// }
+/**
+ * Quan hệ với Clubs
+ */
 public function clubs()
 {
-    return $this->belongsToMany(Club::class, 'club_members');
+    return $this->belongsToMany(Club::class, 'club_members')
+                ->withPivot('role')
+                ->withTimestamps();
+}
+
+/**
+ * Quan hệ với Events (nếu có bảng registrations)
+ */
+public function events()
+{
+    return $this->hasMany(Event::class, 'organizer_id')
+                ->orWhereHas('registrations', function($q) {
+                    $q->where('user_id', $this->id);
+                });
+}
+
+/**
+ * Quan hệ với Posts
+ */
+public function posts()
+{
+    return $this->hasMany(Post::class);
 }
     // // ✅ CLB do người dùng quản lý
     // public function managedClubs(): HasMany
@@ -44,35 +59,34 @@ public function clubs()
     //     return $this->hasMany(Club::class, 'manager_id');
     // }
 
-    // ✅ Thành viên của các CLB (nếu có bảng trung gian ClubMember)
-    public function memberships()
-    {
-        return $this->hasMany(ClubMember::class, 'user_id');
-    }
+    // // ✅ Thành viên của các CLB (nếu có bảng trung gian ClubMember)
+    // public function memberships(): HasMany
+    // {
+    //     return $this->hasMany(ClubMember::class, 'user_id');
+    // }
 
-    // ✅ Bài viết do người dùng đăng
-    public function posts()
-    {
-        return $this->hasMany(Post::class, 'user_id');
-        
-    }
+    // // ✅ Bài viết do người dùng đăng
+    // public function posts(): HasMany
+    // {
+    //     return $this->hasMany(Post::class, 'user_id');
+    // }
 
-    // ✅ Thông báo do người dùng tạo
+    // // ✅ Thông báo do người dùng tạo
     // public function notifications()
     // {
     //     return $this->hasMany(Notification::class, 'created_by');
     // }
 
-    // ✅ Tài liệu do người dùng tải lên
-    public function uploadedMedia()
-    {
-        return $this->hasMany(Media::class, 'uploaded_by');
-    }
+    // // ✅ Tài liệu do người dùng tải lên
+    // public function uploadedMedia()
+    // {
+    //     return $this->hasMany(Media::class, 'uploaded_by');
+    // }
 
-    // ✅ Sự kiện do người dùng tạo
-    public function events()
-    {
-        return $this->hasMany(Event::class, 'created_by');
+    // // ✅ Sự kiện do người dùng tạo
+    // public function events()
+    // {
+    //     return $this->hasMany(Event::class, 'created_by');
 
-    }
+    // }
 }

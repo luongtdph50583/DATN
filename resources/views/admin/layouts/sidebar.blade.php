@@ -4,7 +4,7 @@
                 <!-- Dark Logo-->
                 <a href="index.html" class="logo logo-dark">
                     <span class="logo-sm">
-                        <img src="assets/images/logo-sm.png" alt="" height="22">
+                        <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="22">
                     </span>
                     <span class="logo-lg">
                         <img src="assets/images/logo-dark.png" alt="" height="17">
@@ -56,35 +56,17 @@
                     </div>
                     <ul class="navbar-nav" id="navbar-nav">
                         <li class="menu-title"><span data-key="t-menu">Menu</span></li>
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="#quanlitk" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="quanlitk">
+                     <li class="nav-item">
+                            <a class="nav-link menu-link" href="{{ route('admin.users.index') }}">
                                 <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí tài khoản</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="quanlitk">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="dashboard-analytics.html" class="nav-link" data-key="t-analytics"> Analytics </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="dashboard-crm.html" class="nav-link" data-key="t-crm"> CRM </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li> <!-- end Dashboard Menu -->
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="#quanlidk" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="quanlidk">
-                                <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí sự kiện</span>
+                            
+                        </li>
+                      <li class="nav-item">
+                            <a class="nav-link menu-link" href="{{ route('admin.events.index') }}">
+                                <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí sự kiện </span>
                             </a>
-                            <div class="collapse menu-dropdown" id="quanlidk">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="dashboard-analytics.html" class="nav-link" data-key="t-analytics"> Analytics </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="dashboard-crm.html" class="nav-link" data-key="t-crm"> CRM </a>
-                                    </li>
-                                </ul>
-                            </div>
+                            
                         </li> <!-- end Dashboard Menu -->
                         {{-- quản lí clb --}}
                         <li class="nav-item">
@@ -113,23 +95,14 @@
     </div>
 </li>
 {{-- end quản lí clb --}}
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="#quanlitv" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="quanlitv">
+                       <li class="nav-item">
+                            <a class="nav-link menu-link" href="{{ route('admin.members.index') }}">
                                 <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí thành viên</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="quanlitv">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="dashboard-analytics.html" class="nav-link" data-key="t-analytics"> Analytics </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="dashboard-crm.html" class="nav-link" data-key="t-crm"> CRM </a>
-                                    </li>
-                                </ul>
-                            </div>
+                            
                         </li> <!-- end Dashboard Menu -->
                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="widgets.html">
+                            <a class="nav-link menu-link" href="{{ route('admin.stats.index') }}">
                                 <i class="ri-honour-line"></i> <span data-key="t-widgets">Thống kê</span>
                             </a>
                         </li>
@@ -144,12 +117,10 @@
                             <div class="collapse menu-dropdown" id="sidebartintuc">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="advance-ui-sweetalerts.html" class="nav-link" data-key="t-sweet-alerts">Sweet
-                                            Alerts</a>
+                                        <a href="{{ route('admin.documents.index') }}" class="nav-link" data-key="t-sweet-alerts">Tin Tức</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="advance-ui-nestable.html" class="nav-link" data-key="t-nestable-list">Nestable
-                                            List</a>
+                                        <a href="{{ route('admin.posts.index') }}" class="nav-link" data-key="t-nestable-list">Bài Viết</a>
                                     </li>
 
                                 </ul>
@@ -161,16 +132,7 @@
                                 <i class="ri-honour-line"></i> <span data-key="t-widgets">Bình luận</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link menu-link" href="widgets.html">
-                                <i class="ri-honour-line"></i> <span data-key="t-widgets">Lịch sử tham gia</span>
-                            </a>
-                        </li>
-                                                <li class="nav-item">
-                            <a class="nav-link menu-link" href="widgets.html">
-                                <i class="ri-honour-line"></i> <span data-key="t-widgets">tài liệu</span>
-                            </a>
-                        </li>
+                    
 
                         <li class="menu-title"><i class="ri-community-line"></i> <span>Quản lý Câu lạc bộ</span></li>
 

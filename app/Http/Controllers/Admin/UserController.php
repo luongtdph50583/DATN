@@ -145,5 +145,9 @@
              $user->delete();
              return redirect()->route('admin.users.index')->with('success', 'Tài khoản đã được xóa.');
          }
+         function show(User $user)
+         {
+             return view('admin.users.show', compact('user'));
     }
+}
      

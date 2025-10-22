@@ -1,6 +1,8 @@
 @extends('admin.layouts.app')
 
-@section('content')
+@section('title', 'Quản lý Thành viên')
+
+@section('card-body')
     <div class="container-fluid">
         <h1 class="h3 mb-4 text-gray-800">Quản lý Thành viên</h1>
         @if (session('success'))

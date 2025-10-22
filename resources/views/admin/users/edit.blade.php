@@ -54,7 +54,7 @@
             <div class="mb-3">
                 <label for="phone" class="form-label">Số điện thoại</label>
                 <input type="text" name="phone" id="phone" class="form-control" value="{{ old('phone', $user->phone) }}">
-            </div>
+</div>
             <div class="mb-3">
                 <label for="student_id" class="form-label">Mã sinh viên</label>
                 <input type="text" name="student_id" id="student_id" class="form-control" value="{{ old('student_id', $user->student_id) }}">

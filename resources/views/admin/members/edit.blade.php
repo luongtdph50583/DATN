@@ -1,6 +1,8 @@
 @extends('admin.layouts.app')
 
-   @section('content')
+@section('title', 'Chỉnh sửa Thành viên')
+
+@section('card-body')
        <div class="container-fluid">
            <h1 class="h3 mb-4 text-gray-800">Chỉnh sửa Thành viên</h1>
            @if ($errors->any())
