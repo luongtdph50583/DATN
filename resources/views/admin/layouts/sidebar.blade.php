@@ -86,6 +86,33 @@
                                 </ul>
                             </div>
                         </li> <!-- end Dashboard Menu -->
+                        {{-- quản lí clb --}}
+                        <li class="nav-item">
+    <a class="nav-link menu-link" href="#sidebarclb" data-bs-toggle="collapse" role="button"
+        aria-expanded="false" aria-controls="sidebarclb">
+        <i class="ri-team-line"></i> <span>Quản lý CLB</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarclb">
+        <ul class="nav nav-sm flex-column">
+            <li class="nav-item">
+                <a href="{{ route('admin.clubs.index') }}" class="nav-link">
+                    Danh sách CLB
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('admin.club-requests.index') }}" class="nav-link">
+                    Yêu cầu tạo CLB
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('admin.club-join-requests.index') }}" class="nav-link">
+                    Yêu cầu tham gia CLB
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+{{-- end quản lí clb --}}
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="#quanlitv" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="quanlitv">
                                 <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí thành viên</span>
@@ -144,6 +171,10 @@
                                 <i class="ri-honour-line"></i> <span data-key="t-widgets">tài liệu</span>
                             </a>
                         </li>
+
+                        <li class="menu-title"><i class="ri-community-line"></i> <span>Quản lý Câu lạc bộ</span></li>
+
+
 
 
 
