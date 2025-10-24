@@ -28,7 +28,7 @@ public function members()
 
 
 
-     public function posts()
+    public function posts()
     {
         return $this->hasMany(Post::class);
     }
@@ -36,6 +36,12 @@ public function members()
     {
         return $this->hasMany(Event::class, 'club_id');
     }
+
+    public function fundTransactions()
+    {
+        return $this->hasMany(FundTransaction::class);
+    }
+
 
 
     protected $casts = [

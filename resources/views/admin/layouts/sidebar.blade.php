@@ -101,6 +101,21 @@
                             </a>
                             
                         </li> <!-- end Dashboard Menu -->
+                        <li class="nav-item">
+                            <a class="nav-link menu-link" href="#quanliquy" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="quanliquy">
+                                <i class="ri-wallet-line"></i> <span data-key="t-funds">Quản lý quỹ</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="quanliquy">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.funds.index') }}" class="nav-link" data-key="t-fund-list">Danh sách giao dịch</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.funds.create') }}" class="nav-link" data-key="t-fund-create">Thêm giao dịch</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li> <!-- end Fund Management Menu -->
                        <li class="nav-item">
                             <a class="nav-link menu-link" href="{{ route('admin.stats.index') }}">
                                 <i class="ri-honour-line"></i> <span data-key="t-widgets">Thống kê</span>

@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\{
 
     ClubJoinRequestController
 };
+use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
 
 /*
@@ -218,10 +219,48 @@ Route::controller(PostController::class)
             Route::get('/reports', 'reports')->name('reports');
         });
 
+    // 💰 Fund Management
+    Route::controller(FundController::class)
+        ->prefix('funds')
+        ->as('funds.')
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{fund}', 'show')->name('show');
+            Route::get('/{fund}/edit', 'edit')->name('edit');
+            Route::put('/{fund}', 'update')->name('update');
+            Route::delete('/{fund}', 'destroy')->name('destroy');
+            Route::post('/{fund}/approve', 'approve')->name('approve');
+            Route::post('/{fund}/reject', 'reject')->name('reject');
+            Route::get('/api/summary', 'summary')->name('summary');
+        });
+
     // Route test admin
     Route::get('/test-role', function () {
         return 'Bạn có quyền truy cập admin!';
     });
+});
+
+// === 🏛 Club Manager Routes ===
+Route::prefix('club-manager')
+    ->middleware(['auth', CheckRole::class . ':club_manager'])
+    ->as('club-manager.')
+    ->group(function () {
+
+    // 💰 Fund Management (Club Manager can only see their club's funds)
+    Route::controller(FundController::class)
+        ->prefix('funds')
+        ->as('funds.')
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{fund}', 'show')->name('show');
+            Route::get('/{fund}/edit', 'edit')->name('edit');
+            Route::put('/{fund}', 'update')->name('update');
+            Route::get('/api/summary', 'summary')->name('summary');
+        });
 });
 
 // === Auth Routes ===
