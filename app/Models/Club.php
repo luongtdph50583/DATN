@@ -21,10 +21,11 @@ class Club extends Model
 // Trong Club model
 public function members()
 {
-    return $this->belongsToMany(User::class, 'club_members', 'club_id', 'user_id')
-                ->withPivot('role', 'created_at')
+    return $this->belongsToMany(Member::class, 'club_members')
+                ->withPivot('role', 'joined_at')
                 ->withTimestamps();
 }
+
 
 
 

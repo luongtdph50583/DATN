@@ -1,34 +1,52 @@
 <?php
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Faker\Factory as Faker;
 
 class UserSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $faker = Faker::create();
+
+        // 1) Tạo tài khoản admin cố định
+        DB::table('users')->insert([
+            'name'       => 'Admin',
+            'email'      => 'admin@gmail.com',
+            'password'   => Hash::make('123456'), // mật khẩu: 123456
+            'role'       => 'admin',
+            'status'     => 'active',
+            'avatar'     => null,
+            'remember_token' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // 2) Tạo thêm N tài khoản fake để test
+        $count = 20; // chỉnh số lượng theo ý bạn
+        $roles = ['member', 'club_manager'];
+
         $users = [];
-        $departments = ['CNTT', 'Kinh tế', 'Mỹ thuật', 'Kỹ thuật', 'Ngôn ngữ học'];
-        for ($i = 1; $i <= 15; $i++) {
+        for ($i = 0; $i < $count; $i++) {
+            $name = $faker->name;
+            $email = $faker->unique()->safeEmail;
             $users[] = [
-                'name' => $faker->name,
-                'email' => $faker->unique()->safeEmail,
-                'email_verified_at' => $faker->optional()->dateTimeThisYear(),
-                'password' => Hash::make('password'),
-                'role' => $i <= 2 ? 'admin' : ($i <= 5 ? 'club_manager' : 'member'),
-                'status' => $faker->randomElement(['active', 'inactive']),
-                'phone' => $faker->phoneNumber,
-                'avatar' => $faker->imageUrl(),
-                'student_id' => 'STU' . str_pad($i, 5, '0', STR_PAD_LEFT),
-                'department' => $faker->randomElement($departments),
+                'name'       => $name,
+                'email'      => $email,
+                'password'   => Hash::make('password'), // mật khẩu mặc định cho fake users
+                'role'       => $roles[array_rand($roles)],
+                'status'     => 'active',
+                'avatar'     => null,
+                'remember_token' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
         }
+
         DB::table('users')->insert($users);
     }
 }

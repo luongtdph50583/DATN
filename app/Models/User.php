@@ -28,6 +28,11 @@
 /**
  * Quan hệ với Clubs
  */
+public function member()
+{
+    return $this->hasOne(Member::class);
+}
+
 public function clubs()
 {
     return $this->belongsToMany(Club::class, 'club_members')
