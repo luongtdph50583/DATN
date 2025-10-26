@@ -3,7 +3,7 @@
 
     use Illuminate\Foundation\Auth\User as Authenticatable;
     use Illuminate\Notifications\Notifiable;
-
+    use App\Models\Member;
     class User extends Authenticatable
     {
         use Notifiable;
@@ -20,6 +20,10 @@
             'email_verified_at' => 'datetime',
             'status' => 'string',
         ];
+        public function member()
+    {
+        return $this->hasOne(Member::class);
+    }
 
 // public function clubs()
 // {
