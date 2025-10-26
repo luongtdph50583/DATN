@@ -1,139 +1,144 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Quản lý yêu cầu tạo Câu lạc bộ')
+@section('title', 'Danh sách yêu cầu CLB')
 
 @section('card-body')
-<div class="container-fluid py-4">
-    <h1 class="h3 mb-4 text-gray-800">Danh sách yêu cầu tạo Câu lạc bộ</h1>
+@php
+    use Illuminate\Support\Str;
+@endphp
 
-    {{-- Thông báo thành công --}}
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Danh sách yêu cầu CLB</h1>
+
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
-    <div class="card shadow-lg border-0 rounded-3">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Danh sách yêu cầu</h5>
-        </div>
+    <table class="table table-hover table-bordered align-middle">
+        <thead class="thead-dark">
+            <tr class="text-center">
+                <th>#</th>
+                <th>Logo</th>
+                <th>Người tạo</th>
+                <th>Tên CLB</th>
+                <th>Mô tả</th>
+                <th>Lĩnh vực</th>
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($requests as $request)
+            <tr class="text-center">
+                <td>{{ $request->id }}</td>
 
-        {{-- Bộ lọc tìm kiếm --}}
-        <div class="card-body border-bottom">
-            <form method="GET" action="{{ route('admin.club-requests.index') }}" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label for="search" class="form-label fw-bold">Tìm kiếm</label>
-                    <input type="text" name="search" id="search" value="{{ request('search') }}" class="form-control" placeholder="Tên CLB hoặc người gửi...">
-                </div>
+                <!-- Thumbnail -->
+                <td>
+                    @if($request->logo)
+                        <img src="{{ asset('storage/' . $request->logo) }}" 
+                            alt="Logo"
+                            style="width: 45px; height: 45px; object-fit: cover;"
+                            class="rounded shadow">
+                    @else
+                        <span class="text-muted"><em>Không logo</em></span>
+                    @endif
+                </td>
 
-                <div class="col-md-3">
-                    <label for="status" class="form-label fw-bold">Trạng thái</label>
-                    <select name="status" id="status" class="form-select">
-                        <option value="">Tất cả</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
-                        <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Đã duyệt</option>
-                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Từ chối</option>
-                    </select>
-                </div>
+                <td>{{ $request->user->name ?? 'N/A' }}</td>
+                <td><strong>{{ $request->name }}</strong></td>
 
-                <div class="col-md-3">
-                    <label for="field" class="form-label fw-bold">Lĩnh vực</label>
-                    <input type="text" name="field" id="field" value="{{ request('field') }}" class="form-control" placeholder="Ví dụ: CNTT, Văn hóa...">
-                </div>
+                <!-- Mô tả rút gọn -->
+                <td>{{ Str::limit($request->description, 40) }}</td>
 
-                <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary w-100">Lọc</button>
-                    <a href="{{ route('admin.club-requests.index') }}" class="btn btn-secondary w-100">Đặt lại</a>
-                </div>
-            </form>
-        </div>
+                <td>{{ $request->field }}</td>
 
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover align-middle text-center mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th width="50">ID</th>
-                        <th>Người gửi</th>
-                        <th>Email</th>
-                        <th class="text-start">Tên CLB</th>
-                        <th>Lĩnh vực</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày gửi</th>
-                        <th width="180">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($requests as $request)
-                        <tr>
-                            <td>{{ $request->id }}</td>
-                            <td>{{ $request->user->name ?? 'Ẩn danh' }}</td>
-                            <td>{{ $request->user->email ?? 'Không rõ' }}</td>
-                            <td class="text-start">{{ $request->name }}</td>
-                            <td>{{ $request->field ?? '—' }}</td>
-                            <td>
-                                <span class="badge-status {{ $request->status }}">
-                                    @switch($request->status)
-                                        @case('approved') Đã duyệt @break
-                                        @case('rejected') Từ chối @break
-                                        @default Chờ duyệt
-                                    @endswitch
-                                </span>
-                            </td>
-                            <td>{{ $request->created_at->format('d/m/Y H:i') }}</td>
-                            <td>
-                                <a href="{{ route('admin.club-requests.show', $request->id) }}" class="btn btn-sm btn-info" title="Xem chi tiết">
-                                    <i class="fas fa-eye"></i>xem
-                                </a>
+                <!-- Badge trạng thái -->
+                <td>
+                   @php
+    $class = [
+        'pending' => 'badge-custom badge-pending',
+        'approved' => 'badge-custom badge-approved',
+        'rejected' => 'badge-custom badge-rejected'
+    ][$request->status] ?? 'badge-custom';
+    $label = [
+        'pending' => '⏳ Chờ duyệt',
+        'approved' => '✅ Đã duyệt',
+        'rejected' => '❌ Bị từ chối'
+    ][$request->status] ?? 'Không xác định';
+@endphp
 
-                                <form action="{{ route('admin.club-requests.handle', $request->id) }}" method="POST" style="display:inline-block;">
-                                    @csrf
-                                    <button type="submit" name="action" value="approve" class="btn btn-sm btn-success" title="Duyệt">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger" title="Từ chối">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="text-muted py-4">Không có yêu cầu nào</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+<span class="{{ $class }}">
+    {{ $label }}
+</span>
+                </td>
+
+                <td>{{ $request->created_at->format('d/m/Y H:i') }}</td>
+
+                <!-- Hành động -->
+                <td style="min-width: 150px;">
+                    <a href="{{ route('admin.club-requests.show', $request->id) }}" 
+                       class="btn btn-info btn-sm mb-1 w-100">
+                        👁 Xem
+                    </a>
+
+                    <form action="{{ route('admin.club-requests.updateStatus', $request->id) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+                        <select name="status" class="form-control mb-1">
+                            <option value="pending" @selected($request->status=='pending') >Pending</option>
+                            <option value="approved" @selected($request->status=='approved')>Approved</option>
+                            <option value="rejected" @selected($request->status=='rejected')>Rejected</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            ✅ Cập nhật
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <!-- Phân trang -->
+    <div class="mt-3">
+        {{ $requests->links() }}
     </div>
-</div>
 
-{{-- CSS cho badge trạng thái --}}
-<style>
-.badge-status {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 600;
-    text-transform: capitalize;
-    display: inline-block;
-    min-width: 100px;
-}
-.badge-status.pending {
-    background-color: #ffc107;
-    color: #212529;
-}
-.badge-status.approved {
-    background-color: #28a745;
-    color: #fff;
-}
-.badge-status.rejected {
-    background-color: #dc3545;
-    color: #fff;
-}
-.table td {
-    vertical-align: middle;
-    word-wrap: break-word;
-    max-width: 250px;
-}
-</style>
+</div>
 @endsection
+<style>
+    .badge-custom {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 6px 10px;
+    border-radius: 8px;
+    text-transform: capitalize;
+}
+
+/* Chờ duyệt */
+.badge-pending {
+    background-color: #ffd08a; /* cam nhạt */
+    color: #7a4600;
+    border: 1px solid #ffb44d;
+}
+
+/* Đã duyệt */
+.badge-approved {
+    background-color: #b4f0d0; /* xanh mint */
+    color: #085c34;
+    border: 1px solid #2ecc71;
+}
+
+/* Bị từ chối */
+.badge-rejected {
+    background-color: #ffb3b8; /* đỏ pastel */
+    color: #7a1a1a;
+    border: 1px solid #e74c3c;
+}
+
+</style>

@@ -1,85 +1,70 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Chi tiết Câu lạc bộ')
+@section('title', 'Chi tiết CLB')
 
 @section('card-body')
-<div class="container py-4">
+<div class="container-fluid">
+    <h1 class="mb-4">Chi tiết CLB</h1>
 
-    {{-- Tiêu đề --}}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h4 text-gray-800 mb-0">📘 Chi tiết Câu lạc bộ: <strong>{{ $club->name }}</strong></h1>
-        <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">← Quay lại danh sách</a>
-    </div>
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
 
-    {{-- Thông tin CLB --}}
+    {{-- Card thông tin CLB --}}
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light fw-bold">🏛️ Thông tin Câu lạc bộ</div>
         <div class="card-body">
-            <p><strong>Chủ nhiệm:</strong>
-                {{ $club->leader->name ?? '— Chưa gán —' }}
-            </p>
-
-            <p><strong>Lĩnh vực:</strong> {{ $club->field ?? '—' }}</p>
-
-            <p><strong>Trạng thái:</strong>
-                @switch($club->status)
-                    @case('active')
-                        <span class="badge bg-success">Đang hoạt động</span>
-                        @break
-                    @case('pending')
-                        <span class="badge bg-warning text-dark">Chờ duyệt</span>
-                        @break
-                    @case('inactive')
-                        <span class="badge bg-secondary">Ngừng hoạt động</span>
-                        @break
-                    @default
-                        <span class="badge bg-light text-dark">Không xác định</span>
-                @endswitch
-            </p>
-
-            <p><strong>Mô tả:</strong></p>
-            <div class="border p-3 bg-light rounded">
-                {{ $club->description ?? 'Không có mô tả.' }}
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    @if($club->logo)
+                        <img src="{{ asset('storage/' . $club->logo) }}" class="img-fluid border p-2" style="max-height:200px;">
+                    @else
+                        <div class="border p-4 text-muted">Chưa có logo</div>
+                    @endif
+                </div>
+                <div class="col-md-8">
+                    <p><strong>ID:</strong> {{ $club->id }}</p>
+                    <p><strong>Tên:</strong> {{ $club->name }}</p>
+                    <p><strong>Lĩnh vực:</strong> {{ $club->field ?? 'Chưa cập nhật' }}</p>
+                    <p><strong>Trạng thái:</strong> {{ ucfirst($club->status ?? 'Chưa cập nhật') }}</p>
+                    <p><strong>Chủ nhiệm:</strong> 
+                        {{ $club->manager->name ?? 'Chưa có' }}
+                        @if(!$club->manager)
+                            <a href="{{ route('admin.clubs.assign', $club->id) }}" class="btn btn-success btn-sm">Gán</a>
+                        @endif
+                    </p>
+                    <p><strong>Số lượng thành viên:</strong> {{ $club->members->count() }}</p>
+                    <p><strong>Ngày tạo:</strong> {{ optional($club->created_at)->format('d/m/Y H:i') }}</p>
+                    <p><strong>Ngày cập nhật:</strong> {{ optional($club->updated_at)->format('d/m/Y H:i') }}</p>
+                </div>
             </div>
-
-            <p class="mt-3 text-muted"><strong>Ngày tạo:</strong> {{ $club->created_at->format('d/m/Y') }}</p>
+            <div class="mt-3 border p-3 bg-light">
+                <strong>Mô tả:</strong>
+                <p>{{ $club->description ?? 'Chưa có mô tả' }}</p>
+            </div>
         </div>
     </div>
 
     {{-- Danh sách thành viên --}}
     <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white fw-bold">
-            👥 Danh sách thành viên CLB
-        </div>
         <div class="card-body">
+            <h5>Thành viên CLB ({{ $club->members->count() }})</h5>
             @if($club->members->isEmpty())
-                <p class="text-muted fst-italic">Chưa có thành viên nào được duyệt tham gia.</p>
+                <p class="text-muted">Chưa có thành viên nào</p>
             @else
-                <table class="table table-striped align-middle text-center">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Tên thành viên</th>
-                            <th>Email</th>
-                            <th>Vai trò</th>
-                            <th>Ngày tham gia</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($club->members as $index => $member)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $member->user->name ?? 'Không rõ' }}</td>
-                                <td>{{ $member->user->email ?? '—' }}</td>
-                                <td>{{ ucfirst($member->role ?? 'member') }}</td>
-                                <td>{{ $member->created_at->format('d/m/Y') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                <ul class="list-group list-group-flush">
+                    @foreach($club->members as $member)
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ $member->name }}
+                            <span class="badge bg-primary rounded-pill">{{ $member->email }}</span>
+                        </li>
+                    @endforeach
+                </ul>
             @endif
         </div>
     </div>
 
+    <div class="mt-4">
+        <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">Quay lại</a>
+    </div>
 </div>
 @endsection

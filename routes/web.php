@@ -160,24 +160,39 @@ Route::controller(PostController::class)
     });
 
     // 📝 Club Request Management
-    Route::controller(ClubRequestController::class)
-    ->prefix('club-requests')
-    ->as('club-requests.')
-    ->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('/{clubRequest}', 'show')->name('show');
-        Route::post('/{clubRequest}/handle', 'handle')->name('handle');
-    });
+   
+        Route::controller(ClubRequestController::class)
+            ->prefix('club-requests')
+            ->as('club-requests.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                // Route model binding
+                Route::get('/{clubRequest}', 'show')->name('show');
+                // PATCH để update status
+                Route::patch('/{clubRequest}/update-status', 'updateStatus')->name('updateStatus');
+            });
 
 
-    // 🙋‍♂️ Club Join Request Management
-    Route::controller(ClubJoinRequestController::class)
+
+// 🙋‍♂️ Club Join Request Management
+Route::controller(ClubJoinRequestController::class)
     ->prefix('club-join-requests')
     ->as('club-join-requests.')
     ->group(function () {
+        // Danh sách yêu cầu
         Route::get('/', 'index')->name('index');
-          Route::get('/{joinRequest}', 'show')->name('show'); 
-        Route::post('/{joinRequest}', 'handle')->name('handle');
+
+        // Xem chi tiết 1 yêu cầu
+        Route::get('/{id}', 'show')->name('show');
+
+        // Duyệt yêu cầu
+        Route::post('/{id}/approve', 'approve')->name('approve');
+
+        // Từ chối yêu cầu
+        Route::post('/{id}/reject', 'reject')->name('reject');
+
+        // Gửi yêu cầu (nếu bạn dùng cho user)
+        Route::post('/{club_id}/store', 'store')->name('store');
     });
 
 

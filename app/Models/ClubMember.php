@@ -2,21 +2,30 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ClubMember extends Model
 {
-    protected $fillable = ['club_id', 'user_id', 'role', 'joined_at'];
+    use HasFactory;
 
-    protected $dates = ['joined_at'];
+    protected $table = 'club_members';
+
+    protected $fillable = [
+        'club_id',
+        'member_id',
+        'role',
+        'joined_at',
+    ];
 
     public function club()
     {
-        return $this->belongsTo(Club::class);
+        return $this->belongsTo(Club::class, 'club_id');
     }
 
-    public function user()
+    // 🔹 Thành viên (bảng members) của CLB
+    public function member()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Member::class, 'member_id');
     }
 }
