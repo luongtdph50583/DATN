@@ -2,7 +2,14 @@
 @section('title', 'Sửa bài viết')
 
 @section('card-title', 'Sửa bài viết')
-@section('card-header', 'Thông tin bài viết')
+@section('card-header')
+    <div class="d-flex justify-content-between align-items-center">
+        <span> Thông tin bài viết</span>
+        <a href="{{ route('admin.posts.index') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+@endsection
 @section('card-body')
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>

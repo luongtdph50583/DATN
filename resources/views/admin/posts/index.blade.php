@@ -9,6 +9,13 @@
 
 @section('card-header')
     Tin tức & Bài viết
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
 @endsection
 
 @section('card-body')
@@ -26,6 +33,7 @@
     </div>
 
     {{-- Bảng danh sách bài viết --}}
+
     <div class="table-responsive">
         <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
             <thead>
@@ -40,43 +48,45 @@
             </thead>
             <tbody>
                 @forelse($posts as $index => $post)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $post->title }}</td>
-                        <td>{{ $post->created_at->format('d/m/Y') }}</td>
-                        <td>{{ $post->status }}</td>
-                        <td>{{ $post->visibility }}</td>
-                        <td>
-                            {{-- Nút Xem --}}
-                            <a href="{{ route('admin.posts.show', $post->id) }}" class="btn btn-warning btn-sm">
-                                <i class="fas fa-eye"></i> Xem
-                            </a>
+                                        <tr>
+                                            <td>{{ $index + 1 }}</td>
+                                            <td>{{ $post->title }}</td>
+                                            <td>{{ $post->created_at->format('d/m/Y') }}</td>
+                                            <td>{{ $post->status }}</td>
+                                            <td>{{ $post->visibility }}</td>
+                                            <td>
+                                                {{-- Nút Xem --}}
+                                                <a href="{{ route('admin.posts.show', $post->id) }}" class="btn btn-warning btn-sm">
+                                                    <i class="fas fa-eye"></i> Xem
+                                                </a>
 
-                            {{-- Nút Sửa --}}
-                            <a href="{{ route('admin.posts.edit', $post->id) }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-edit"></i> Sửa
-                            </a>
+                                                {{-- Nút Sửa --}}
+                                                <a href="{{ route('admin.posts.edit', $post->id) }}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-edit"></i> Sửa
+                                                </a>
 
-                            {{-- Nút Ẩn/Hiện --}}
-                            <form action="{{ route('admin.posts.toggle', $post->id) }}" method="POST" style="display:inline;">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn btn-info btn-sm">
-                                    {{ $post->status === 'visible' ? 'Ẩn' : 'Hiện' }}
-                                </button>
-                            </form>
+                                                {{-- Nút Ẩn/Hiện --}}
+                                                <form action="{{ route('admin.posts.toggle', $post->id) }}" method="POST" style="display:inline;">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="btn btn-info btn-sm">
+                                                        {{ $post->status === 'visible' ? 'Ẩn' : 'Hiện' }}
+                                                    </button>
+                                                </form>
 
-                            {{-- Nút Xóa --}}
-                            <form action="{{ route('admin.posts.destroy', $post->id) }}" method="POST" style="display:inline;"
-                                onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
+                                                {{-- Nút Xóa --}}
+                    <form id="delete-form-{{ $post->id }}" action="{{ route('admin.posts.destroy', $post->id) }}" method="POST"
+                        style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete({{ $post->id }})">
+                            <i class="fas fa-trash"></i> Xóa
+                        </button>
+                    </form>
+
+
+                                            </td>
+                                        </tr>
                 @empty
                     <tr>
                         <td colspan="6" class="text-center">Không có bài viết nào.</td>
@@ -143,4 +153,20 @@
                 .catch(err => console.error('Lỗi:', err));
         });
     });
+
+    function confirmDelete(postId) {
+            const reason = prompt("Nhập lý do xóa bài viết:");
+            if (reason && reason.trim() !== "") {
+                const form = document.getElementById(`delete-form-${postId}`);
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "reason";
+                input.value = reason;
+                form.appendChild(input);
+                form.submit();
+            } else {
+                alert("Bạn phải nhập lý do xóa.");
+            }
+        }
+
 </script>

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\CustomNotification;
 
 class PostController extends Controller
 {
@@ -37,13 +38,24 @@ class PostController extends Controller
     /**
      * Xóa bài viết
      */
-    public function destroy($id)
+
+
+    public function destroy(Request $request, $id)
     {
         $post = Post::findOrFail($id);
+        $user = $post->user;
+        $reason = $request->input('reason', 'Vi phạm nội quy');
+
         $post->delete();
 
-        return redirect()->back()->with('success', 'Đã xóa bài viết.');
+        $user->notify(new CustomNotification(
+            'Bài viết bị xóa',
+            "Bài viết của bạn đã bị xóa vì lý do: $reason"
+        ));
+
+        return redirect()->back()->with('success', 'Đã xóa bài viết và gửi thông báo.');
     }
+
 
     /**
      * Hiển thị chi tiết bài viết

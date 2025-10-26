@@ -2,6 +2,15 @@
 
 @section('title', 'Chi tiết bài viết')
 
+@section('card-header')
+    <div class="d-flex justify-content-between align-items-center">
+        <span> Thông tin bài viết</span>
+        <a href="{{ route('admin.posts.index') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+@endsection
+
 @section('card-body')
 
     {{-- Tiêu đề bài viết --}}
@@ -70,15 +79,15 @@
 <div class="row">
     @forelse($post->media as $media)
         @php
-            $path = asset('storage/' . $media->file_path);
-            $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
-            $mime = strtolower($media->file_type);
-            $type = $extension ?: (Str::contains($mime, '/') ? explode('/', $mime)[1] : 'other');
+    $path = asset('storage/' . $media->file_path);
+    $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
+    $mime = strtolower($media->file_type);
+    $type = $extension ?: (Str::contains($mime, '/') ? explode('/', $mime)[1] : 'other');
 
-            $isImage = in_array($type, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-            $isVideo = in_array($type, ['mp4', 'mov', 'avi', 'mkv']);
-            $isAudio = in_array($type, ['mp3', 'wav', 'ogg', 'm4a']);
-            $isDocument = in_array($type, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt']);
+    $isImage = in_array($type, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+    $isVideo = in_array($type, ['mp4', 'mov', 'avi', 'mkv']);
+    $isAudio = in_array($type, ['mp3', 'wav', 'ogg', 'm4a']);
+    $isDocument = in_array($type, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt']);
         @endphp
 
         <div class="col-md-4 mb-4">
