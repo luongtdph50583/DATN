@@ -1,29 +1,39 @@
 <?php
 
-     namespace Database\Seeders;
+namespace Database\Seeders;
 
-     use Illuminate\Database\Seeder;
-     use App\Models\Event;
-     use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
+use App\Models\Event;
+use App\Models\Club;
+use App\Models\User;
 
-     class EventSeeder extends Seeder
-     {
-         public function run()
-         {
-             $faker = Faker::create('vi_VN'); // Sử dụng locale tiếng Việt
-             $clubs = [1, 2, 3]; // Giả sử có 3 CLB với ID 1, 2, 3
-             $users = [1, 2, 3, 4, 5]; // Giả sử có 5 người dùng với ID 1 đến 5
+class EventSeeder extends Seeder
+{
+    public function run()
+    {
+        $faker = \Faker\Factory::create();
 
-             for ($i = 1; $i <= 10; $i++) {
-                 Event::create([
-                     'club_id' => $clubs[array_rand($clubs)], // Chọn ngẫu nhiên CLB
-                     'name' => $faker->sentence(3), // Tên sự kiện ngẫu nhiên
-                     'description' => $faker->paragraph(2), // Mô tả ngẫu nhiên
-                     'event_date' => $faker->dateTimeBetween('+1 week', '+3 months'), // Ngày trong 1-3 tháng tới
-                     'location' => $faker->city . ', ' . $faker->streetAddress, // Địa điểm ngẫu nhiên
-                     'status' => $faker->randomElement(['pending', 'approved', 'rejected']), // Trạng thái ngẫu nhiên
-                     'created_by' => $users[array_rand($users)], // Chọn ngẫu nhiên người tạo
-                 ]);
-             }
-         }
-     }
+        $clubIds = Club::pluck('id')->toArray();
+        $userIds = User::pluck('id')->toArray();
+
+        for ($i = 0; $i < 15; $i++) {
+            $start = $faker->dateTimeBetween('now', '+1 month');
+            $end = (clone $start)->modify('+2 hours');
+
+            Event::create([
+                'club_id' => $faker->randomElement($clubIds),
+                'name' => ucfirst($faker->words(3, true)),
+                'description' => $faker->paragraph(),
+                'start_time' => $start,
+                'end_time' => $end,
+                'location' => $faker->address(),
+                'max_participants' => $faker->numberBetween(20, 200),
+                'is_public' => $faker->boolean(),
+                'status' => $faker->randomElement(['pending', 'approved', 'rejected']),
+                'created_by' => $faker->randomElement($userIds),
+                'approval_by' => $faker->randomElement($userIds),
+                'budget' => $faker->randomFloat(2, 100000, 2000000),
+            ]);
+        }
+    }
+}

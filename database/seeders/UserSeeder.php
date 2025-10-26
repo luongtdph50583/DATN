@@ -4,49 +4,42 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Faker\Factory as Faker;
+use App\Models\User;
 
 class UserSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        $faker = Faker::create();
+        $faker = \Faker\Factory::create();
 
-        // 1) Tạo tài khoản admin cố định
-        DB::table('users')->insert([
-            'name'       => 'Admin',
-            'email'      => 'admin@gmail.com',
-            'password'   => Hash::make('123456'), // mật khẩu: 123456
-            'role'       => 'admin',
-            'status'     => 'active',
-            'avatar'     => null,
-            'remember_token' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
+        // Tạo 1 admin và 1 club_manager cố định
+        User::create([
+            'name' => 'Admin System',
+            'email' => 'admin@gmail.com',
+            'password' => Hash::make('123456'),
+            'role' => 'admin',
+            'status' => 'active',
         ]);
 
-        // 2) Tạo thêm N tài khoản fake để test
-        $count = 20; // chỉnh số lượng theo ý bạn
-        $roles = ['member', 'club_manager'];
+        User::create([
+            'name' => 'Club Manager',
+            'email' => 'manager@example.com',
+            'password' => Hash::make('123456'),
+            'role' => 'club_manager',
+            'status' => 'active',
+        ]);
 
-        $users = [];
-        for ($i = 0; $i < $count; $i++) {
-            $name = $faker->name;
-            $email = $faker->unique()->safeEmail;
-            $users[] = [
-                'name'       => $name,
-                'email'      => $email,
-                'password'   => Hash::make('password'), // mật khẩu mặc định cho fake users
-                'role'       => $roles[array_rand($roles)],
-                'status'     => 'active',
-                'avatar'     => null,
-                'remember_token' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+        // Fake thêm 20 user member
+        for ($i = 0; $i < 20; $i++) {
+            User::create([
+                'name' => $faker->name(),
+                'email' => $faker->unique()->safeEmail(),
+                'password' => Hash::make('123456'),
+                'role' => 'member',
+                'status' => $faker->randomElement(['active', 'inactive']),
+                'avatar' => $faker->imageUrl(200, 200, 'people', true),
+                'remember_token' => \Str::random(10),
+            ]);
         }
-
-        DB::table('users')->insert($users);
     }
 }

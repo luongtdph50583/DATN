@@ -143,7 +143,7 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="widgets.html">
+                            <a class="nav-link menu-link" href="{{ route('admin.comments.index') }}">
                                 <i class="ri-honour-line"></i> <span data-key="t-widgets">Bình luận</span>
                             </a>
                         </li>

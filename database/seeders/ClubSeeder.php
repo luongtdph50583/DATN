@@ -3,53 +3,28 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Faker\Factory as Faker;
+use App\Models\Club;
 use App\Models\User;
 
 class ClubSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        $faker = Faker::create();
+        $faker = \Faker\Factory::create();
+        $manager = User::where('role', 'club_manager')->first();
 
-        // Lấy danh sách user có vai trò "club_manager"
-        $managers = User::where('role', 'club_manager')->pluck('id')->toArray();
-
-        // Nếu chưa có manager nào, tạo tạm 1 admin làm quản lý
-        if (empty($managers)) {
-            $managers = [User::first()->id ?? 1];
+        for ($i = 0; $i < 5; $i++) {
+            Club::create([
+                'name' => 'CLB ' . ucfirst($faker->word()),
+                'description' => $faker->paragraph(),
+                'logo' => $faker->imageUrl(300, 300, 'sports', true),
+                'field' => $faker->randomElement(['Công nghệ', 'Nghệ thuật', 'Kinh doanh', 'Tình nguyện']),
+                'status' => $faker->randomElement(['active', 'pending', 'inactive']),
+                'manager_id' => $manager->id ?? null,
+                'email' => $faker->unique()->safeEmail(),
+                'phone' => '09' . $faker->numberBetween(10000000, 99999999),
+                'member_limit' => $faker->numberBetween(20, 100),
+            ]);
         }
-
-        // Danh sách CLB mẫu
-        $clubNames = [
-            'CLB Âm nhạc',
-            'CLB Bóng rổ',
-            'CLB Công nghệ',
-            'CLB Tình nguyện',
-            'CLB Nhiếp ảnh',
-            'CLB Sách & Tri thức',
-            'CLB Thiết kế',
-        ];
-
-        $clubs = [];
-
-        foreach ($clubNames as $name) {
-            $clubs[] = [
-                'name'          => $name,
-                'description'   => $faker->sentence(10),
-                'logo'          => null,
-                'field'         => $faker->randomElement(['Thể thao', 'Nghệ thuật', 'Công nghệ', 'Giáo dục']),
-                'status'        => $faker->randomElement(['active', 'pending', 'inactive']),
-                'manager_id'    => $faker->randomElement($managers),
-                'email'         => $faker->unique()->safeEmail,
-                'phone'         => $faker->phoneNumber,
-                'member_limit'  => $faker->numberBetween(20, 200),
-                'created_at'    => now(),
-                'updated_at'    => now(),
-            ];
-        }
-
-        DB::table('clubs')->insert($clubs);
     }
 }

@@ -8,9 +8,7 @@ use Illuminate\Database\Seeder;
    {
        public function run()
        {
-           $this->call([
-               UserSeeder::class,
-          
-           ]);
+        $this->call(PostAndCommentSeeder::class);
+
        }
    }

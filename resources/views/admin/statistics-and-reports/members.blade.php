@@ -66,12 +66,7 @@
 
     <!-- Bộ lọc -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <select id="sortMembers" class="form-control">
-                <option value="newest" {{ $sort == 'newest' ? 'selected' : '' }}>Thành viên mới nhất</option>
-                <option value="oldest" {{ $sort == 'oldest' ? 'selected' : '' }}>Thành viên cũ nhất</option>
-            </select>
-        </div>
+       
         <div class="col-md-3">
             <select id="statusFilter" class="form-control">
                 <option value="">-- Tất cả trạng thái --</option>
@@ -94,44 +89,44 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Tên</th>
-                                    <th>Email</th>
-                                    <th>Số điện thoại</th>
-                                    <th>Địa chỉ</th>
-                                    <th>Trạng thái</th>
-                                    <th>Ngày tham gia</th>
+                        <th>Tên người dùng</th>
+                        <th>Giới tính</th>
+                        <th>Khóa học</th>
+                        <th>Chuyên ngành</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tham gia</th>
                                      <th class="text-center">Hành động</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($members as $i => $member)
-                                    <tr>
-                                        <td>{{ $i + 1 + ($members->currentPage() - 1) * $members->perPage() }}</td>
-                                        <td>{{ $member->name }}</td>
-                                        <td>{{ $member->email }}</td>
-                                        <td>{{ $member->phone ?? '—' }}</td>
-                                        <td>{{ $member->address ?? '—' }}</td>
-                                        <td>
-                                            @if($member->status == 'active')
-                                                <span class="badge bg-success">Hoạt động</span>
-                                            @elseif($member->status == 'inactive')
-                                                <span class="badge bg-secondary">Không hoạt động</span>
-                                            @else
-                                                <span class="badge bg-light">Không rõ</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $member->created_at ? $member->created_at->format('Y-m-d') : '—' }}</td>
-                                         <td class="text-center">
-                                        <a href="#" class="btn btn-sm btn-info">
+                                 @forelse($members as $index => $member)
+                        <tr>
+                            <td>{{ $index + 1 + ($members->currentPage() - 1) * $members->perPage() }}</td>
+                            <td>{{ $member->user->name ?? 'Không rõ' }}</td>
+                            <td>
+                                @if($member->gender == 'male') Nam
+                                @elseif($member->gender == 'female') Nữ
+                                @else Khác @endif
+                            </td>
+                            <td>{{ $member->course ?? '-' }}</td>
+                            <td>{{ $member->major ?? '-' }}</td>
+                            <td>
+                                <span class="badge bg-{{ $member->status == 'active' ? 'success' : 'secondary' }}">
+                                    {{ $member->status == 'active' ? 'Hoạt động' : 'Ngưng hoạt động' }}
+                                </span>
+                            </td>
+                            <td>{{ $member->created_at ? $member->created_at->format('d/m/Y') : '-' }}</td>
+                            <td><a href="#" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i> Xem chi tiết
                                         </a>
-                                    </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center">Không có thành viên nào phù hợp.</td>
-                                    </tr>
-                                @endforelse
+                                    </td> 
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Không có thành viên nào phù hợp</td>
+                        </tr>
+                    @endforelse
+                                       
                             </tbody>
                         </table>
                     </div>

@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-    protected $fillable = ['club_id', 'user_id', 'title', 'content', 'type', 'status'];
+protected $fillable = [
+    'club_id',
+    'user_id',
+    'title',
+    'content',
+    'type',
+    'status',
+    'image',
+    'scope',
+];
+
 
     protected $morphClass = 'post';
 
