@@ -33,6 +33,11 @@
 
 <!-- Custom Css -->
 <link href="{{ asset('assets/css/custom.min.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ asset('assets/libs/quill/quill.core.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ asset('assets/libs/quill/quill.bubble.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ asset('assets/libs/quill/quill.snow.css') }}" rel="stylesheet" type="text/css" />
+<script src="{{ asset('assets/libs/quill/quill.min.js') }}"></script>
+
 
 
 </head>
@@ -166,6 +171,18 @@
 <!-- App js -->
 <script src="{{ asset('assets/js/app.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- CKEditor -->
+<script src="{{ asset('assets/libs/@ckeditor/ckeditor5-build-classic/build/ckeditor.js') }}"></script>
+
+<!-- Quill JS -->
+<script src="{{ asset('assets/libs/quill/quill.min.js') }}"></script>
+
+<!-- Init JS cho editor -->
+<script src="{{ asset('assets/js/pages/form-editor.init.js') }}"></script>
+
+<!-- App JS -->
+<script src="{{ asset('assets/js/app.js') }}"></script>
+
 
 
 

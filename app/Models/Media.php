@@ -4,13 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Media extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
-        'file_name', 'file_path', 'file_type',
-        'related_id', 'related_type', 'uploaded_by'
+        'file_name',
+        'file_path',
+        'file_type',
+        'related_id',
+        'related_type',
+        'uploaded_by'
     ];
+
+    protected $dates = ['deleted_at'];
 
     public function uploader(): BelongsTo
     {
@@ -21,9 +30,16 @@ class Media extends Model
     {
         return $this->morphTo();
     }
-  
 
+    // ✅ Scope: chỉ lấy media chưa bị xóa
+    public function scopeActive($query)
+    {
+        return $query->whereNull('deleted_at');
+    }
+
+    // ✅ Scope: chỉ lấy media đã bị xóa (thùng rác)
+    public function scopeTrashed($query)
+    {
+        return $query->onlyTrashed();
+    }
 }
-
-
-

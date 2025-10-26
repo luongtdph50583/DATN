@@ -16,8 +16,10 @@ class CreateMediaTable extends Migration
             $table->string('related_type')->nullable(); // clubs/events/posts
             $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes(); // ✅ hỗ trợ thùng rác
         });
     }
+
 
     public function down()
     {
