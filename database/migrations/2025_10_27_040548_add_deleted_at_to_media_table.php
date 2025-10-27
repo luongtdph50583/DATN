@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up(): void
+  public function up(): void
 {
     Schema::table('media', function (Blueprint $table) {
         $table->softDeletes()->after('updated_at');

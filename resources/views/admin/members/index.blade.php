@@ -87,9 +87,9 @@
                         <tr>
                             <th>ID</th>
                             <th>Họ tên</th>
+                            <th>MSSV</th>
                             <th>Email</th>
                             <th>SĐT</th>
-                            <th>CCCD</th>
                             <th>Khóa</th>
                             <th>Chuyên ngành</th>
                             <th>Trạng thái</th>
@@ -101,13 +101,14 @@
                             <tr>
                                 <td><span class="id-badge">#{{ $member->id }}</span></td>
                                 <td class="fw-bold">{{ $member->user->name ?? '—' }}</td>
+                                   <td>{{ $member->student_code ?? '<span class="text-muted">—</span>' }}</td>
                                 <td>
                                     <a href="mailto:{{ $member->user->email ?? '' }}" class="text-primary">
                                         {{ $member->user->email ?? '—' }}
                                     </a>
                                 </td>
                                 <td>{{ $member->phone ?? '<span class="text-muted">—</span>' }}</td>
-                                <td>{{ $member->citizen_id ?? '<span class="text-muted">—</span>' }}</td>
+                             
                                 <td>{{ $member->course ?? '<span class="text-muted">—</span>' }}</td>
                                 <td>{{ $member->major ?? '<span class="text-muted">—</span>' }}</td>
                                 <td>

@@ -28,10 +28,6 @@ public function members()
                 ->withPivot('role', 'joined_at', 'created_at')
                 ->withTimestamps();
 }
-
-
-
-
     public function posts()
     {
         return $this->hasMany(Post::class);

@@ -134,8 +134,8 @@
                 @forelse ($members as $index => $member)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
-                        <td>{{ $member->user->name ?? 'Không rõ' }}</td>
-                        <td>{{ $member->user->email ?? '—' }}</td>
+                                    <td>{{ $member->name }}</td>
+            <td>{{ $member->email }}</td>
                         <td class="text-center">
                             @if(isset($member->role))
                                 <span class="badge bg-info text-dark">{{ ucfirst($member->role) }}</span>

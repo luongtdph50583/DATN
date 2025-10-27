@@ -119,24 +119,47 @@ public function clubs(Request $request)
         return redirect()->route('admin.stats.clubs');
     }
 
-    // 1️⃣ Nhận thời gian lọc
+    // 1️⃣ Lấy khoảng thời gian lọc
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
 
-    // Nếu không có → mặc định là đầu năm đến cuối năm hiện tại
     if (!$startDate || !$endDate) {
-        $startDate = now()->startOfYear()->toDateString();
-        $endDate = now()->endOfYear()->toDateString();
+        $start = now()->startOfYear()->startOfDay();
+        $end = now()->endOfYear()->endOfDay();
+    } else {
+        try {
+            $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+        } catch (\Exception $e) {
+            $start = now()->startOfYear()->startOfDay();
+        }
+        try {
+            $end = \Carbon\Carbon::parse($endDate)->endOfDay();
+        } catch (\Exception $e) {
+            $end = now()->endOfYear()->endOfDay();
+        }
     }
 
-    // 2️⃣ Bộ lọc sắp xếp
+    // chuẩn cho input type="date" ở view
+    $startDateView = $start->toDateString();
+    $endDateView = $end->toDateString();
+
+    // 2️⃣ Lọc theo sắp xếp
     $sort = $request->query('sort', 'top_members');
 
-    // 🔹 Lấy danh sách CLB kèm đếm thành viên & sự kiện
-    // (Giả sử Club model có quan hệ: members() và events())
     $query = \App\Models\Club::withCount(['members', 'events'])
-        ->whereBetween('created_at', [$startDate, $endDate]);
+        ->whereBetween('created_at', [$start, $end]);
 
+    // 3️⃣ Lọc theo trạng thái (nếu có)
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    // 4️⃣ Lọc theo tên CLB (tìm kiếm)
+    if ($request->filled('search')) {
+        $query->where('name', 'like', '%' . $request->search . '%');
+    }
+
+    // 5️⃣ Sắp xếp
     switch ($sort) {
         case 'least_members':
             $query->orderBy('members_count', 'asc');
@@ -149,47 +172,58 @@ public function clubs(Request $request)
             break;
         default:
             $query->orderBy('members_count', 'desc');
-            break;
     }
 
-    $clubs = $query->paginate(10);
+    $clubs = $query->paginate(10)->appends($request->query());
 
-    // 3️⃣ Dữ liệu cho biểu đồ
+    // ---------------------------
+    // 🔢 Tạo dữ liệu cho biểu đồ
+    // ---------------------------
     $labels = [];
     $clubsPerMonth = [];
     $membersPerMonth = [];
     $eventsPerMonth = [];
 
-    $period = \Carbon\CarbonPeriod::create($startDate, '1 month', $endDate);
+    // tạo period từ tháng bắt đầu đến tháng kết thúc
+    $periodStart = $start->copy()->startOfMonth();
+    $periodEnd = $end->copy()->endOfMonth();
+
+    $period = \Carbon\CarbonPeriod::create($periodStart, '1 month', $periodEnd);
 
     foreach ($period as $date) {
         $month = $date->month;
         $year = $date->year;
         $labels[] = "Tháng {$month}/{$year}";
 
-        // Số CLB tạo trong tháng
-        $clubsPerMonth[] = \App\Models\Club::whereYear('created_at', $year)
+        // NOTE: dùng whereYear + whereMonth để đếm theo tháng
+        $clubsPerMonth[] = Club::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->count();
 
-        // Số thành viên đăng ký trong tháng
-        $membersPerMonth[] = \App\Models\User::where('role', 'member')
+        $membersPerMonth[] = User::where('role', 'member')
             ->whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->count();
 
-        // Số sự kiện tạo trong tháng
-        $eventsPerMonth[] = \App\Models\Event::whereYear('created_at', $year)
+        $eventsPerMonth[] = Event::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->count();
     }
 
-    // 4️⃣ Trả về view
+    // 6️⃣ Nếu request là AJAX → trả về partial bảng thôi (không trả data chart)
+    if ($request->ajax()) {
+        return view('admin.statistics-and-reports.partials.club_table', compact('clubs'))->render();
+    }
+
+    // 7️⃣ Nếu request thường → load full trang, truyền cả dữ liệu biểu đồ
     return view('admin.statistics-and-reports.clubs', compact(
-        'clubs', 'sort', 'startDate', 'endDate',
+        'clubs', 'sort', 'startDateView', 'endDateView',
         'labels', 'clubsPerMonth', 'membersPerMonth', 'eventsPerMonth'
     ));
 }
+
+
+
 
 
 

@@ -50,6 +50,12 @@
                             </select>
                             @error('user_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
+                        <div class="form-group">
+    <label class="form-label fw-bold">Mã số sinh viên</label>
+    <input type="text" name="student_code" class="form-control" 
+           value="{{ old('student_code', $member->student_code ?? '') }}"
+           placeholder="Nhập mã số sinh viên">
+</div>
 
                         <!-- Giới tính -->
                         <div class="form-group">

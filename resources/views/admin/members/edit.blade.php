@@ -47,6 +47,18 @@
                                 {{ $member->user->name }} ({{ $member->user->email }})
                             </div>
                         </div>
+                        <!-- Mã số sinh viên -->
+<div class="form-group">
+    <label class="form-label fw-bold">Mã số sinh viên <span class="text-danger">*</span></label>
+    <input type="text" name="student_code"
+           class="form-control @error('student_code') is-invalid @enderror"
+           value="{{ old('student_code', $member->student_code) }}"
+           placeholder="Nhập mã số sinh viên (VD: PH4995)">
+    @error('student_code')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
 
                         <!-- Giới tính -->
                         <div class="form-group">

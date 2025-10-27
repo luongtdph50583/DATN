@@ -18,7 +18,8 @@
         <div class="col-md-8">
             <div class="card-body">
                 <h5 class="fw-bold mb-2">{{ $comment->post->title ?? 'Không xác định' }}</h5>
-                <p class="text-muted mb-3">{{ $comment->post->content ?? 'Nội dung không khả dụng' }}</p>
+                <div class="text-muted mb-3">{!! $comment->post->content ?? 'Nội dung không khả dụng' !!}</div>
+
 
               
 

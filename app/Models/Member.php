@@ -10,6 +10,7 @@ class Member extends Model
     protected $fillable = [
         'user_id',
         'gender',
+        'student_code',
         'date_of_birth',
         'address',
         'course',
@@ -27,7 +28,7 @@ class Member extends Model
     ];
     public function user()
     {
-             return $this->belongsTo(User::class, 'user_id');
+             return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     public function clubs()

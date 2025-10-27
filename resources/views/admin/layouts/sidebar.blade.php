@@ -127,16 +127,17 @@
 
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="#sidebartintuc" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebartintuc">
-                                <i class="ri-stack-line"></i> <span data-key="t-advance-ui">Tin tức và bài viết</span>
+                                <i class="ri-stack-line"></i> <span data-key="t-advance-ui">Bài viết và Tài liệu</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebartintuc">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.documents.index') }}" class="nav-link" data-key="t-sweet-alerts">Tin Tức</a>
-                                    </li>
-                                    <li class="nav-item">
+                                     <li class="nav-item">
                                         <a href="{{ route('admin.posts.index') }}" class="nav-link" data-key="t-nestable-list">Bài Viết</a>
+                                    </li> 
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.documents.index') }}" class="nav-link" data-key="t-sweet-alerts">Tài Liệu </a>
                                     </li>
+                                  
 
                                 </ul>
                             </div>
