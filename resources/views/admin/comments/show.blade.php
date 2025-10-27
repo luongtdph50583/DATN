@@ -14,32 +14,13 @@
 <!-- Card bài viết -->
 <div class="card card-post mb-4">
     <div class="row g-0 align-items-center">
-        <div class="col-md-4 text-center">
-            @if($comment->post->image ?? false)
-                <img src="{{ asset('storage/' . $comment->post->image) }}" 
-                     alt="Ảnh bài viết" 
-                     class="img-fluid post-image"
-                     style="max-height: 200px; object-fit: cover;">
-            @else
-                <div class="border rounded p-4 text-muted bg-light">
-                    <i class="fas fa-image fa-3x mb-2"></i><br>
-                    Không có ảnh
-                </div>
-            @endif
-        </div>
 
         <div class="col-md-8">
             <div class="card-body">
                 <h5 class="fw-bold mb-2">{{ $comment->post->title ?? 'Không xác định' }}</h5>
                 <p class="text-muted mb-3">{{ $comment->post->content ?? 'Nội dung không khả dụng' }}</p>
 
-                <p class="mb-1"><strong>Phạm vi hiển thị:</strong> 
-                    @if($comment->post->scope === 'club')
-                        <span class="badge badge-bg-gradient" title="Chỉ thành viên CLB mới thấy">Trong CLB</span>
-                    @else
-                        <span class="badge badge-bg-gradient" title="Công khai">Công khai</span>
-                    @endif
-                </p>
+              
 
                 <p class="mb-1"><strong>Trạng thái bài viết:</strong> 
                     @if($comment->post->status === 'visible')

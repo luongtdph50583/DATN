@@ -8,10 +8,6 @@ use Illuminate\Database\Seeder;
    {
        public function run()
        {
-<<<<<<< HEAD
-        $this->call(PostAndCommentSeeder::class);
-
-=======
            $this->call([
               MemberSeeder::class,
                UserSeeder::class,
@@ -27,8 +23,6 @@ use Illuminate\Database\Seeder;
                CommentSeeder::class,
                SessionSeeder::class,
                FundTransactionSeeder::class,
-
            ]);
->>>>>>> c7ce5a584d2062f69f26293277e6021bdd430e1e
        }
    }

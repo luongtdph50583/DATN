@@ -15,10 +15,11 @@ class CreatePostsTable extends Migration
             $table->text('content');
             $table->enum('type', ['post', 'notice', 'document'])->default('post');
             $table->enum('status', ['visible', 'hidden'])->default('visible');
+            $table->enum('visibility', ['internal', 'public'])->default('public'); // thêm visibility nếu muốn
+            $table->string('thumbnail')->nullable(); // ảnh đại diện
             $table->timestamps();
         });
     }
-
     public function down()
     {
         Schema::dropIfExists('posts');
