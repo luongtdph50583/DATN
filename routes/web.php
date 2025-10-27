@@ -167,11 +167,48 @@ Route::prefix('admin')
             Route::post('/{joinRequest}', 'handle')->name('handle');
         });
 
-        // 🔔 Notification Management
-        Route::controller(NotificationController::class)
-            ->prefix('notifications')
-            ->as('notifications.')
+    // 📝 Club Request Management
+   
+        Route::controller(ClubRequestController::class)
+            ->prefix('club-requests')
+            ->as('club-requests.')
             ->group(function () {
+                Route::get('/', 'index')->name('index');
+                // Route model binding
+                Route::get('/{clubRequest}', 'show')->name('show');
+                // PATCH để update status
+                Route::patch('/{clubRequest}/update-status', 'updateStatus')->name('updateStatus');
+            });
+
+
+
+// 🙋‍♂️ Club Join Request Management
+Route::controller(ClubJoinRequestController::class)
+    ->prefix('club-join-requests')
+    ->as('club-join-requests.')
+    ->group(function () {
+        // Danh sách yêu cầu
+        Route::get('/', 'index')->name('index');
+
+        // Xem chi tiết 1 yêu cầu
+        Route::get('/{id}', 'show')->name('show');
+
+        // Duyệt yêu cầu
+        Route::post('/{id}/approve', 'approve')->name('approve');
+
+        // Từ chối yêu cầu
+        Route::post('/{id}/reject', 'reject')->name('reject');
+
+        // Gửi yêu cầu (nếu bạn dùng cho user)
+        Route::post('/{club_id}/store', 'store')->name('store');
+    });
+
+
+    // 🔔 Notification Management
+    Route::controller(NotificationController::class)
+        ->prefix('notifications')
+        ->as('notifications.')
+        ->group(function () {
             Route::get('/create', 'create')->name('create');
             Route::post('/', 'store')->name('store');
         });

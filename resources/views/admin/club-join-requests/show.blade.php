@@ -1,87 +1,71 @@
 @extends('admin.layouts.app')
-
 @section('title', 'Chi tiết yêu cầu tham gia CLB')
 
 @section('card-body')
 <div class="container py-4">
-    <h1 class="h4 mb-4 text-gray-800">Chi tiết yêu cầu #{{ $joinRequest->id }}</h1>
-
-    {{-- Thông tin người gửi --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light fw-bold">Thông tin người gửi</div>
-        <div class="card-body">
-            <p><strong>Họ tên:</strong> {{ $joinRequest->user->name ?? 'Không rõ' }}</p>
-            <p><strong>Email:</strong> {{ $joinRequest->user->email ?? '—' }}</p>
-            <p><strong>Ngày gửi:</strong> {{ $joinRequest->created_at->format('d/m/Y H:i') }}</p>
-            <p><strong>Trạng thái:</strong>
-                <span class="badge-status {{ $joinRequest->status }}">
-                    @switch($joinRequest->status)
-                        @case('approved') Đã duyệt @break
-                        @case('rejected') Từ chối @break
-                        @default Chờ duyệt
-                    @endswitch
-                </span>
-            </p>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">🔍 Chi tiết yêu cầu tham gia CLB</h3>
+        <a href="{{ route('admin.club-join-requests.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
     </div>
 
-    {{-- Thông tin CLB --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light fw-bold">Thông tin Câu lạc bộ</div>
-        <div class="card-body">
-            @if ($joinRequest->club)
-                <p><strong>Tên CLB:</strong> {{ $joinRequest->club->name }}</p>
-                <p><strong>Lĩnh vực:</strong> {{ $joinRequest->club->field ?? '—' }}</p>
-                <p><strong>Người phụ trách:</strong> {{ $joinRequest->club->leader->name ?? 'Không rõ' }}</p>
-                <p><strong>Mô tả:</strong></p>
-                <div class="border p-3 bg-light rounded">
-                    {{ $joinRequest->club->description ?? 'Không có mô tả' }}
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3">
+                    <strong class="text-muted">👤 Người gửi:</strong>
+                    <div class="fs-5 fw-semibold text-dark">
+                        {{ $joinRequest->user->name ?? 'Không xác định' }}
+                    </div>
                 </div>
-            @else
-                <p class="text-muted">Thông tin CLB không khả dụng.</p>
-            @endif
-        </div>
-    </div>
 
-    {{-- Ghi chú của người gửi --}}
-    @if (!empty($joinRequest->message))
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light fw-bold">Lời nhắn / Ghi chú</div>
-            <div class="card-body">
-                {{ $joinRequest->message }}
+                <div class="col-md-6 mb-3">
+                    <strong class="text-muted">🏛 CLB:</strong>
+                    <div class="fs-5 fw-semibold text-primary">
+                        {{ $joinRequest->club->name ?? 'Không xác định' }}
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong class="text-muted">📅 Ngày gửi:</strong>
+                    <div class="fs-6">
+                        {{ $joinRequest->requested_at ? $joinRequest->requested_at->format('d/m/Y H:i') : '—' }}
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <strong class="text-muted">📌 Trạng thái:</strong>
+                    <div class="mt-1">
+                        @if($joinRequest->status === 'pending')
+                            <span class="badge bg-warning text-dark px-3 py-2">⏳ Đang chờ duyệt</span>
+                        @elseif($joinRequest->status === 'approved')
+                            <span class="badge bg-success px-3 py-2">✅ Đã duyệt</span>
+                        @else
+                            <span class="badge bg-danger px-3 py-2">❌ Từ chối</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-start gap-3 mt-4">
+                <form action="{{ route('admin.club-join-requests.approve', $joinRequest->id) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-success px-4"
+                            onclick="return confirm('Bạn có chắc chắn muốn duyệt yêu cầu này?')">
+                        <i class="bi bi-check-circle"></i> Duyệt
+                    </button>
+                </form>
+
+                <form action="{{ route('admin.club-join-requests.reject', $joinRequest->id) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-danger px-4"
+                            onclick="return confirm('Bạn chắc chắn muốn từ chối yêu cầu này?')">
+                        <i class="bi bi-x-circle"></i> Từ chối
+                    </button>
+                </form>
             </div>
         </div>
-    @endif
-
-    {{-- Nút hành động --}}
-    @if ($joinRequest->status === 'pending')
-        <form action="{{ route('admin.club-join-requests.handle', $joinRequest->id) }}" method="POST" class="mb-3">
-            @csrf
-            <button type="submit" name="action" value="approve" class="btn btn-success">
-                ✅ Duyệt yêu cầu
-            </button>
-            <button type="submit" name="action" value="reject" class="btn btn-danger"
-                onclick="return confirm('Bạn có chắc muốn từ chối yêu cầu này?')">
-                ❌ Từ chối
-            </button>
-        </form>
-    @endif
-
-    <a href="{{ route('admin.club-join-requests.index') }}" class="btn btn-secondary">← Quay lại</a>
+    </div>
 </div>
-
-{{-- CSS --}}
-<style>
-.badge-status {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 600;
-    text-transform: capitalize;
-    display: inline-block;
-    min-width: 100px;
-}
-.badge-status.pending { background-color: #ffc107; color: #212529; }
-.badge-status.approved { background-color: #28a745; color: #fff; }
-.badge-status.rejected { background-color: #dc3545; color: #fff; }
-</style>
 @endsection

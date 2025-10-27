@@ -4,71 +4,73 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClubRequest;
+use App\Models\Club;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ClubRequestController extends Controller
 {
-    public function index(Request $request)
-{
-    $query = ClubRequest::with('user');
+    // danh sách (paginate)
+    public function index()
+    {
+        $requests = ClubRequest::with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate(12);
 
-    // 🔍 Lọc theo tên CLB hoặc người gửi
-    if ($request->filled('search')) {
-        $search = $request->search;
-        $query->where('name', 'like', "%{$search}%")
-              ->orWhereHas('user', function ($q) use ($search) {
-                  $q->where('name', 'like', "%{$search}%");
-              });
+        return view('admin.club-requests.index', compact('requests'));
     }
 
-    // 🔖 Lọc theo trạng thái
-    if ($request->filled('status')) {
-        $query->where('status', $request->status);
+    // show chi tiết (route model binding)
+    public function show(ClubRequest $clubRequest)
+    {
+        $clubRequest->load('user');
+        return view('admin.club-requests.show', compact('clubRequest'));
     }
 
-    // 📚 Lọc theo lĩnh vực
-    if ($request->filled('field')) {
-        $query->where('field', $request->field);
-    }
-
-    $requests = $query->latest()->paginate(10);
-
-    return view('admin.club-requests.index', compact('requests'));
-}
-public function show(ClubRequest $clubRequest)
-{
-    return view('admin.club-requests.show', compact('clubRequest'));
-}
-
-
- public function handle(Request $request, \App\Models\ClubRequest $clubRequest)
-{
-    $action = $request->input('action');
-
-    if ($action === 'approve') {
-        // ✅ 1. Cập nhật trạng thái yêu cầu
-        $clubRequest->update(['status' => 'approved']);
-
-        // ✅ 2. Tạo CLB mới từ yêu cầu
-        \App\Models\Club::create([
-            'name'        => $clubRequest->name,
-            'description' => $clubRequest->description,
-            'field'       => $clubRequest->field,
-            'logo'        => $clubRequest->logo ?? null,
-            'leader_id'   => $clubRequest->user_id,
-            'status'      => 'active', // hoặc 'pending' nếu bạn muốn duyệt 2 bước
+    // cập nhật trạng thái
+    public function updateStatus(Request $request, ClubRequest $clubRequest)
+    {
+        $data = $request->validate([
+            'status' => 'required|in:pending,approved,rejected'
         ]);
 
-        // (Tùy chọn) Xóa yêu cầu sau khi tạo CLB
-        // $clubRequest->delete();
+        $status = $data['status'];
 
-    } elseif ($action === 'reject') {
-        $clubRequest->update(['status' => 'rejected']);
+        DB::beginTransaction();
+        try {
+            $clubRequest->status = $status;
+            $clubRequest->save();
+
+            if ($status === 'approved') {
+                // kiểm tra trùng tên CLB
+                $exists = Club::where('name', $clubRequest->name)->exists();
+                if ($exists) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Tên CLB đã tồn tại. Vui lòng đổi tên trước khi duyệt.');
+                }
+
+                // tạo club mới
+                $club = Club::create([
+                    'name' => $clubRequest->name,
+                    'description' => $clubRequest->description,
+                    'logo' => $clubRequest->logo ?? null, // reuse path nếu có
+                    'leader_id' => $clubRequest->user_id,
+                    'field' => $clubRequest->field ?? null,
+                ]);
+
+                // nếu muốn: thêm bản ghi member chủ nhiệm vào bảng membership ở đây
+
+                DB::commit();
+                return redirect()->back()->with('success', 'Yêu cầu đã được duyệt và CLB đã được tạo!');
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Trạng thái yêu cầu đã được cập nhật!');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            // Bạn có thể log lỗi: \Log::error($e);
+            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        }
     }
-
-    return redirect()
-        ->route('admin.club-requests.index')
-        ->with('success', 'Đã xử lý yêu cầu thành công!');
-}
-
 }

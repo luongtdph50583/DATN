@@ -3,98 +3,108 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Club;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
 
 class ClubController extends Controller
 {
-    // === Danh sách CLB ===
+    // =================== Danh sách CLB + Tìm kiếm ===================
     public function index(Request $request)
     {
-        $query = Club::with('leader');
+        $query = Club::with('manager'); // load manager để tránh N+1
 
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        if ($request->filled('field')) {
+            $query->where('field', 'like', '%' . $request->field . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
         $clubs = $query->orderBy('id', 'desc')->get();
+        $users = User::all(); // dùng để gán chủ nhiệm
 
-        return view('admin.clubs.index', compact('clubs'));
+        return view('admin.clubs.index', compact('clubs', 'users'));
     }
 
-    // === Form tạo CLB ===
+    // =================== Hiển thị chi tiết CLB ===================
+    public function show(Club $club)
+    {
+        $club->load('manager', 'members'); // load manager + members
+        return view('admin.clubs.show', compact('club'));
+    }
+
+    // =================== Form tạo CLB ===================
     public function create()
     {
         $users = User::all();
         return view('admin.clubs.create', compact('users'));
     }
 
-    // === Lưu CLB mới ===
+    // =================== Lưu CLB mới ===================
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'logo' => 'nullable|image|max:2048',
-            'field' => 'nullable|string|max:255',
-            'status' => 'required|string|in:active,pending,inactive',
-            'leader_id' => 'nullable|exists:users,id',
+        $request->validate([
+            'name' => 'required',
+            'field' => 'required',
+            'status' => 'nullable|in:active,pending,inactive',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
+        $data = $request->all();
+
+        // Upload logo nếu có
         if ($request->hasFile('logo')) {
-            $validated['logo'] = $request->file('logo')->store('logos', 'public');
+            $path = $request->file('logo')->store('logos', 'public'); // storage/app/public/logos
+            $data['logo'] = $path;
         }
 
-        // Nếu chưa chọn leader → gán mặc định là người đang đăng nhập
-        $validated['leader_id'] = $request->input('leader_id') ?? Auth::id();
+        Club::create($data);
 
-        Club::create($validated);
-
-        return redirect()->route('admin.clubs.index')->with('success', 'Thêm Câu lạc bộ thành công!');
+        return redirect()->route('admin.clubs.index')
+            ->with('success', 'Tạo CLB thành công');
     }
 
-    // === Xem chi tiết CLB ===
-    public function show(Club $club)
-    {
-        $club->load(['leader', 'members.user']);
-        return view('admin.clubs.show', compact('club'));
-    }
-
-    // === Form sửa CLB ===
+    // =================== Form sửa CLB ===================
     public function edit(Club $club)
     {
         $users = User::all();
         return view('admin.clubs.edit', compact('club', 'users'));
     }
 
-    // === Cập nhật CLB ===
+    // =================== Cập nhật CLB ===================
     public function update(Request $request, Club $club)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'logo' => 'nullable|image|max:2048',
-            'field' => 'nullable|string|max:255',
-            'status' => 'required|string|in:active,pending,inactive',
-            'leader_id' => 'nullable|exists:users,id',
+        $request->validate([
+            'name' => 'required',
+            'field' => 'required',
+            'status' => 'nullable|in:active,pending,inactive',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
+        $data = $request->all();
+
+        // Upload logo mới, xóa logo cũ nếu có
         if ($request->hasFile('logo')) {
             if ($club->logo && Storage::disk('public')->exists($club->logo)) {
                 Storage::disk('public')->delete($club->logo);
             }
-            $validated['logo'] = $request->file('logo')->store('logos', 'public');
+            $data['logo'] = $request->file('logo')->store('logos', 'public');
         }
 
-        $club->update($validated);
+        $club->update($data);
 
-        return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật CLB thành công!');
+        return redirect()->route('admin.clubs.index')
+            ->with('success', 'Cập nhật CLB thành công');
     }
 
-    // === Xóa CLB ===
+    // =================== Xóa CLB ===================
     public function destroy(Club $club)
     {
         if ($club->logo && Storage::disk('public')->exists($club->logo)) {
@@ -103,40 +113,27 @@ class ClubController extends Controller
 
         $club->delete();
 
-        return redirect()->route('admin.clubs.index')->with('success', 'Xóa CLB thành công!');
+        return back()->with('success', 'Xóa CLB thành công');
     }
 
-    // === Form gán chủ nhiệm ===
+    // =================== Form gán chủ nhiệm ===================
     public function assign(Club $club)
     {
         $users = User::all();
         return view('admin.clubs.assign', compact('club', 'users'));
     }
 
-    // === Lưu chủ nhiệm ===
-    public function assignStore(Request $request, Club $club)
+    // =================== Lưu chủ nhiệm ===================
+    public function assignManager(Request $request, Club $club)
     {
-        $validated = $request->validate([
-            'leader_id' => 'required|exists:users,id',
+        $request->validate([
+            'manager_id' => 'required|exists:users,id'
         ]);
 
-        $club->update(['leader_id' => $validated['leader_id']]);
+        $club->manager_id = $request->manager_id;
+        $club->save();
 
-        return redirect()->route('admin.clubs.index')->with('success', 'Gán chủ nhiệm thành công!');
+        return redirect()->route('admin.clubs.index')
+            ->with('success', 'Gán chủ nhiệm thành công!');
     }
-
-    public function approve(Club $club)
-{
-    // Chỉ duyệt nếu đang ở trạng thái pending
-    if ($club->status !== 'pending') {
-        return redirect()->back()->with('warning', 'CLB này đã được duyệt hoặc bị vô hiệu hóa.');
-    }
-
-    $club->update(['status' => 'active']);
-
-    return redirect()
-        ->route('admin.clubs.index')
-        ->with('success', "CLB '{$club->name}' đã được duyệt thành công!");
-}
-
 }

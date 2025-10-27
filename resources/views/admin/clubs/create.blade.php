@@ -1,44 +1,59 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Thêm Câu lạc bộ mới')
+@section('title', 'Tạo CLB')
 
 @section('card-body')
 <div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Thêm Câu lạc bộ</h1>
+    <h1 class="mb-4">Tạo Câu lạc bộ mới</h1>
 
     <form action="{{ route('admin.clubs.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        <div class="form-group">
-            <label>Tên Câu lạc bộ</label>
-            <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
-        </div>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    {{-- Logo bên trái --}}
+                    <div class="col-md-4 text-center">
+                        <div class="border p-4 text-muted">
+                            Chưa có logo
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Upload logo</label>
+                            <input type="file" name="logo" class="form-control">
+                        </div>
+                    </div>
 
-        <div class="form-group">
-            <label>Mô tả</label>
-            <textarea name="description" class="form-control">{{ old('description') }}</textarea>
-        </div>
+                    {{-- Thông tin CLB bên phải --}}
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label">Tên CLB</label>
+                            <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+                        </div>
 
-        <div class="form-group">
-            <label>Logo</label>
-            <input type="file" name="logo" class="form-control-file">
-        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Lĩnh vực</label>
+                            <input type="text" name="field" class="form-control" value="{{ old('field') }}" required>
+                        </div>
 
-        <div class="form-group">
-            <label>Lĩnh vực</label>
-            <input type="text" name="field" class="form-control" value="{{ old('field') }}">
-        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <select name="status" class="form-control">
+                                <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Hoạt động</option>
+                                <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
+                                <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Không hoạt động</option>
+                            </select>
+                        </div>
 
-        <div class="form-group">
-            <label>Trạng thái</label>
-            <select name="status" class="form-control">
-                <option value="active">Hoạt động</option>
-                <option value="pending">Chờ duyệt</option>
-                <option value="inactive">Không hoạt động</option>
-            </select>
-        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả</label>
+                            <textarea name="description" class="form-control" rows="4">{{ old('description') }}</textarea>
+                        </div>
 
-        <button type="submit" class="btn btn-success">Lưu</button>
-        <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">Hủy</a>
+                        <button type="submit" class="btn btn-primary">Tạo CLB</button>
+                        <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">Quay lại</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </form>
 </div>
 @endsection
