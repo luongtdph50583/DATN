@@ -158,15 +158,29 @@
             const reason = prompt("Nhập lý do xóa bài viết:");
             if (reason && reason.trim() !== "") {
                 const form = document.getElementById(`delete-form-${postId}`);
+                if (!form) {
+                    alert("Không tìm thấy form xóa.");
+                    return;
+                }
+
+                // Xóa input cũ nếu đã tồn tại
+                const existingInput = form.querySelector('input[name="reason"]');
+                if (existingInput) {
+                    existingInput.remove();
+                }
+
+                // Tạo input mới
                 const input = document.createElement("input");
                 input.type = "hidden";
                 input.name = "reason";
-                input.value = reason;
+                input.value = reason.trim();
                 form.appendChild(input);
+
                 form.submit();
             } else {
                 alert("Bạn phải nhập lý do xóa.");
             }
         }
+
 
 </script>

@@ -6,9 +6,9 @@
     <title>{{ $title }}</title>
 </head>
 
-<body>
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
     <h2>{{ $title }}</h2>
-    <p>{{ $messageContent }}</p>
+    <p>{!! nl2br(e($messageContent)) !!}</p>
 </body>
 
 </html>

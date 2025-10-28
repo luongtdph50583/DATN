@@ -7,9 +7,12 @@ use App\Models\Post;
 use App\Models\Media;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Jobs\SendNotificationJob;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\GenericNotificationMail;
 use App\Notifications\CustomNotification;
 
 class PostController extends Controller
@@ -40,26 +43,24 @@ class PostController extends Controller
      */
 
 
+
     public function destroy(Request $request, $id)
     {
         $post = Post::findOrFail($id);
         $user = $post->user;
         $reason = $request->input('reason', 'Vi phạm nội quy');
 
-        // ✅ Lấy tất cả media liên quan đến bài viết
+        // ✅ Xóa tất cả media liên quan
         $mediaList = Media::withTrashed()
             ->where('related_type', 'post')
             ->where('related_id', $post->id)
             ->get();
 
         foreach ($mediaList as $media) {
-            // ✅ Xóa file vật lý nếu tồn tại
             $filePath = storage_path('app/public/' . $media->file_path);
             if (file_exists($filePath)) {
                 unlink($filePath);
             }
-
-            // ✅ Xóa bản ghi khỏi database (kể cả nếu đã bị xóa mềm)
             $media->forceDelete();
         }
 
@@ -71,15 +72,18 @@ class PostController extends Controller
         // ✅ Xóa bài viết
         $post->delete();
 
-        // ✅ Gửi thông báo cho người dùng
-        $user->notify(new CustomNotification(
+        // ✅ Gửi thông báo và email qua job (xử lý nền)
+        dispatch(new SendNotificationJob(
+            $user,
             'Bài viết bị xóa',
-            "Bài viết của bạn đã bị xóa vì lý do: $reason"
+            "Bài viết của bạn đã bị xóa vì lý do: $reason",
+            'both' 
         ));
 
-        return redirect()->back()->with('success', 'Đã xóa bài viết, toàn bộ file đính kèm và đã gửi email thông báo ');
+        // ✅ Redirect về danh sách bài viết
+        return redirect()->route('admin.posts.index')
+            ->with('success', 'Đã xóa bài viết và gửi thông báo + email cho người dùng.');
     }
-
 
 
     /**
@@ -290,7 +294,6 @@ class PostController extends Controller
                     $media->restore();
             }
         }
-
         // =============================
         // 6. Move tất cả file editor trong uploads/posts -> folder đúng, cập nhật Media
         // Thumbnail KHÔNG có trong uploads/posts, nên sẽ không bị tạo Media
@@ -359,13 +362,6 @@ class PostController extends Controller
         return redirect()->route('admin.posts.show', $post->id)
             ->with('success', 'Đã cập nhật bài viết thành công!');
     }
-
-
-
-
-
-
-
 
     public function create()
     {
