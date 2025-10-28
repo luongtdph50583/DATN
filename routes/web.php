@@ -19,7 +19,8 @@ use App\Http\Controllers\Admin\{
     ClubReportController,
     ClubRequestController,
     TrashController,
-    ClubJoinRequestController
+    ClubJoinRequestController,
+    PlanController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -273,7 +274,26 @@ Route::controller(ClubJoinRequestController::class)
         Route::get('/test-role', function () {
             return 'Bạn có quyền truy cập admin!';
         });
+
+            // 📋 Club Plan Management
+    Route::controller(PlanController::class)
+        ->prefix('plans')
+        ->as('plans.')
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{plan}', 'show')->name('show');
+            Route::get('/{plan}/edit', 'edit')->name('edit');
+            Route::put('/{plan}', 'update')->name('update');
+            Route::delete('/{plan}', 'destroy')->name('destroy');
+            Route::post('/{plan}/approve', 'approve')->name('approve');
+            Route::post('/{plan}/reject', 'reject')->name('reject');
+});
     });
+
+
+
 
 // === 🏛 Club Manager Routes ===
 Route::prefix('club-manager')
@@ -295,6 +315,7 @@ Route::prefix('club-manager')
             Route::get('/api/summary', 'summary')->name('summary');
         });
     });
+
 
 // === Auth Routes ===
 require __DIR__ . '/auth.php';
