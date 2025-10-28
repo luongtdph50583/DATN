@@ -121,6 +121,14 @@
                                 <i class="ri-honour-line"></i> <span data-key="t-widgets">Thống kê</span>
                             </a>
                         </li>
+                        {{--Plans club --}}
+                        <li>
+                            <a class="nav-link menu-link" href="{{ route('admin.plans.index') }}">
+                                <i class="ri-file-list-3-line"></i> <span data-key="t-forms">Kế hoạch</span>
+                            </a>
+                        </li>
+                        {{-- End Plans club --}}
+                        
                         <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Nội dung</span></li>
 
 
