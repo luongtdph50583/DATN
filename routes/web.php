@@ -206,13 +206,27 @@ Route::controller(ClubJoinRequestController::class)
 
 
     // 🔔 Notification Management
-    Route::controller(NotificationController::class)
-        ->prefix('notifications')
-        ->as('notifications.')
-        ->group(function () {
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-        });
+  
+        // 🔔 Notification Management
+        // 🔔 Notification Management
+    
+        Route::controller(NotificationController::class)
+            ->prefix('notifications')
+            ->as('notifications.')
+            ->group(function () {
+
+                Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
+                Route::get('/create', 'create')->name('create');           // form tạo thông báo
+                Route::post('/', 'store')->name('store');                  // lưu thông báo
+        
+                // AJAX
+                Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
+                Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
+                Route::get('/fetch-club-members', 'fetchClubMembers')->name('fetchClubMembers');
+                Route::get('/fetch-events', 'fetchEvents')->name('fetchEvents');
+                Route::get('/fetch-event-members', 'fetchEventMembers')->name('fetchEventMembers');
+            });
+
 
         // 📊 Statistics Management
         Route::controller(StatisticsController::class)
@@ -260,7 +274,7 @@ Route::controller(ClubJoinRequestController::class)
             Route::get('/api/summary', 'summary')->name('summary');
         });
 
-        // 🗑️ Trash Management 
+        // 🗑️ Trash Management
         Route::prefix('trash/media')
             ->as('trash.media.')
             ->controller(TrashController::class)
