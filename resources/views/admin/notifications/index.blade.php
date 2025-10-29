@@ -4,86 +4,87 @@
 @section('card-title', 'Danh sách thông báo')
 @section('card-header', 'Trung tâm thông báo')
 
-@if (session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-@endif
+
 
 @section('card-body')
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Danh sách thông báo</h5>
-        <a href="{{ route('admin.notifications.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Tạo thông báo mới
-        </a>
-    </div>
-
-    <form method="POST" action="{{ route('admin.notifications.bulkDelete') }}" id="bulk-delete-form">
-        @csrf
-
-        <div class="mb-2">
-            <button type="button" id="bulk-delete-btn" class="btn btn-danger btn-sm">
-                <i class="bi bi-trash"></i> Xóa đã chọn
-            </button>
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Danh sách thông báo</h5>
+            <a href="{{ route('admin.notifications.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Tạo thông báo mới
+            </a>
         </div>
 
-        <table id="notifications-table" class="table table-bordered table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th scope="col" style="width: 5%">
-                        <input type="checkbox" id="select-all">
-                    </th>
-                    <th scope="col">Tiêu đề</th>
-                    <th scope="col">Nội dung</th>
-                    <th scope="col">Người nhận</th>
-                    <th scope="col">Kênh gửi</th>
-                    <th scope="col">Ngày tạo</th>
-                    <th scope="col">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($activities as $item)
+        <form method="POST" action="{{ route('admin.notifications.bulkDelete') }}" id="bulk-delete-form">
+            @csrf
+
+            <div class="mb-2">
+                <button type="button" id="bulk-delete-btn" class="btn btn-danger btn-sm">
+                    <i class="bi bi-trash"></i> Xóa đã chọn
+                </button>
+            </div>
+
+            <table id="notifications-table" class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
                     <tr>
-                        <td>
-                            <input type="checkbox" name="ids[]" value="{{ $item['id'] ?? '' }}" class="select-item"
-                                data-type="{{ $item['source'] ?? 'notification' }}">
-                        </td>
-                        <td>{{ $item['title'] ?? '(Không có tiêu đề)' }}</td>
-                        <td>{{ Str::limit($item['content'] ?? '(Không có nội dung)', 60) }}</td>
-                        <td>{{ $item['user'] ?? 'Không xác định' }}</td>
-                        <td>
-                            @foreach ($item['channels'] as $channel => $status)
-                                @php
-        $badgeClass = match ($status) {
-            'sent' => 'bg-success',
-            'failed' => 'bg-danger',
-            default => 'bg-secondary',
-        };
-                                @endphp
-                                <span class="badge {{ $badgeClass }}">{{ $channel }}: {{ $status }}</span>
-                            @endforeach
-                        </td>
-                        <td>{{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y H:i') }}</td>
-                        <td class="d-flex gap-1">
-                            @if(!empty($item['user_id']))
-                                <form action="{{ route('admin.notifications.resend', [$item['batch_id'], $item['user_id']]) }}"
-                                    method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-warning">Gửi lại</button>
-                                </form>
-                            @endif
+                        <th scope="col" style="width: 5%">
+                            <input type="checkbox" id="select-all">
+                        </th>
+                        <th scope="col">Tiêu đề</th>
+                        <th scope="col">Nội dung</th>
+                        <th scope="col">Người nhận</th>
+                        <th scope="col">Kênh gửi</th>
+                        <th scope="col">Ngày tạo</th>
+                        <th scope="col">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($activities as $item)
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="ids[]" value="{{ $item['id'] ?? '' }}" class="select-item"
+                                    data-type="{{ $item['source'] ?? 'notification' }}">
+                            </td>
+                            <td>{{ $item['title'] ?? '(Không có tiêu đề)' }}</td>
+                            <td>{{ Str::limit($item['content'] ?? '(Không có nội dung)', 60) }}</td>
+                            <td>{{ $item['user'] ?? 'Không xác định' }}</td>
+                            <td>
+                                @foreach ($item['channels'] as $channel => $status)
+                                    @php
+            $badgeClass = match ($status) {
+                'sent' => 'bg-success',
+                'failed' => 'bg-danger',
+                default => 'bg-secondary',
+            };
+                                    @endphp
+                                    <span class="badge {{ $badgeClass }}">{{ $channel }}: {{ $status }}</span>
+                                @endforeach
+                            </td>
+                            <td>{{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y H:i') }}</td>
+                            <td class="d-flex gap-1">
+                                @if(!empty($item['user_id']))
+                                    <form action="{{ route('admin.notifications.resend', [$item['batch_id'], $item['user_id']]) }}"
+                                        method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-warning">Gửi lại</button>
+                                    </form>
+                                @endif
 
 
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="text-center text-muted">Chưa có thông báo nào</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Chưa có thông báo nào</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </form>
 
 @endsection
 @push('scripts')

@@ -72,13 +72,20 @@ class PostController extends Controller
         // ✅ Xóa bài viết
         $post->delete();
 
-        // ✅ Gửi thông báo và email qua job (xử lý nền)
-        dispatch(new SendNotificationJob(
-            $user,
-            'Bài viết bị xóa',
-            "Bài viết của bạn đã bị xóa vì lý do: $reason",
-            'both' 
-        ));
+        // ✅ Tạo batchId duy nhất cho thông báo
+        $batchId = 'post_deleted_' . $post->id . '_' . Str::random(6);
+
+        // ✅ Gửi thông báo và email qua job
+        if ($user) {
+            dispatch(new SendNotificationJob(
+                userId: $user->id,
+                title: 'Bài viết bị xóa',
+                content: "Bài viết của bạn đã bị xóa vì lý do: {$reason}",
+                sendVia: 'both',
+                batchId: $batchId,
+                force: false
+            ));
+        }
 
         // ✅ Redirect về danh sách bài viết
         return redirect()->route('admin.posts.index')
@@ -99,7 +106,7 @@ class PostController extends Controller
      * Cập nhật bài viết
      */
     // Helper detect mime type chính xác
-    
+
 
     // Hàm detectMimeType
     private function detectMimeType($fullPath)

@@ -20,7 +20,9 @@ use App\Http\Controllers\Admin\{
     ClubRequestController,
     TrashController,
     ClubJoinRequestController,
-    PlanController
+    PlanController,
+    DocumentPostController,
+    DocumentClubController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -103,7 +105,7 @@ Route::prefix('admin')
         });
 
         // 📚 Document Management
-        Route::controller(DocumentController::class)
+        Route::controller(DocumentPostController::class)
             ->prefix('documents')
             ->as('documents.')
             ->group(function () {
@@ -118,6 +120,29 @@ Route::prefix('admin')
             ->group(function () {
             Route::get('/', 'index')->name('index');
         });
+        Route::controller(DocumentClubController::class)
+            ->prefix('documentclub')
+            ->as('documentclub.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');                 // danh sách
+                Route::get('/create', 'create')->name('create');         // form thêm
+                Route::post('/', 'store')->name('store');
+                Route::get('/search', 'search')->name('search'); // realtime search
+      // lưu mới
+                Route::get('/{document}/edit', 'edit')->name('edit');    // form chỉnh sửa
+                Route::put('/{document}', 'update')->name('update');     // cập nhật
+                Route::delete('/{document}', 'destroy')->name('destroy'); // xóa mềm
+                Route::get('/{document}/download', 'download')->name('download');
+                Route::get('/{document}', 'show')->name('show');
+
+
+                // ✅ Thùng rác và quản lý tài liệu đã xóa mềm
+                Route::get('/trash', 'trash')->name('trash'); // danh sách tài liệu đã xóa mềm
+                Route::put('/{id}/restore', 'restore')->name('restore'); // khôi phục
+                Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
+            });
+
+
 
         // 💬 Comment Management
         Route::controller(CommentController::class)
