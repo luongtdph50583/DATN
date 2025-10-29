@@ -13,38 +13,76 @@
     </div>
 
     <!-- Thông tin cơ bản -->
-    <div class="card shadow mb-4">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-primary">Thông tin cơ bản</h6>
-        </div>
-        <div class="card-body row">
-            <!-- Logo -->
-            <div class="col-md-4 text-center mb-3">
-                @if ($club->logo)
-                    <img src="{{ asset('storage/' . $club->logo) }}" alt="Logo CLB" class="img-fluid rounded" style="max-height: 180px;">
-                @else
-                    <div class="border rounded py-5 bg-light text-muted">Chưa có logo</div>
-                @endif
-            </div>
+  <div class="card shadow mb-4">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">Thông tin cơ bản</h6>
+    </div>
 
-            <!-- Thông tin -->
-            <div class="col-md-8">
-                <p><strong>Tên CLB:</strong> {{ $club->name }}</p>
-                <p><strong>Lĩnh vực:</strong> {{ $club->field ?? 'Không rõ' }}</p>
-                <p><strong>Ngày thành lập:</strong> {{ $club->created_at ? $club->created_at->format('d/m/Y') : '—' }}</p>
-               <p><strong>Người thành lập:</strong> {{ $club->manager->name ?? 'Không rõ' }}</p>
-                <p><strong>Mô tả:</strong> {{ $club->description ?? 'Chưa có mô tả' }}</p>
-                <p>
-                    <strong>Trạng thái:</strong>
-                    @if ($club->status === 'active')
-                        <span class="badge bg-success px-3 py-2">Đang hoạt động</span>
-                    @else
-                        <span class="badge bg-secondary px-3 py-2">Ngừng hoạt động</span>
-                    @endif
-                </p>
-            </div>
+    <div class="card-body row">
+        <!-- Logo CLB -->
+        <div class="col-md-4 text-center mb-3">
+            @if ($club->logo)
+                <img src="{{ asset('storage/' . $club->logo) }}" 
+                     alt="Logo CLB" 
+                     class="img-fluid rounded shadow-sm" 
+                     style="max-height: 180px; object-fit: contain;">
+            @else
+                <div class="border rounded py-5 bg-light text-muted">
+                    <i class="fas fa-image fa-2x mb-2"></i><br>
+                    Chưa có logo
+                </div>
+            @endif
+        </div>
+
+        <!-- Thông tin chi tiết CLB -->
+        <div class="col-md-8">
+            <p><strong>Mã CLB (ID):</strong> {{ $club->id }}</p>
+
+            <p><strong>Tên CLB:</strong> {{ $club->name }}</p>
+
+            <p><strong>Lĩnh vực hoạt động:</strong> {{ $club->field ?? 'Không rõ' }}</p>
+
+            <p><strong>Mô tả:</strong> 
+                {{ $club->description ? $club->description : 'Chưa có mô tả' }}
+            </p>
+
+            <p>
+                <strong>Trạng thái:</strong>
+                @if ($club->status === 'active')
+                    <span class="badge bg-success px-3 py-2">Đang hoạt động</span>
+                @elseif ($club->status === 'pending')
+                    <span class="badge bg-warning text-dark px-3 py-2">Chờ duyệt</span>
+                @else
+                    <span class="badge bg-secondary px-3 py-2">Ngừng hoạt động</span>
+                @endif
+            </p>
+
+            <p><strong>Người quản lý:</strong> 
+                {{ $club->manager->name ?? 'Không rõ' }}
+            </p>
+
+            <p><strong>Email liên hệ:</strong> 
+                {{ $club->email ?? 'Chưa có' }}
+            </p>
+
+            <p><strong>Số điện thoại:</strong> 
+                {{ $club->phone ?? 'Chưa có' }}
+            </p>
+
+            <p><strong>Giới hạn thành viên:</strong> 
+                {{ $club->member_limit ?? 'Không giới hạn' }}
+            </p>
+
+            <p><strong>Ngày tạo:</strong> 
+                {{ $club->created_at ? $club->created_at->format('d/m/Y H:i') : '—' }}
+            </p>
+
+            <p><strong>Cập nhật gần nhất:</strong> 
+                {{ $club->updated_at ? $club->updated_at->format('d/m/Y H:i') : '—' }}
+            </p>
         </div>
     </div>
+</div>
 
     <!-- Thống kê nhanh -->
     <div class="row">
@@ -74,103 +112,131 @@
     </div>
 
     <!-- Danh sách Thành viên -->
-    <div class="card shadow mb-4">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-primary">Danh sách Thành viên CLB</h6>
-        </div>
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="thead-light">
-    <tr>
-        <th>#</th>
-        <th>Họ tên</th>
-        <th>Email</th>
-        <th>Vai trò</th>
-        <th>Trạng thái</th>
-        <th>Ngày tham gia</th>
-        <th>Hành động</th> <!-- cột mới -->
-    </tr>
-</thead>
-<tbody>
-    @forelse ($members as $index => $member)
-        <tr>
-            <td>{{ $index + 1 }}</td>
-            <td>{{ $member->name }}</td>
-            <td>{{ $member->email }}</td>
-            <td>{{ ucfirst($member->pivot->role ?? 'thành viên') }}</td>
-          <td>
-                    @if ($member->status === 'active')
-                        <span class="badge bg-success">Hoạt động</span>
-                    @else
-                        <span class="badge bg-secondary">Không hoạt động</span>
-                    @endif
-                </td>
-            <td>{{ $member->pivot->created_at->format('d/m/Y') }}</td>
-            <td>
-                <a href="#" class="btn btn-primary btn-sm">Xem chi tiết</a>
-            </td>
-        </tr>
-    @empty
-        <tr>
-            <td colspan="7" class="text-center text-muted">Chưa có thành viên nào.</td>
-        </tr>
-    @endforelse
-</tbody>
-
-            </table>
-        </div>
+ <div class="card shadow mb-4">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">Danh sách Thành viên CLB</h6>
     </div>
+
+    <div class="card-body table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="thead-light">
+                <tr class="text-center">
+                    <th>#</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tham gia</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($members as $index => $member)
+                    <tr>
+                        <td class="text-center">{{ $index + 1 }}</td>
+                                    <td>{{ $member->name }}</td>
+            <td>{{ $member->email }}</td>
+                        <td class="text-center">
+                            @if(isset($member->role))
+                                <span class="badge bg-info text-dark">{{ ucfirst($member->role) }}</span>
+                            @else
+                                <span class="badge bg-secondary">Thành viên</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if ($member->status === 'active')
+                                <span class="badge bg-success px-3 py-2">Hoạt động</span>
+                            @else
+                                <span class="badge bg-secondary px-3 py-2">Ngưng hoạt động</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            {{ $member->created_at ? $member->created_at->format('d/m/Y') : '—' }}
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ route('admin.members.show', $member->id) }}" class="btn btn-primary btn-sm">
+                                Xem chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-3">
+                            Chưa có thành viên nào trong CLB này.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+
+        {{-- Phân trang (nếu có) --}}
+        @if (method_exists($members, 'links'))
+            <div class="d-flex justify-content-center mt-3">
+                {{ $members->links() }}
+            </div>
+        @endif
+    </div>
+</div>
+
 
     <!-- Danh sách Sự kiện -->
-    <div class="card shadow mb-4">
-        <div class="card-header">
-            <h6 class="m-0 font-weight-bold text-success">Danh sách Sự kiện CLB</h6>
-        </div>
-        <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="thead-light">
-    <tr>
-        <th>#</th>
-        <th>Tên sự kiện</th>
-        <th>Ngày tổ chức</th>
-        <th>Địa điểm</th>
-        <th>Trạng thái</th>
-        <th>Người tạo</th>
-        <th>Hành động</th> <!-- cột mới -->
-    </tr>
-</thead>
-<tbody>
-    @forelse ($events as $index => $event)
-        <tr>
-            <td>{{ $index + 1 }}</td>
-            <td>{{ $event->name }}</td>
-            <td>{{ \Carbon\Carbon::parse($event->event_date)->format('d/m/Y H:i') }}</td>
-            <td>{{ $event->location }}</td>
-            <td>
-                @if ($event->status === 'approved')
-                    <span class="badge bg-success">Đã duyệt</span>
-                @elseif ($event->status === 'pending')
-                    <span class="badge bg-warning">Chờ duyệt</span>
-                @else
-                    <span class="badge bg-danger">Từ chối</span>
-                @endif
-            </td>
-           <td>{{ $event->createdBy->name ?? 'Không rõ' }}</td>
-
-            <td>
-                <a href="#" class="btn btn-primary btn-sm">Xem chi tiết</a>
-            </td>
-        </tr>
-    @empty
-        <tr>
-            <td colspan="7" class="text-center text-muted">Chưa có sự kiện nào.</td>
-        </tr>
-    @endforelse
-</tbody>
-
-            </table>
-        </div>
+<div class="card shadow mb-4">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-success">Danh sách Sự kiện CLB</h6>
     </div>
+    <div class="card-body table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th>#</th>
+                    <th>Tên sự kiện</th>
+                    <th>Ngày tổ chức</th>
+                    <th>Địa điểm</th>
+                    <th>Trạng thái</th>
+                    <th>Người tạo</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($events as $index => $event)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $event->name }}</td>
+                        <td>
+                            @if ($event->start_time)
+                                {{ \Carbon\Carbon::parse($event->start_time)->format('d/m/Y H:i') }}
+                            @else
+                                <span class="text-muted">Chưa xác định</span>
+                            @endif
+                        </td>
+                        <td>{{ $event->location ?? 'Không rõ' }}</td>
+                        <td>
+                            @if ($event->status === 'approved')
+                                <span class="badge bg-success">Đã duyệt</span>
+                            @elseif ($event->status === 'pending')
+                                <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                            @else
+                                <span class="badge bg-danger">Từ chối</span>
+                            @endif
+                        </td>
+                        <td>{{ $event->createdBy->name ?? 'Không rõ' }}</td>
+                        <td>
+                            <a href="{{ route('admin.events.show', $event->id) }}" class="btn btn-primary btn-sm">
+                                Xem chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Chưa có sự kiện nào.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
 
     <!-- Xuất báo cáo PDF -->
     <div class="text-center mb-5">

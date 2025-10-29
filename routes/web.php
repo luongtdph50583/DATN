@@ -19,7 +19,8 @@ use App\Http\Controllers\Admin\{
     ClubReportController,
     ClubRequestController,
     TrashController,
-    ClubJoinRequestController
+    ClubJoinRequestController,
+    PlanController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -169,23 +170,69 @@ Route::prefix('admin')
 
         // 🔔 Notification Management
         // 🔔 Notification Management
-    
+
         Route::controller(NotificationController::class)
             ->prefix('notifications')
             ->as('notifications.')
             ->group(function () {
 
+                // Danh sách, tạo, lưu
                 Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
                 Route::get('/create', 'create')->name('create');           // form tạo thông báo
                 Route::post('/', 'store')->name('store');                  // lưu thông báo
-        
-                // AJAX
+
+                // AJAX fetch dữ liệu liên quan
                 Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
                 Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
                 Route::get('/fetch-club-members', 'fetchClubMembers')->name('fetchClubMembers');
                 Route::get('/fetch-events', 'fetchEvents')->name('fetchEvents');
                 Route::get('/fetch-event-members', 'fetchEventMembers')->name('fetchEventMembers');
+
+                // Gửi lại thông báo cho từng user theo batch
+                Route::post('/resend/{batchId}/{userId}', 'resend')->name('resend');
+
+                // ✅ Xóa thông báo hàng loạt
+                Route::post('/bulk-delete', 'bulkDelete')->name('bulkDelete');
+
             });
+
+
+        // 📝 Club Request Management
+
+        Route::controller(ClubRequestController::class)
+            ->prefix('club-requests')
+            ->as('club-requests.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                // Route model binding
+                Route::get('/{clubRequest}', 'show')->name('show');
+                // PATCH để update status
+                Route::patch('/{clubRequest}/update-status', 'updateStatus')->name('updateStatus');
+            });
+
+
+
+// 🙋‍♂️ Club Join Request Management
+Route::controller(ClubJoinRequestController::class)
+    ->prefix('club-join-requests')
+    ->as('club-join-requests.')
+    ->group(function () {
+        // Danh sách yêu cầu
+        Route::get('/', 'index')->name('index');
+
+        // Xem chi tiết 1 yêu cầu
+        Route::get('/{id}', 'show')->name('show');
+
+        // Duyệt yêu cầu
+        Route::post('/{id}/approve', 'approve')->name('approve');
+
+        // Từ chối yêu cầu
+        Route::post('/{id}/reject', 'reject')->name('reject');
+
+        // Gửi yêu cầu (nếu bạn dùng cho user)
+        Route::post('/{club_id}/store', 'store')->name('store');
+    });
+
 
 
         // 📊 Statistics Management
@@ -248,7 +295,26 @@ Route::prefix('admin')
         Route::get('/test-role', function () {
             return 'Bạn có quyền truy cập admin!';
         });
+
+            // 📋 Club Plan Management
+    Route::controller(PlanController::class)
+        ->prefix('plans')
+        ->as('plans.')
+        ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{plan}', 'show')->name('show');
+            Route::get('/{plan}/edit', 'edit')->name('edit');
+            Route::put('/{plan}', 'update')->name('update');
+            Route::delete('/{plan}', 'destroy')->name('destroy');
+            Route::post('/{plan}/approve', 'approve')->name('approve');
+            Route::post('/{plan}/reject', 'reject')->name('reject');
+});
     });
+
+
+
 
 // === 🏛 Club Manager Routes ===
 Route::prefix('club-manager')
@@ -270,6 +336,7 @@ Route::prefix('club-manager')
             Route::get('/api/summary', 'summary')->name('summary');
         });
     });
+
 
 // === Auth Routes ===
 require __DIR__ . '/auth.php';

@@ -7,16 +7,16 @@
                         <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="22">
                     </span>
                     <span class="logo-lg">
-                        <img src="assets/images/logo-dark.png" alt="" height="17">
+                        <img src="{{ asset('assets/images/logo-dark.png')}}" alt="" height="17">
                     </span>
                 </a>
                 <!-- Light Logo-->
                 <a href="index.html" class="logo logo-light">
                     <span class="logo-sm">
-                        <img src="assets/images/logo-sm.png" alt="" height="22">
+                        <img src="{{ asset('assets/images/logo-sm.png')}}" alt="" height="22">
                     </span>
                     <span class="logo-lg">
-                        <img src="assets/images/logo-light.png" alt="" height="17">
+                        <img src="{{ asset('assets/images/logo-light.png')}}" alt="" height="17">
                     </span>
                 </a>
                 <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
@@ -60,13 +60,13 @@
                             <a class="nav-link menu-link" href="{{ route('admin.users.index') }}">
                                 <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí tài khoản</span>
                             </a>
-                            
+
                         </li>
                       <li class="nav-item">
                             <a class="nav-link menu-link" href="{{ route('admin.events.index') }}">
                                 <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí sự kiện </span>
                             </a>
-                            
+
                         </li> <!-- end Dashboard Menu -->
                         {{-- quản lí clb --}}
                         <li class="nav-item">
@@ -99,7 +99,7 @@
                             <a class="nav-link menu-link" href="{{ route('admin.members.index') }}">
                                 <i class="ri-dashboard-2-line"></i> <span data-key="t-dashboards">Quản lí thành viên</span>
                             </a>
-                            
+
                         </li> <!-- end Dashboard Menu -->
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="#quanliquy" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="quanliquy">
@@ -121,33 +121,42 @@
                                 <i class="ri-honour-line"></i> <span data-key="t-widgets">Thống kê</span>
                             </a>
                         </li>
+                        {{--Plans club --}}
+                        <li>
+                            <a class="nav-link menu-link" href="{{ route('admin.plans.index') }}">
+                                <i class="ri-file-list-3-line"></i> <span data-key="t-forms">Kế hoạch</span>
+                            </a>
+                        </li>
+                        {{-- End Plans club --}}
+
                         <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">Nội dung</span></li>
 
 
 
                         <li class="nav-item">
                             <a class="nav-link menu-link" href="#sidebartintuc" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebartintuc">
-                                <i class="ri-stack-line"></i> <span data-key="t-advance-ui">Tin tức và bài viết</span>
+                                <i class="ri-stack-line"></i> <span data-key="t-advance-ui">Bài viết và Tài liệu</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebartintuc">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.documents.index') }}" class="nav-link" data-key="t-sweet-alerts">Tin Tức</a>
-                                    </li>
-                                    <li class="nav-item">
+                                     <li class="nav-item">
                                         <a href="{{ route('admin.posts.index') }}" class="nav-link" data-key="t-nestable-list">Bài Viết</a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.documents.index') }}" class="nav-link" data-key="t-sweet-alerts">Tài Liệu </a>
+                                    </li>
+
 
                                 </ul>
                             </div>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="widgets.html">
+                            <a class="nav-link menu-link" href="{{ route('admin.comments.index') }}">
                                 <i class="ri-honour-line"></i> <span data-key="t-widgets">Bình luận</span>
                             </a>
                         </li>
-                    
+
 
                         <li class="menu-title"><i class="ri-community-line"></i> <span>Quản lý Câu lạc bộ</span></li>
 

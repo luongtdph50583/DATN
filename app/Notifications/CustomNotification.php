@@ -3,38 +3,43 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\DatabaseMessage;
 
-class CustomNotification extends Notification implements ShouldQueue
+class CustomNotification extends Notification
 {
     use Queueable;
 
-    protected $title;
-    protected $message;
+    public string $title;
+    public string $content;
+    public string $batchId;
 
-    protected $channels;
-
-    public function __construct($title, $message)
+    public function __construct(string $title, string $content, string $batchId)
     {
         $this->title = $title;
-        $this->message = $message;
+        $this->content = $content;
+        $this->batchId = $batchId;
     }
 
-
-    // ✅ Chỉ gửi qua database
     public function via($notifiable)
     {
         return ['database'];
     }
 
-    public function toArray($notifiable)
+    public function toDatabase($notifiable)
     {
         return [
             'title' => $this->title,
-            'message' => $this->message,
+            'message' => $this->content,
+            'status' => 'sent',
+            'batch_id' => $this->batchId, // Observer sẽ lấy từ đây
         ];
     }
 
-}
 
+    // Ghi batch_id vào cột riêng
+    public function afterCommit()
+    {
+        return true; // nếu dùng queue, commit xong mới lưu
+    }
+}

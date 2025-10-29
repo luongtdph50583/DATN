@@ -11,35 +11,71 @@ use App\Models\Member;
 
 class StatisticsController extends Controller
 {
-   public function index(Request $request)
+ public function index(Request $request)
 {
-        if ($request->has('reset')) {
+    // === 1️⃣ Xử lý nút "Đặt lại" ===
+    if ($request->has('reset')) {
         return redirect()->route('admin.stats.index');
     }
-    // 1️⃣ Nhận khoảng thời gian lọc từ request (nếu có)
+
+    // === 2️⃣ Lọc theo thời gian ===
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
 
-    // Nếu chưa chọn ngày, mặc định là từ đầu năm đến hiện tại
     if (!$startDate || !$endDate) {
         $startDate = now()->startOfYear()->toDateString();
         $endDate = now()->endOfYear()->toDateString();
     }
 
-    // 2️⃣ Tổng số CLB, Thành viên, Sự kiện trong khoảng thời gian đó
+    // === 3️⃣ Tạo query cơ bản cho CLB ===
+    $query = Club::withCount(['members', 'events'])
+        ->whereBetween('created_at', [$startDate, $endDate]);
+
+    // 🔹 Lọc theo trạng thái
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    // 🔹 Lọc theo từ khóa tìm kiếm (theo tên CLB)
+    if ($request->filled('search')) {
+        $query->where('name', 'like', '%' . $request->search . '%');
+    }
+
+    // 🔹 Sắp xếp theo tùy chọn
+    switch ($request->input('sort')) {
+        case 'top_members':
+            $query->orderByDesc('members_count');
+            break;
+        case 'least_members':
+            $query->orderBy('members_count');
+            break;
+        case 'oldest':
+            $query->orderBy('created_at', 'asc');
+            break;
+        case 'most_events':
+            $query->orderByDesc('events_count');
+            break;
+        default:
+            $query->latest();
+            break;
+    }
+
+    // Lấy dữ liệu (có phân trang + giữ bộ lọc)
+    $clubs = $query->paginate(10)->appends($request->all());
+
+    // === 4️⃣ Tính toán số liệu tổng quan ===
     $clubCount = Club::whereBetween('created_at', [$startDate, $endDate])->count();
     $memberCount = User::where('role', 'member')
-                        ->whereBetween('created_at', [$startDate, $endDate])
-                        ->count();
+        ->whereBetween('created_at', [$startDate, $endDate])
+        ->count();
     $eventCount = Event::whereBetween('created_at', [$startDate, $endDate])->count();
 
-    // 3️⃣ Lấy dữ liệu theo tháng trong khoảng chọn
+    // === 5️⃣ Chuẩn bị dữ liệu cho biểu đồ thống kê theo tháng ===
     $clubsPerMonth = [];
     $membersPerMonth = [];
     $eventsPerMonth = [];
     $labels = [];
 
-    // Tạo danh sách tháng trong khoảng ngày đã chọn
     $period = \Carbon\CarbonPeriod::create($startDate, '1 month', $endDate);
 
     foreach ($period as $date) {
@@ -61,13 +97,20 @@ class StatisticsController extends Controller
             ->count();
     }
 
-    // 4️⃣ Truyền dữ liệu sang view
+    // === 6️⃣ Trả dữ liệu về view ===
     return view('admin.statistics-and-reports.statistics', compact(
+        'clubs',
         'clubCount', 'memberCount', 'eventCount',
         'clubsPerMonth', 'membersPerMonth', 'eventsPerMonth',
         'labels', 'startDate', 'endDate'
-    ));
+    ))->with([
+        'sort' => $request->input('sort', ''),
+        'status' => $request->input('status', ''),
+        'search' => $request->input('search', ''),
+    ]);
 }
+
+
 
 public function clubs(Request $request)
 {
@@ -76,24 +119,47 @@ public function clubs(Request $request)
         return redirect()->route('admin.stats.clubs');
     }
 
-    // 1️⃣ Nhận thời gian lọc
+    // 1️⃣ Lấy khoảng thời gian lọc
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
 
-    // Nếu không có → mặc định là đầu năm đến cuối năm hiện tại
     if (!$startDate || !$endDate) {
-        $startDate = now()->startOfYear()->toDateString();
-        $endDate = now()->endOfYear()->toDateString();
+        $start = now()->startOfYear()->startOfDay();
+        $end = now()->endOfYear()->endOfDay();
+    } else {
+        try {
+            $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+        } catch (\Exception $e) {
+            $start = now()->startOfYear()->startOfDay();
+        }
+        try {
+            $end = \Carbon\Carbon::parse($endDate)->endOfDay();
+        } catch (\Exception $e) {
+            $end = now()->endOfYear()->endOfDay();
+        }
     }
 
-    // 2️⃣ Bộ lọc sắp xếp
+    // chuẩn cho input type="date" ở view
+    $startDateView = $start->toDateString();
+    $endDateView = $end->toDateString();
+
+    // 2️⃣ Lọc theo sắp xếp
     $sort = $request->query('sort', 'top_members');
 
-    // 🔹 Lấy danh sách CLB kèm đếm thành viên & sự kiện
-    // (Giả sử Club model có quan hệ: members() và events())
     $query = \App\Models\Club::withCount(['members', 'events'])
-        ->whereBetween('created_at', [$startDate, $endDate]);
+        ->whereBetween('created_at', [$start, $end]);
 
+    // 3️⃣ Lọc theo trạng thái (nếu có)
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+
+    // 4️⃣ Lọc theo tên CLB (tìm kiếm)
+    if ($request->filled('search')) {
+        $query->where('name', 'like', '%' . $request->search . '%');
+    }
+
+    // 5️⃣ Sắp xếp
     switch ($sort) {
         case 'least_members':
             $query->orderBy('members_count', 'asc');
@@ -106,47 +172,58 @@ public function clubs(Request $request)
             break;
         default:
             $query->orderBy('members_count', 'desc');
-            break;
     }
 
-    $clubs = $query->paginate(10);
+    $clubs = $query->paginate(10)->appends($request->query());
 
-    // 3️⃣ Dữ liệu cho biểu đồ
+    // ---------------------------
+    // 🔢 Tạo dữ liệu cho biểu đồ
+    // ---------------------------
     $labels = [];
     $clubsPerMonth = [];
     $membersPerMonth = [];
     $eventsPerMonth = [];
 
-    $period = \Carbon\CarbonPeriod::create($startDate, '1 month', $endDate);
+    // tạo period từ tháng bắt đầu đến tháng kết thúc
+    $periodStart = $start->copy()->startOfMonth();
+    $periodEnd = $end->copy()->endOfMonth();
+
+    $period = \Carbon\CarbonPeriod::create($periodStart, '1 month', $periodEnd);
 
     foreach ($period as $date) {
         $month = $date->month;
         $year = $date->year;
         $labels[] = "Tháng {$month}/{$year}";
 
-        // Số CLB tạo trong tháng
-        $clubsPerMonth[] = \App\Models\Club::whereYear('created_at', $year)
+        // NOTE: dùng whereYear + whereMonth để đếm theo tháng
+        $clubsPerMonth[] = Club::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->count();
 
-        // Số thành viên đăng ký trong tháng
-        $membersPerMonth[] = \App\Models\User::where('role', 'member')
+        $membersPerMonth[] = User::where('role', 'member')
             ->whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->count();
 
-        // Số sự kiện tạo trong tháng
-        $eventsPerMonth[] = \App\Models\Event::whereYear('created_at', $year)
+        $eventsPerMonth[] = Event::whereYear('created_at', $year)
             ->whereMonth('created_at', $month)
             ->count();
     }
 
-    // 4️⃣ Trả về view
+    // 6️⃣ Nếu request là AJAX → trả về partial bảng thôi (không trả data chart)
+    if ($request->ajax()) {
+        return view('admin.statistics-and-reports.partials.club_table', compact('clubs'))->render();
+    }
+
+    // 7️⃣ Nếu request thường → load full trang, truyền cả dữ liệu biểu đồ
     return view('admin.statistics-and-reports.clubs', compact(
-        'clubs', 'sort', 'startDate', 'endDate',
+        'clubs', 'sort', 'startDateView', 'endDateView',
         'labels', 'clubsPerMonth', 'membersPerMonth', 'eventsPerMonth'
     ));
 }
+
+
+
 
 
 
@@ -206,36 +283,52 @@ public function events(Request $request)
     $sort = $request->get('sort', 'newest');
     $status = $request->get('status', '');
 
-    // Kiểm tra nếu bấm nút Đặt lại
+    // Kiểm tra nếu bấm nút Đặt lại (trong trường hợp người dùng bấm nút Đặt lại của biểu đồ)
+    // Nếu bạn muốn reset toàn bộ, nên dùng một tham số reset khác hoặc xử lý reset trong Blade
     if ($request->has('reset')) {
-        return redirect()->route('admin.stats.events');
+        // Giữ lại các filter của bảng nếu có trong URL
+        $queryParams = $request->only(['sort', 'status']);
+        return redirect()->route('admin.stats.events', $queryParams);
     }
 
     // Tham số lọc cho biểu đồ
     $startDate = $request->get('start_date');
     $endDate = $request->get('end_date');
 
-    // --- DỮ LIỆU BẢNG ---
+    // --- DỮ LIỆU BẢNG (Events Table) ---
     $query = Event::query()->with('club');
 
+    // 1. Lọc theo Trạng thái (Status)
     if ($status) {
         $query->where('status', $status);
     }
 
-     // Sắp xếp
-    if ($sort === 'oldest') {
-        $query->orderBy('event_date', 'asc');
-    } else {
-        $query->orderBy('event_date', 'desc');
+    // 2. Sắp xếp (Sort)
+    // Sửa lỗi 'event_date' và thêm logic cho start_asc, start_desc
+    switch ($sort) {
+        case 'oldest': // Cũ nhất theo created_at (thời gian tạo)
+            $query->orderBy('created_at', 'asc');
+            break;
+        case 'start_asc': // Sắp xếp theo Thời gian bắt đầu (Sớm nhất)
+            $query->orderBy('start_time', 'asc');
+            break;
+        case 'start_desc': // Sắp xếp theo Thời gian bắt đầu (Muộn nhất)
+            $query->orderBy('start_time', 'desc');
+            break;
+        case 'newest': // Mặc định: Mới nhất theo created_at (thời gian tạo)
+        default:
+            $query->orderBy('created_at', 'desc');
+            break;
     }
 
-    $events = $query->paginate(10);
+    $events = $query->paginate(10)->appends(['sort' => $sort, 'status' => $status, 'start_date' => $startDate, 'end_date' => $endDate]);
 
-    // --- DỮ LIỆU BIỂU ĐỒ ---
+    // --- DỮ LIỆU BIỂU ĐỒ (Chart Data) ---
     $labels = [];
     $eventsPerMonth = [];
 
     // Nếu không có filter, mặc định 12 tháng gần nhất
+    // Lưu ý: Biểu đồ này đếm theo thời gian tạo sự kiện (created_at)
     $start = $startDate ? Carbon::parse($startDate)->startOfMonth() : Carbon::now()->subMonths(11)->startOfMonth();
     $end = $endDate ? Carbon::parse($endDate)->endOfMonth() : Carbon::now()->endOfMonth();
 
@@ -243,19 +336,27 @@ public function events(Request $request)
     $period = new \DatePeriod(
         $start,
         new \DateInterval('P1M'),
-        (clone $end)->modify('+1 month') // bao gồm cả tháng cuối
+        (clone $end)->modify('+1 day') // Dùng +1 day để bao gồm cả tháng cuối cùng
     );
 
-   
+    // Lấy tất cả sự kiện đã tạo trong khoảng thời gian để tối ưu truy vấn
+    $monthlyEvents = Event::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, count(*) as count')
+        ->whereBetween('created_at', [$start, $end])
+        ->groupBy('year', 'month')
+        ->get()
+        ->keyBy(function ($item) {
+            return $item->year . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
+        });
+
     foreach ($period as $date) {
         $month = Carbon::instance($date);
+        $key = $month->year . '-' . str_pad($month->month, 2, '0', STR_PAD_LEFT);
 
         // 🔥 Hiển thị tiếng Việt: "Tháng 1/2025"
         $labels[] = 'Tháng ' . $month->month . '/' . $month->year;
 
-        $eventsPerMonth[] = Event::whereYear('created_at', $month->year)
-            ->whereMonth('created_at', $month->month)
-            ->count();
+        // Lấy số lượng từ collection đã query, nếu không có thì là 0
+        $eventsPerMonth[] = $monthlyEvents->get($key)->count ?? 0;
     }
 
 
@@ -263,8 +364,9 @@ public function events(Request $request)
         'events' => $events,
         'sort' => $sort,
         'status' => $status,
-        'startDate' => $startDate,
-        'endDate' => $endDate,
+        // Chuyển lại giá trị cho input type="date"
+        'startDate' => $startDate, 
+        'endDate' => $endDate, 
         'labels' => $labels,
         'eventsPerMonth' => $eventsPerMonth,
     ]);

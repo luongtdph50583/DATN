@@ -13,7 +13,7 @@ use Illuminate\Database\Seeder;
                UserSeeder::class,
                ClubSeeder::class,
                ClubMemberSeeder::class,
-               MediaSeeder::class, // Chạy trước để tạo dữ liệu cho bảng media
+               MediaSeeder::class, 
                EventSeeder::class,
                EventRegistrationSeeder::class,
                PostSeeder::class,

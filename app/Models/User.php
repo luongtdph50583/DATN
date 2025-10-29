@@ -3,7 +3,7 @@
 
     use Illuminate\Foundation\Auth\User as Authenticatable;
     use Illuminate\Notifications\Notifiable;
-
+    use App\Models\Member;
     class User extends Authenticatable
     {
         use Notifiable;
@@ -21,7 +21,7 @@
             'email_verified_at' => 'datetime',
             'status' => 'string',
         ];
-
+      
 // public function clubs()
 // {
 //     return $this->belongsToMany(Club::class, 'club_members');
@@ -29,12 +29,39 @@
 /**
  * Quan hệ với Clubs
  */
+// public function member()
+// {
+//     return $this->hasOne(Member::class);
+// }
+
 public function clubs()
 {
-    return $this->belongsToMany(Club::class, 'club_members')
-                ->withPivot('role')
+    return $this->belongsToMany(Club::class, 'club_members', 'user_id', 'club_id')
+                ->withPivot('role', 'created_at')
                 ->withTimestamps();
 }
+
+// 🔹 Mỗi user có 1 bản ghi mở rộng trong bảng members
+    public function member()
+    {
+        return $this->hasOne(Member::class, 'user_id');
+    }
+
+    // 🔹 Các yêu cầu tham gia CLB
+    public function clubJoinRequests()
+    {
+        return $this->hasMany(ClubJoinRequest::class, 'user_id');
+    }
+        // 🔹 CLB mà user quản lý
+    public function managedClubs()
+    {
+        return $this->hasMany(Club::class, 'manager_id');
+    }
+public function clubRequests()
+{
+    return $this->hasMany(ClubRequest::class);
+}
+
 
 /**
  * Quan hệ với Events (nếu có bảng registrations)
