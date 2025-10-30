@@ -15,17 +15,32 @@ class ClubMember extends Model
         'club_id',
         'member_id',
         'role',
-        'joined_at',
+        'joined_at'
     ];
+
+    public $timestamps = true;
 
     public function club()
     {
-        return $this->belongsTo(Club::class, 'club_id');
+        return $this->belongsTo(Club::class);
     }
 
-    // 🔹 Thành viên (bảng members) của CLB
-    public function member()
+    public function user()
     {
-        return $this->belongsTo(Member::class, 'member_id');
+        return $this->belongsTo(User::class, 'member_id');
+    }
+    public function member()
+{
+    return $this->belongsTo(User::class, 'member_id');
+}
+protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($member) {
+            if ($member->club && $member->club->manager_id == $member->member_id) {
+                $member->club->update(['manager_id' => null]);
+            }
+        });
     }
 }

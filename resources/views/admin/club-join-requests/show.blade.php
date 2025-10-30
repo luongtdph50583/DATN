@@ -1,70 +1,49 @@
 @extends('admin.layouts.app')
+
 @section('title', 'Chi tiết yêu cầu tham gia CLB')
 
 @section('card-body')
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold mb-0">🔍 Chi tiết yêu cầu tham gia CLB</h3>
-        <a href="{{ route('admin.club-join-requests.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Quay lại danh sách
-        </a>
-    </div>
+<div class="container-fluid">
 
-    <div class="card shadow-sm border-0 rounded-4">
-        <div class="card-body p-4">
-            <div class="row mb-3">
-                <div class="col-md-6 mb-3">
-                    <strong class="text-muted">👤 Người gửi:</strong>
-                    <div class="fs-5 fw-semibold text-dark">
-                        {{ $joinRequest->user->name ?? 'Không xác định' }}
-                    </div>
-                </div>
+    <h2 class="mb-4">Chi tiết yêu cầu</h2>
 
-                <div class="col-md-6 mb-3">
-                    <strong class="text-muted">🏛 CLB:</strong>
-                    <div class="fs-5 fw-semibold text-primary">
-                        {{ $joinRequest->club->name ?? 'Không xác định' }}
-                    </div>
-                </div>
+    <div class="card shadow p-4">
+        <h5 class="mb-3">
+            <strong>CLB:</strong> {{ $requestJoin->club->name }}
+        </h5>
 
-                <div class="col-md-6 mb-3">
-                    <strong class="text-muted">📅 Ngày gửi:</strong>
-                    <div class="fs-6">
-                        {{ $joinRequest->requested_at ? $joinRequest->requested_at->format('d/m/Y H:i') : '—' }}
-                    </div>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <strong class="text-muted">📌 Trạng thái:</strong>
-                    <div class="mt-1">
-                        @if($joinRequest->status === 'pending')
-                            <span class="badge bg-warning text-dark px-3 py-2">⏳ Đang chờ duyệt</span>
-                        @elseif($joinRequest->status === 'approved')
-                            <span class="badge bg-success px-3 py-2">✅ Đã duyệt</span>
-                        @else
-                            <span class="badge bg-danger px-3 py-2">❌ Từ chối</span>
-                        @endif
-                    </div>
-                </div>
+        <div class="d-flex align-items-center mb-3">
+            <img src="{{ $requestJoin->user->avatar ?? 'https://via.placeholder.com/50' }}" 
+                 class="rounded-circle me-3" width="50" height="50">
+            <div>
+                <strong>{{ $requestJoin->user->name }}</strong><br>
+                <small>Email: {{ $requestJoin->user->email }}</small>
             </div>
+        </div>
 
-            <div class="d-flex justify-content-start gap-3 mt-4">
-                <form action="{{ route('admin.club-join-requests.approve', $joinRequest->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-success px-4"
-                            onclick="return confirm('Bạn có chắc chắn muốn duyệt yêu cầu này?')">
-                        <i class="bi bi-check-circle"></i> Duyệt
-                    </button>
-                </form>
+        <p><strong>Trạng thái:</strong>
+            @if($requestJoin->status == 'pending')
+                <span class="badge bg-warning">Pending</span>
+            @elseif($requestJoin->status == 'approved')
+                <span class="badge bg-success">Approved</span>
+            @else
+                <span class="badge bg-danger">Rejected</span>
+            @endif
+        </p>
 
-                <form action="{{ route('admin.club-join-requests.reject', $joinRequest->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-danger px-4"
-                            onclick="return confirm('Bạn chắc chắn muốn từ chối yêu cầu này?')">
-                        <i class="bi bi-x-circle"></i> Từ chối
-                    </button>
-                </form>
-            </div>
+        <p><strong>Lý do tham gia:</strong></p>
+        <div class="border p-3 bg-light rounded">
+            {!! nl2br(e($requestJoin->reason)) !!}
+        </div>
+
+        <hr>
+        <p><strong>Ngày gửi:</strong> {{ $requestJoin->created_at->format('d/m/Y H:i') }}</p>
+        <p><strong>Ngày cập nhật:</strong> {{ $requestJoin->updated_at->format('d/m/Y H:i') }}</p>
+
+        <div class="mt-3">
+            <a href="{{ route('admin.club-join-requests.index') }}" class="btn btn-secondary">
+                ← Quay lại
+            </a>
         </div>
     </div>
 </div>

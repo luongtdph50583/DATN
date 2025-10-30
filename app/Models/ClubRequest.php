@@ -9,22 +9,31 @@ class ClubRequest extends Model
 {
     use HasFactory;
 
+    protected $table = 'club_requests';
+
     protected $fillable = [
         'user_id',
-        'name',        // tên CLB trong DB
+        'name',
         'description',
         'field',
+        'email',
+        'phone',
+        'logo',
         'status',
-        'logo'         // nếu bạn lưu đường dẫn logo ở đây
     ];
+
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
+    /**
+     * Người gửi yêu cầu tạo CLB
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
 }
