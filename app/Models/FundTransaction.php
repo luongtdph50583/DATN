@@ -16,11 +16,18 @@ class FundTransaction extends Model
         'status',
         'created_by',
         'approved_by',
+        'receipt',
+        'event_id',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
     ];
+
+    public function event()
+{
+    return $this->belongsTo(Event::class, 'event_id');
+}
 
     // Relationships
     public function club(): BelongsTo
@@ -75,4 +82,9 @@ class FundTransaction extends Model
 
         return $badges[$this->status] ?? 'secondary';
     }
+    public function fund()
+{
+    return $this->belongsTo(Fund::class);
+}
+
 }

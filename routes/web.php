@@ -67,7 +67,13 @@ Route::prefix('admin')
         Route::resource('events', EventController::class);
         Route::post('events/{event}/approve', [EventController::class, 'approve'])->name('events.approve');
         Route::post('events/{event}/reject', [EventController::class, 'reject'])->name('events.reject');
+  Route::get('events-by-club/{clubId}', [EventController::class, 'getEventsByClub'])
+        ->name('events.byClub');
+Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManagersByClub'])->name('events.getManagers');
 
+
+        Route::get('/club-balance/{clubId}', [FundController::class, 'getClubBalance'])
+    ->name('clubs.balance');
         // 👨‍👩‍👧‍👦 Member Management
         Route::controller(MemberController::class)
             ->prefix('members')

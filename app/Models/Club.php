@@ -42,7 +42,21 @@ public function members()
         return $this->hasMany(FundTransaction::class);
     }
 
+    public function fund()
+{
+    return $this->hasOne(Fund::class);
+}
 
+    // Khi tạo CLB mới => tự tạo quỹ
+    protected static function booted()
+    {
+        static::created(function ($club) {
+            $club->fund()->create([
+                'initial_balance' => 0,
+                'balance' => 0,
+            ]);
+        });
+    }
 
     protected $casts = [
           'description' => 'string',

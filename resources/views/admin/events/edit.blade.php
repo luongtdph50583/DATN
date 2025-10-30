@@ -106,16 +106,14 @@
                         </div>
 
                         <!-- Công khai -->
-                        <div class="form-group">
-                            <label class="form-label fw-bold">Hiển thị công khai</label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="is_public" value="1"
-                                       {{ old('is_public', $event->is_public) ? 'checked' : '' }} id="is_public">
-                                <label class="form-check-label" for="is_public">
-                                    {{ old('is_public', $event->is_public) ? 'Công khai' : 'Nội bộ' }}
-                                </label>
-                            </div>
-                        </div>
+                    <div class="form-group">
+    <label class="form-label fw-bold">Hiển thị sự kiện</label>
+    <select name="is_public" class="form-select @error('is_public') is-invalid @enderror" required>
+        <option value="1" {{ old('is_public') == 1 ? 'selected' : '' }}>Công khai toàn trường</option>
+        <option value="0" {{ old('is_public') == 0 ? 'selected' : '' }}>Chỉ hiển thị cho CLB</option>
+    </select>
+    @error('is_public') <div class="invalid-feedback">{{ $message }}</div> @enderror
+</div>
 
                         <!-- Trạng thái -->
                         <div class="form-group">
@@ -130,18 +128,20 @@
                         </div>
 
                         <!-- Người tạo -->
-                        <div class="form-group">
-                            <label class="form-label fw-bold">Người tạo <span class="text-danger">*</span></label>
-                            <select name="created_by" class="form-select @error('created_by') is-invalid @enderror" required>
-                                <option value="">-- Chọn người tạo --</option>
-                                @foreach($users as $user)
-                                    <option value="{{ $user->id }}" {{ old('created_by', $event->created_by) == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }} ({{ $user->email }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('created_by') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+           <!-- Người tạo -->
+<div class="form-group">
+    <label class="form-label fw-bold">Người tạo <span class="text-danger">*</span></label>
+    <select name="created_by" class="form-select @error('created_by') is-invalid @enderror" required>
+        <option value="">-- Chọn người tạo --</option>
+        @foreach($users as $user)
+            <option value="{{ $user->id }}" {{ old('created_by', $event->created_by) == $user->id ? 'selected' : '' }}>
+                {{ $user->name }} ({{ $user->email }})
+            </option>
+        @endforeach
+    </select>
+    @error('created_by') <div class="invalid-feedback">{{ $message }}</div> @enderror
+</div>
+
 
                         <!-- Người duyệt (nếu đã duyệt) -->
                         @if($event->approval_by)
@@ -154,12 +154,42 @@
                         @endif
 
                         <!-- Ngân sách -->
-                        <div class="form-group">
-                            <label class="form-label fw-bold">Ngân sách (VNĐ)</label>
-                            <input type="number" name="budget" class="form-control @error('budget') is-invalid @enderror"
-                                   value="{{ old('budget', $event->budget) }}" min="0" step="0.01" placeholder="VD: 45000000">
-                            @error('budget') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+                      <!-- Ngân sách dự kiến -->
+<div class="form-group">
+    <label class="form-label fw-bold">Ngân sách dự kiến (VNĐ)</label>
+    <input type="number" name="budget_estimated" 
+           class="form-control @error('budget_estimated') is-invalid @enderror"
+           value="{{ old('budget_estimated', $event->budget_estimated) }}" 
+           min="0" step="0.01" placeholder="VD: 50000000">
+    @error('budget_estimated') 
+        <div class="invalid-feedback">{{ $message }}</div> 
+    @enderror
+</div>
+
+<!-- Ngân sách hiện có -->
+<div class="form-group">
+    <label class="form-label fw-bold">Ngân sách hiện có (VNĐ)</label>
+    <input type="number" name="budget_current" 
+           class="form-control @error('budget_current') is-invalid @enderror"
+           value="{{ old('budget_current', $event->budget_current) }}" 
+           min="0" step="0.01" placeholder="VD: 30000000">
+    @error('budget_current') 
+        <div class="invalid-feedback">{{ $message }}</div> 
+    @enderror
+</div>
+
+<!-- Ngân sách thực dùng -->
+<div class="form-group">
+    <label class="form-label fw-bold">Ngân sách đã sử dụng (VNĐ)</label>
+    <input type="number" name="budget_used" 
+           class="form-control @error('budget_used') is-invalid @enderror"
+           value="{{ old('budget_used', $event->budget_used) }}" 
+           min="0" step="0.01" placeholder="VD: 25000000">
+    @error('budget_used') 
+        <div class="invalid-feedback">{{ $message }}</div> 
+    @enderror
+</div>
+
                     </div>
                 </div>
 
@@ -176,6 +206,43 @@
         </div>
     </div>
 </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const clubSelect = document.querySelector('select[name="club_id"]');
+    const userSelect = document.querySelector('#created_by');
+
+    clubSelect.addEventListener('change', function () {
+        const clubId = this.value;
+        userSelect.innerHTML = '<option value="">Đang tải...</option>';
+
+        if (clubId) {
+            fetch(`/admin/events/get-managers/${clubId}`)
+                .then(response => response.json())
+                .then(data => {
+                    userSelect.innerHTML = '';
+                    if (data.success && data.data.length > 0) {
+                        userSelect.innerHTML = '<option value="">-- Chọn người tạo --</option>';
+                        data.data.forEach(user => {
+                            const option = document.createElement('option');
+                            option.value = user.id;
+                            option.textContent = `${user.name} (${user.email})`;
+                            userSelect.appendChild(option);
+                        });
+                    } else {
+                        userSelect.innerHTML = '<option value="">Không có quản lý nào trong CLB này</option>';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    userSelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+                });
+        } else {
+            userSelect.innerHTML = '<option value="">-- Chọn CLB trước để hiển thị người tạo --</option>';
+        }
+    });
+});
+</script>
 
 <style>
     :root {

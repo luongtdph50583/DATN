@@ -1,14 +1,13 @@
 @extends('admin.layouts.app')
 
 @section('card-title', 'Chi tiết giao dịch quỹ')
-
 @section('card-header', 'Xem chi tiết giao dịch')
 
 @section('card-body')
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="mb-0">Thông tin giao dịch #{{ $fund->id }}</h5>
     <a href="{{ url()->previous() }}" class="btn btn-outline-primary btn-sm">Quay lại</a>
- </div>
+</div>
 
 <!-- Summary strip -->
 <div class="row g-3 mb-3">
@@ -46,9 +45,9 @@
             <div class="h6 mb-0">{{ $fund->created_at->format('d/m/Y H:i') }}</div>
         </div>
     </div>
- </div>
+</div>
 
-<div class="card shadow-sm">
+<div class="card shadow-sm mb-3">
     <div class="card-body">
         <div class="row g-4">
             <div class="col-md-6">
@@ -79,10 +78,45 @@
     </div>
 </div>
 
+{{-- Hóa đơn / Chứng từ --}}
+@if($fund->receipt)
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="text-muted small mb-2">Hóa đơn / Chứng từ</div>
+
+        @php
+            // Nếu là JSON mảng thì decode, nếu là chuỗi đơn lẻ thì gói thành mảng
+            $receipts = is_array(json_decode($fund->receipt, true)) 
+                ? json_decode($fund->receipt, true) 
+                : [$fund->receipt];
+        @endphp
+
+        <div class="d-flex flex-wrap gap-2">
+            @foreach($receipts as $file)
+                @php
+                    $ext = pathinfo($file, PATHINFO_EXTENSION);
+                    $url = asset('storage/' . $file);
+                @endphp
+
+                @if(in_array(strtolower($ext), ['jpg','jpeg','png','gif']))
+                    <a href="{{ $url }}" target="_blank">
+                        <img src="{{ $url }}" alt="Hóa đơn" width="100" class="border p-1">
+                    </a>
+                @else
+                    <a href="{{ $url }}" target="_blank" class="d-block border p-2 text-truncate" style="width:150px;">
+                        {{ basename($file) }}
+                    </a>
+                @endif
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
+
+
 <style>
 .font-weight-600 { font-weight:600; }
 .g-3 > [class^="col"], .g-4 > [class^="col"] { padding-left:.75rem; padding-right:.75rem; }
+.d-flex.flex-wrap.gap-2 > a { display: inline-block; }
 </style>
 @endsection
-
-

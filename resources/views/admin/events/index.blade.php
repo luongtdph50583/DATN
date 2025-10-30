@@ -128,12 +128,20 @@
                                 </td>
 
                                 <!-- Trạng thái -->
-                                <td>
-                                    <span class="status-badge status-{{ $event->status }}">
-                                        <span class="status-dot"></span>
-                                        {{ ucfirst($event->status) }}
-                                    </span>
-                                </td>
+                               @php
+    $statusLabels = [
+        'pending' => 'Chờ duyệt',
+        'approved' => 'Đã duyệt',
+        'rejected' => 'Từ chối',
+    ];
+@endphp
+
+<td>
+    <span class="status-badge status-{{ $event->status }}">
+        <span class="status-dot"></span>
+        {{ $statusLabels[$event->status] ?? $event->status }}
+    </span>
+</td>
 
                                 <!-- Người tạo -->
                                 <td>
@@ -156,11 +164,20 @@
                                     <div class="action-buttons">
                                         <a href="{{ route('admin.events.show', $event->id) }}" class="btn btn-action btn-view" title="Xem">Xem</a>
                                         <a href="{{ route('admin.events.edit', $event->id) }}" class="btn btn-action btn-edit" title="Sửa">Sửa</a>
-                                        <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST" style="display:inline;"
-                                              onsubmit="return confirm('Xóa sự kiện này?');">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-action btn-delete" title="Xóa">Xóa</button>
-                                        </form>
+                                         @if($event->status !== 'approved')
+          <form action="{{ route('admin.events.approve', $event->id) }}" method="POST" style="display:inline;">
+    @csrf
+    <button type="submit" class="btn btn-action btn-approve" title="Duyệt">Duyệt</button>
+</form>
+        @endif
+
+        <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST" style="display:inline;"
+              onsubmit="return confirm('Xóa sự kiện này?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn-action btn-delete" title="Xóa">Xóa</button>
+        </form>
+                                     
                                     </div>
                                 </td>
                             </tr>
