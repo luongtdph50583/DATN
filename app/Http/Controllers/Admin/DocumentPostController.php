@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Media;
 use App\Models\User;
 
-class DocumentController extends Controller
+class DocumentPostController extends Controller
 {
     /**
      * Kiểm tra quyền admin.
@@ -88,7 +88,7 @@ class DocumentController extends Controller
                 // );
 
 
-   
+
         // Lấy kết quả mới nhất
         $media = $query->latest()->get();
 

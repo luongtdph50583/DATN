@@ -20,7 +20,9 @@ use App\Http\Controllers\Admin\{
     ClubRequestController,
     TrashController,
     ClubJoinRequestController,
-    PlanController
+    PlanController,
+    DocumentPostController,
+    DocumentClubController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -109,7 +111,7 @@ Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManager
         });
 
         // 📚 Document Management
-        Route::controller(DocumentController::class)
+        Route::controller(DocumentPostController::class)
             ->prefix('documents')
             ->as('documents.')
             ->group(function () {
@@ -124,6 +126,29 @@ Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManager
             ->group(function () {
             Route::get('/', 'index')->name('index');
         });
+        Route::controller(DocumentClubController::class)
+            ->prefix('documentclub')
+            ->as('documentclub.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');                 // danh sách
+                Route::get('/create', 'create')->name('create');         // form thêm
+                Route::post('/', 'store')->name('store');
+                Route::get('/search', 'search')->name('search'); // realtime search
+      // lưu mới
+                Route::get('/{document}/edit', 'edit')->name('edit');    // form chỉnh sửa
+                Route::put('/{document}', 'update')->name('update');     // cập nhật
+                Route::delete('/{document}', 'destroy')->name('destroy'); // xóa mềm
+                Route::get('/{document}/download', 'download')->name('download');
+                Route::get('/{document}', 'show')->name('show');
+
+
+                // ✅ Thùng rác và quản lý tài liệu đã xóa mềm
+                Route::get('/trash', 'trash')->name('trash'); // danh sách tài liệu đã xóa mềm
+                Route::put('/{id}/restore', 'restore')->name('restore'); // khôi phục
+                Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
+            });
+
+
 
         // 💬 Comment Management
         Route::controller(CommentController::class)
@@ -174,8 +199,37 @@ Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManager
             Route::post('/{joinRequest}', 'handle')->name('handle');
         });
 
-    // 📝 Club Request Management
-   
+        // 🔔 Notification Management
+        // 🔔 Notification Management
+
+        Route::controller(NotificationController::class)
+            ->prefix('notifications')
+            ->as('notifications.')
+            ->group(function () {
+
+                // Danh sách, tạo, lưu
+                Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
+                Route::get('/create', 'create')->name('create');           // form tạo thông báo
+                Route::post('/', 'store')->name('store');                  // lưu thông báo
+
+                // AJAX fetch dữ liệu liên quan
+                Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
+                Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
+                Route::get('/fetch-club-members', 'fetchClubMembers')->name('fetchClubMembers');
+                Route::get('/fetch-events', 'fetchEvents')->name('fetchEvents');
+                Route::get('/fetch-event-members', 'fetchEventMembers')->name('fetchEventMembers');
+
+                // Gửi lại thông báo cho từng user theo batch
+                Route::post('/resend/{batchId}/{userId}', 'resend')->name('resend');
+
+                // ✅ Xóa thông báo hàng loạt
+                Route::post('/bulk-delete', 'bulkDelete')->name('bulkDelete');
+
+            });
+
+
+        // 📝 Club Request Management
+
         Route::controller(ClubRequestController::class)
             ->prefix('club-requests')
             ->as('club-requests.')
@@ -210,28 +264,6 @@ Route::controller(ClubJoinRequestController::class)
         Route::post('/{club_id}/store', 'store')->name('store');
     });
 
-
-    // 🔔 Notification Management
-  
-        // 🔔 Notification Management
-        // 🔔 Notification Management
-    
-        Route::controller(NotificationController::class)
-            ->prefix('notifications')
-            ->as('notifications.')
-            ->group(function () {
-
-                Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
-                Route::get('/create', 'create')->name('create');           // form tạo thông báo
-                Route::post('/', 'store')->name('store');                  // lưu thông báo
-        
-                // AJAX
-                Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
-                Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
-                Route::get('/fetch-club-members', 'fetchClubMembers')->name('fetchClubMembers');
-                Route::get('/fetch-events', 'fetchEvents')->name('fetchEvents');
-                Route::get('/fetch-event-members', 'fetchEventMembers')->name('fetchEventMembers');
-            });
 
 
         // 📊 Statistics Management
