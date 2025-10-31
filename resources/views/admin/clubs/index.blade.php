@@ -1,85 +1,60 @@
 @extends('admin.layouts.app')
-
 @section('title', 'Danh sách CLB')
 
 @section('card-body')
-<h1 class="mb-4">Danh sách CLB</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Danh sách Câu lạc bộ</h3>
+    <a href="{{ route('admin.clubs.create') }}" class="btn btn-primary">+ Tạo CLB mới</a>
+</div>
 
-{{-- Thông báo success --}}
-@if(session('success'))
+@if (session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
-{{-- Form tìm kiếm --}}
-<form method="GET" action="{{ route('admin.clubs.index') }}" class="mb-3 row g-2 align-items-end">
-    <div class="col-md-3">
-        <label for="name" class="form-label">Tên CLB</label>
-        <input type="text" name="name" id="name" class="form-control" value="{{ request('name') }}">
-    </div>
-    <div class="col-md-3">
-        <label for="field" class="form-label">Lĩnh vực</label>
-        <input type="text" name="field" id="field" class="form-control" value="{{ request('field') }}">
-    </div>
-    <div class="col-md-3">
-        <label for="status" class="form-label">Trạng thái</label>
-        <select name="status" id="status" class="form-control">
-            <option value="">-- Tất cả --</option>
-            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Hoạt động</option>
-            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
-            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Không hoạt động</option>
-        </select>
-    </div>
-    <div class="col-md-3">
-        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-        <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">Reset</a>
-    </div>
+<form method="GET" class="mb-3">
+    <input type="text" name="keyword" class="form-control" placeholder="Tìm kiếm CLB..." value="{{ request('keyword') }}">
 </form>
 
-<a href="{{ route('admin.clubs.create') }}" class="btn btn-success mb-3">Thêm mới CLB</a>
-
-<table class="table table-bordered table-hover">
+<table class="table table-bordered align-middle">
     <thead class="table-light">
         <tr>
             <th>ID</th>
-            <th>Logo</th>
             <th>Tên CLB</th>
             <th>Lĩnh vực</th>
-            <th>Trạng thái</th>
             <th>Chủ nhiệm</th>
-            <th>Hành động</th>
+            <th>Trạng thái</th>
+            <th width="180">Hành động</th>
         </tr>
     </thead>
     <tbody>
-        @forelse($clubs as $club)
+        @foreach ($clubs as $club)
         <tr>
             <td>{{ $club->id }}</td>
-            <td>
-                @if($club->logo)
-                    <img src="{{ asset('storage/' . $club->logo) }}" alt="Logo" style="height:50px;">
-                @else
-                    <span class="text-muted">Chưa có</span>
-                @endif
-            </td>
             <td>{{ $club->name }}</td>
-            <td>{{ $club->field ?? 'Chưa cập nhật' }}</td>
-            <td>{{ ucfirst($club->status ?? 'Chưa cập nhật') }}</td>
-            <td>{{ $club->manager->name ?? 'Chưa có' }}</td>
+            <td>{{ $club->field }}</td>
+            <td>{{ $club->manager->name ?? '—' }}</td>
             <td>
-                <a href="{{ route('admin.clubs.show', $club->id) }}" class="btn btn-info btn-sm">Xem</a>
-                <a href="{{ route('admin.clubs.edit', $club->id) }}" class="btn btn-warning btn-sm">Sửa</a>
-                <a href="{{ route('admin.clubs.assign', $club->id) }}" class="btn btn-success btn-sm">Gán chủ nhiệm</a>
-                <form action="{{ route('admin.clubs.destroy', $club->id) }}" method="POST" style="display:inline-block">
-                    @csrf
-                    @method('DELETE')
-                    <button class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa?')">Xóa</button>
+                <span class="badge bg-{{ $club->status == 'active' ? 'success' : 'secondary' }}">
+                    {{ $club->status }}
+                </span>
+            </td>
+            <td>
+                <a href="{{ route('admin.clubs.show', $club->id) }}" class="btn btn-info btn-sm">
+    👁 Xem
+</a>
+                <a href="{{ route('admin.clubs.edit', $club) }}" class="btn btn-sm btn-warning">Sửa</a>
+                 <a href="{{ route('admin.clubs.assign', $club->id) }}" class="btn btn-sm btn-primary">
+        Gán chủ nhiệm
+    </a>
+                <form action="{{ route('admin.clubs.destroy', $club) }}" method="POST" class="d-inline" onsubmit="return confirm('Xóa CLB này?')">
+                    @csrf @method('DELETE')
+                    <button class="btn btn-sm btn-danger">Xóa</button>
                 </form>
             </td>
         </tr>
-        @empty
-        <tr>
-            <td colspan="7" class="text-center">Chưa có CLB nào</td>
-        </tr>
-        @endforelse
+        @endforeach
     </tbody>
 </table>
+
+{{ $clubs->links() }}
 @endsection
