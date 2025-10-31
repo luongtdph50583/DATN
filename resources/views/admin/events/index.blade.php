@@ -77,14 +77,13 @@
                         <tr>
                             <th>ID</th>
                             <th>Tên sự kiện</th>
-                            {{-- <th>Mô tả</th> --}}
                             <th>Thời gian</th>
                             <th>Địa điểm</th>
                             <th>Số người</th>
                             <th>Trạng thái</th>
                             <th>Người tạo</th>
                             <th>CLB</th>
-                            <th>Hành động</th>
+                            <th class="text-center">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,13 +98,6 @@
                                         {{ $event->name }}
                                     </a>
                                 </td>
-
-                                <!-- Mô tả -->
-                                {{-- <td>
-                                    <span title="{{ $event->description }}">
-                                        {{ Str::limit($event->description, 60) }}
-                                    </span>
-                                </td> --}}
 
                                 <!-- Thời gian -->
                                 <td>
@@ -151,15 +143,41 @@
                                     @endif
                                 </td>
 
-                                <!-- Hành động -->
+                                <!-- HÀNH ĐỘNG – ĐỒNG BỘ 100% -->
                                 <td>
                                     <div class="action-buttons">
-                                        <a href="{{ route('admin.events.show', $event->id) }}" class="btn btn-action btn-view" title="Xem">Xem</a>
-                                        <a href="{{ route('admin.events.edit', $event->id) }}" class="btn btn-action btn-edit" title="Sửa">Sửa</a>
-                                        <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST" style="display:inline;"
-                                              onsubmit="return confirm('Xóa sự kiện này?');">
+                                        @if($event->status === 'pending')
+                                            <form action="{{ route('admin.events.approve', $event) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn-action btn-approve" 
+                                                        onclick="return confirm('Duyệt sự kiện này?')">
+                                                    Duyệt
+                                                </button>
+                                            </form>
+
+                                            <form action="{{ route('admin.events.reject', $event) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn-action btn-reject" 
+                                                        onclick="return confirm('Từ chối sự kiện này?')">
+                                                    Từ chối
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        <a href="{{ route('admin.events.show', $event->id) }}" class="btn-action btn-view">
+                                            Xem
+                                        </a>
+
+                                        <a href="{{ route('admin.events.edit', $event->id) }}" class="btn-action btn-edit">
+                                            Sửa
+                                        </a>
+
+                                        <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST" class="d-inline"
+                                              onsubmit="return confirm('Xóa vĩnh viễn sự kiện này?')">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-action btn-delete" title="Xóa">Xóa</button>
+                                            <button type="submit" class="btn-action btn-delete">
+                                                Xóa
+                                            </button>
                                         </form>
                                     </div>
                                 </td>
@@ -177,7 +195,7 @@
             @endif
         @else
             <div class="empty-state">
-                <div class="empty-icon">Không có sự kiện</div>
+                <div class="empty-icon">No events</div>
                 <h3>Chưa có sự kiện nào</h3>
                 <p>Thêm sự kiện đầu tiên để bắt đầu quản lý.</p>
                 <a href="{{ route('admin.events.create') }}" class="btn btn-primary">Thêm sự kiện</a>
@@ -199,6 +217,7 @@
         --border: #e5e7eb;
         --shadow: 0 10px 25px -3px rgba(0,0,0,0.1);
         --radius: 14px;
+        --transition: all 0.25s ease;
     }
 
     .modern-container {
@@ -219,32 +238,18 @@
         align-items: center;
         flex-wrap: wrap;
         gap: 1rem;
+        border-left: 5px solid var(--primary);
     }
 
-    .page-title {
-        font-size: 1.9rem;
-        font-weight: 700;
-        color: var(--dark);
-        margin: 0;
-    }
-
-    .page-subtitle {
-        color: #6b7280;
-        margin: 0.5rem 0 0;
-        font-size: 0.95rem;
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 0.75rem;
-    }
+    .page-title { font-size: 1.9rem; font-weight: 700; color: var(--dark); margin: 0; }
+    .page-subtitle { color: #6b7280; margin: 0.5rem 0 0; font-size: 0.95rem; }
 
     .btn {
         border-radius: 10px;
         font-weight: 600;
         padding: 0.75rem 1.5rem;
         font-size: 0.95rem;
-        transition: all 0.3s;
+        transition: var(--transition);
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
@@ -262,7 +267,7 @@
         box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
 
-    /* === FILTER STYLES === */
+    /* === FILTER === */
     .filter-section {
         background: white;
         padding: 1.5rem;
@@ -302,7 +307,7 @@
         color: var(--dark);
     }
 
-    /* === TABLE STYLES === */
+    /* === TABLE === */
     .table-section {
         background: white;
         border-radius: var(--radius);
@@ -372,31 +377,52 @@
         background: currentColor;
     }
 
+    /* === NÚT HÀNH ĐỘNG – ĐỒNG BỘ 100% === */
     .action-buttons {
         display: flex;
         gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .btn-action {
+        min-width: 60px;
         padding: 0.35rem 0.75rem;
-        border-radius: 0.5rem;
         font-size: 0.8rem;
         font-weight: 600;
-        border: 1px solid #d1d5db;
-        background: white;
-        color: #374151;
-        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-radius: 1.5rem;
+        border: 1.8px solid transparent;
+        transition: all 0.25s ease;
+        cursor: pointer;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .btn-action:hover {
-        background: #f3f4f6;
-        transform: translateY(-1px);
-    }
+    /* Xem */
+    .btn-view { background: #dbeafe; color: #2563eb; border-color: #93c5fd; }
+    .btn-view:hover { background: #bfdbfe; border-color: #60a5fa; color: #1d4ed8; }
 
-    .btn-view { background: #eff6ff; color: #2563eb; border-color: #93c5fd; }
-    .btn-edit { background: #fef3c7; color: #d97706; border-color: #f59e0b; }
-    .btn-delete { background: #fee2e2; color: #dc2626; border-color: #ef4444; }
+    /* Sửa */
+    .btn-edit { background: #fef3c7; color: #d97706; border-color: #fbbf24; }
+    .btn-edit:hover { background: #fde68a; border-color: #f59e0b; color: #b45309; }
 
+    /* Xóa */
+    .btn-delete { background: #fee2e2; color: #dc2626; border-color: #f87171; }
+    .btn-delete:hover { background: #fecaca; border-color: #ef4444; color: #b91c1c; }
+
+    /* Duyệt */
+    .btn-approve { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+    .btn-approve:hover { background: #a7f3d0; border-color: #34d399; color: #064e3b; }
+
+    /* Từ chối */
+    .btn-reject { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+    .btn-reject:hover { background: #fecaca; border-color: #ef4444; color: #7f1d1d; }
+
+    /* === EMPTY STATE === */
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
@@ -418,17 +444,13 @@
         text-align: center;
     }
 
-    .alert {
-        border-radius: 10px;
-        padding: 1rem 1.5rem;
-        margin-bottom: 1.5rem;
-        border: none;
-    }
-
     .alert-success {
         background: #d1fae5;
         color: #065f46;
         border: 1px solid #a7f3d0;
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
     .text-sm { font-size: 0.875rem; line-height: 1.4; }
@@ -438,6 +460,7 @@
         .header-content { flex-direction: column; text-align: center; gap: 1rem; }
         .filter-section .row { flex-direction: column; }
         .filter-section .col-md-4, .filter-section .col-md-2 { width: 100%; }
+        .btn-action { min-width: 50px; font-size: 0.75rem; padding: 0.3rem 0.6rem; }
     }
 </style>
 @endsection
