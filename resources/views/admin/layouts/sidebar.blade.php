@@ -140,8 +140,13 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.funds.create') }}" class="nav-link" data-key="t-fund-create">
-                                    <i class="ri-add-circle-line"></i> Thêm giao dịch
+                                <a href="{{ route('admin.event_fund_requests.index') }}" class="nav-link" data-key="t-fund-create">
+                                    <i class="ri-add-circle-line"></i> Yêu cầu cấp kinh phí
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.event_fund_settlements.index') }}" class="nav-link" data-key="t-fund-create">
+                                    <i class="ri-add-circle-line"></i> Quyết toán kinh phí 
                                 </a>
                             </li>
                         </ul>

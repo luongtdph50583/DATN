@@ -2,10 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
+  
     HomeController,
     ProfileController
 };
 use App\Http\Controllers\Admin\{
+      EventFundRequestController,
+    EventFundSettlementController,
     UserController,
     MemberController,
     EventController,
@@ -311,6 +314,10 @@ Route::controller(ClubJoinRequestController::class)
             Route::post('/{fund}/reject', 'reject')->name('reject');
             Route::get('/api/summary', 'summary')->name('summary');
         });
+
+          Route::resource('event_fund_requests', EventFundRequestController::class);
+              Route::resource('event_fund_settlements', EventFundSettlementController::class);
+
 
         // 🗑️ Trash Management
         Route::prefix('trash/media')
