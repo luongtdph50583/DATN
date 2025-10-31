@@ -12,7 +12,7 @@ class EventFundRequest extends Model
     use HasFactory;
 
 protected $fillable = [
-    'event_id', 'source_type', 'amount_requested', 'note', 'requested_by', 'status'
+    'event_id', 'source_type', 'amount_requested', 'note', 'requested_by', 'status', 'approved_by','approved_amount'
 ];
 
     public function event()

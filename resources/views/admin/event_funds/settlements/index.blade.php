@@ -46,6 +46,7 @@
             <td>
                 <a href="{{ route('admin.event_fund_settlements.show', $settlement->id) }}" class="btn btn-sm btn-info">Xem</a>
                 <a href="{{ route('admin.event_fund_settlements.edit', $settlement->id) }}" class="btn btn-sm btn-warning">Sửa</a>
+
                 <form action="{{ route('admin.event_fund_settlements.destroy', $settlement->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc muốn xóa quyết toán này?');">
                     @csrf
                     @method('DELETE')

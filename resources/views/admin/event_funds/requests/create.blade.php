@@ -8,19 +8,31 @@
     <form action="{{ route('admin.event_fund_requests.store') }}" method="POST">
         @csrf
 
-        <!-- Sự kiện -->
-        <div class="form-group mb-3">
-            <label for="event_id" class="form-label">Chọn sự kiện</label>
-            <select name="event_id" id="event_id" class="form-select" required>
-                <option value="">-- Chọn sự kiện --</option>
-                @foreach($events as $event)
-                    <option value="{{ $event->id }}" {{ old('event_id') == $event->id ? 'selected' : '' }}>
-                        {{ $event->name }}
-                    </option>
-                @endforeach
-            </select>
-            @error('event_id') <small class="text-danger">{{ $message }}</small> @enderror
-        </div>
+    <!-- Chọn câu lạc bộ -->
+<div class="form-group mb-3">
+    <label for="club_id" class="form-label">Chọn câu lạc bộ</label>
+    <select id="club_id" class="form-select">
+        <option value="">-- Chọn câu lạc bộ --</option>
+        @foreach($clubs as $club)
+            <option value="{{ $club->id }}">{{ $club->name }}</option>
+        @endforeach
+    </select>
+</div>
+
+<!-- Chọn sự kiện -->
+<div class="form-group mb-3">
+    <label for="event_id" class="form-label">Chọn sự kiện</label>
+    <select name="event_id" id="event_id" class="form-select" required>
+        <option value="">-- Chọn sự kiện --</option>
+        @foreach($events as $event)
+            <option value="{{ $event->id }}" data-club="{{ $event->club_id }}">
+                {{ $event->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('event_id') <small class="text-danger">{{ $message }}</small> @enderror
+</div>
+
 
         <!-- Nguồn quỹ -->
         <div class="form-group mb-3">
@@ -58,4 +70,40 @@
         </div>
     </form>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const clubSelect = document.getElementById('club_id');
+    const eventSelect = document.getElementById('event_id');
+
+    clubSelect.addEventListener('change', function () {
+        const clubId = this.value;
+
+        Array.from(eventSelect.options).forEach(option => {
+            if (!option.value) return; // option mặc định
+            if (clubId === '' || option.dataset.club === clubId) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+
+        // Reset chọn event
+        eventSelect.value = '';
+    });
+});
+</script>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#club_id, #event_id').select2({
+        placeholder: '-- Chọn --',
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
+
 @endsection

@@ -310,7 +310,10 @@ Route::controller(ClubJoinRequestController::class)
           Route::resource('event_fund_requests', EventFundRequestController::class);
               Route::resource('event_fund_settlements', EventFundSettlementController::class);
 
-
+ Route::get('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approveForm'])->name('event_fund_requests.approveForm');
+    Route::post('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approve'])->name('event_fund_requests.approve');
+Route::post('event_fund_requests/{id}/reject', [App\Http\Controllers\Admin\EventFundRequestController::class, 'reject'])
+    ->name('event_fund_requests.reject');
         // 🗑️ Trash Management
         Route::prefix('trash/media')
             ->as('trash.media.')

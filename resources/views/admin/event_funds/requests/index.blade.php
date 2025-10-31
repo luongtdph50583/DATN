@@ -16,7 +16,8 @@
             <th>#</th>
             <th>Tên sự kiện</th>
             <th>Người yêu cầu</th>
-            <th>Số tiền</th>
+            <th>Số tiền yêu cầu </th>
+            <th>Số tiền được duyệt </th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
             <th>Hành động</th>
@@ -29,6 +30,8 @@
             <td>{{ $req->event->name ?? '—' }}</td>
             <td>{{ $req->user->name ?? 'N/A' }}</td>
             <td>{{ number_format($req->amount_requested, 0, ',', '.') }}₫</td>
+            <td>{{ number_format($req->approved_amount, 0, ',', '.') }}₫</td>
+
           @php
     $statusLabels = [
         'pending' => 'Chờ duyệt',
@@ -48,6 +51,8 @@
             <td>
                 <a href="{{ route('admin.event_fund_requests.show', $req->id) }}" class="btn btn-sm btn-info">Xem</a>
                 <a href="{{ route('admin.event_fund_requests.edit', $req->id) }}" class="btn btn-sm btn-warning">Sửa</a>
+                <a href="{{ route('admin.event_fund_requests.approve', $req->id) }}" class="btn btn-sm btn-warning">Duyệt</a>
+
 
                 <!-- Form Xóa -->
                 <form action="{{ route('admin.event_fund_requests.destroy', $req->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc muốn xóa yêu cầu này?');">
