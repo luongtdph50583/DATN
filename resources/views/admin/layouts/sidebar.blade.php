@@ -182,7 +182,7 @@
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('admin.notifications.index') }}" class="nav-link">
-                                    <i class="ri-list-check-2"></i> Danh sách thông báo
+                                    <i class="ri-list-check-2"></i> Thông báo đã gửi
                                 </a>
                             </li>
                         </ul>
@@ -200,6 +200,11 @@
                             <li class="nav-item">
                                 <a href="{{ route('admin.documentclub.index') }}" class="nav-link">
                                     <i class="ri-file-text-line"></i> Danh sách
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.documentclub.create') }}" class="nav-link">
+                                    <i class="ri-add-box-line"></i> Thêm mới
                                 </a>
                             </li>
                             <li class="nav-item">
