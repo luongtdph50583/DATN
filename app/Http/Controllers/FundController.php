@@ -176,28 +176,33 @@ public function update(FundTransactionRequest $request, FundTransaction $fund)
         $oldEventId = $fund->event_id;
         $oldClubFund = Fund::where('club_id', $fund->club_id)->first();
 
-        // 🔹 2. Xử lý file đính kèm
-        $receipts = is_array(json_decode($fund->receipt, true))
-            ? json_decode($fund->receipt, true)
-            : ($fund->receipt ? [$fund->receipt] : []);
+    // 🔹 2. Xử lý file đính kèm
+$oldReceipts = is_array(json_decode($fund->receipt, true)) ? json_decode($fund->receipt, true) : ($fund->receipt ? [$fund->receipt] : []);
 
-        if ($request->filled('delete_receipts')) {
-            foreach ($request->delete_receipts as $file) {
-                if (in_array($file, $receipts)) {
-                    Storage::disk('public')->delete($file);
-                    $receipts = array_diff($receipts, [$file]);
-                }
-            }
-        }
+// === XÓA FILE CŨ ===
+$keepReceipts = $request->input('keep_receipts', []);
+$deleteReceipts = array_diff($oldReceipts, $keepReceipts);
 
-        if ($request->hasFile('receipt')) {
-            foreach ($request->file('receipt') as $file) {
-                $path = $file->store('receipts', 'public');
-                $receipts[] = $path;
-            }
-        }
+foreach ($deleteReceipts as $fileToDelete) {
+    if (Storage::disk('public')->exists($fileToDelete)) {
+        Storage::disk('public')->delete($fileToDelete);
+    }
+}
 
-        $data['receipt'] = !empty($receipts) ? json_encode(array_values($receipts)) : null;
+// Giữ lại file còn lại
+$receipts = $keepReceipts;
+
+// === UPLOAD FILE MỚI ===
+if ($request->hasFile('receipt')) {
+    foreach ($request->file('receipt') as $file) {
+        $path = $file->store('receipts', 'public');
+        $receipts[] = $path;
+    }
+}
+
+// Cập nhật DB
+$data['receipt'] = !empty($receipts) ? json_encode($receipts) : null;
+    
 
         // 🔹 3. Hoàn tác tác động cũ (không cap về 0)
         if ($oldCategory === 'Hoạt động sự kiện' && $oldEventId) {

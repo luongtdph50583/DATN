@@ -124,50 +124,41 @@
             $currentReceipts = is_array($currentReceipts) ? $currentReceipts : [];
         @endphp
 
-        @if(count($currentReceipts) > 0)
-            <div class="mb-4">
-                <label class="form-label fw-bold">Hóa đơn hiện tại (đánh dấu để xóa)</label>
-                <div class="row g-3">
-                    @foreach($currentReceipts as $index => $file)
-                        @php
-                            $path = is_string($file) ? $file : ($file['path'] ?? null);
-                            if (!$path) continue;
-                            $url = asset('storage/' . $path);
-                            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-                            $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                            $fullPath = storage_path('app/public/' . ltrim($path, '/'));
-                        @endphp
+       @if(count($currentReceipts) > 0)
+<div class="mb-4">
+    <label class="form-label fw-bold">Hóa đơn hiện tại</label>
+    <div class="row g-3">
+        @foreach($currentReceipts as $file)
+            @php
+                $url = asset('storage/' . $file);
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                $isImage = in_array($ext, ['jpg','jpeg','png','gif','webp']);
+            @endphp
+            <div class="col-md-3 col-sm-4 col-6 receipt-wrapper">
+                <div class="receipt-item">
+                    @if($isImage)
+                        <img src="{{ $url }}" alt="Hóa đơn" class="receipt-img">
+                    @else
+                        <a href="{{ $url }}" target="_blank" class="d-block text-center p-3 bg-light text-decoration-none">
+                            <i class="fas fa-file-pdf fa-2x text-danger mb-2"></i>
+                            <div class="small text-muted text-truncate">{{ basename($file) }}</div>
+                        </a>
+                    @endif
 
-                        <div class="col-md-3 col-sm-4 col-6">
-                            <div class="receipt-item">
-                                @if($isImage && file_exists($fullPath))
-                                    <a href="{{ $url }}" target="_blank">
-                                        <img src="{{ $url }}" alt="Hóa đơn" class="receipt-img">
-                                    </a>
-                                @else
-                                    <a href="{{ $url }}" target="_blank" class="d-block text-center p-3 bg-light text-decoration-none">
-                                        <i class="fas fa-file-pdf fa-3x text-danger mb-2"></i>
-                                        <div class="small text-muted text-truncate">{{ basename($path) }}</div>
-                                    </a>
-                                @endif
+                    <!-- Checkbox overlay -->
+                    <label class="checkbox-overlay">
+                        <input type="checkbox" name="keep_receipts[]" value="{{ $file }}" checked>
+                        Giữ
+                    </label>
 
-                                <div class="receipt-overlay">
-                                    <small>{{ basename($path) }}</small>
-                                </div>
-
-                                <!-- Nút xóa -->
-                                <button type="button" class="remove-receipt" "data-index="{{ $index }}">
-                                    <i class="fas fa-times"></i>
-                                </button>
-
-                                <!-- Hidden input để gửi danh sách file giữ lại -->
-                                <input type="hidden" name="keep_receipts[{{ $index }}]" value="{{ $path }}" id="keep-{{ $index }}">
-                            </div>
-                        </div>
-                    @endforeach
+                    <div class="receipt-overlay">{{ basename($file) }}</div>
                 </div>
             </div>
-        @endif
+        @endforeach
+    </div>
+</div>
+@endif
+
 
         <!-- Trạng thái -->
         <div class="mb-4">
@@ -196,6 +187,23 @@
     .container {
         max-width: 1000px;
     }
+    .receipt-wrapper { position: relative; }
+.receipt-item { position: relative; border-radius: 8px; overflow: hidden; }
+.receipt-img { width: 100%; height: 120px; object-fit: cover; }
+.receipt-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); color: white; font-size: 0.75rem; text-align: center; padding: 0.2rem; }
+.checkbox-overlay {
+    position: absolute;
+    top: 5px; right: 5px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+}
+.checkbox-overlay input {
+    margin-right: 3px;
+}
+
 
     .form-label {
         font-weight: 600;
@@ -455,32 +463,17 @@
 
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.remove-receipt').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const index = this.dataset.index; // cần thêm data-index="{{ $index }}"
-            const input = document.getElementById('keep-' + index);
-            if (!input) return;
-            const col = input.closest('.col-md-3');
-            if (!col) return;
-            input.remove();
-            col.style.display = 'none';
-        });
-    });
-});
- window.removeReceipt = function(index) {
-    const input = document.getElementById('keep-' + index);
-    if (!input) return;
+$oldReceipts = json_decode($settlement->receipts, true) ?? [];
+$keepReceipts = $request->input('keep_receipts', []);
 
-    const col = input.closest('.col-md-3');
-    if (!col) return;
+// Xóa file đã bỏ checkbox
+foreach(array_diff($oldReceipts, $keepReceipts) as $file){
+    Storage::disk('public')->delete($file);
+}
 
-    // Xóa input → server không nhận file này nữa
-    input.remove();
-
-    // Ẩn tạm trên UI
-    col.style.display = 'none';
-};
+// Cập nhật DB
+$settlement->receipts = !empty($keepReceipts) ? json_encode($keepReceipts) : null;
+$settlement->save();
 
 
     // Format JSON
