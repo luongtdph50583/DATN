@@ -69,6 +69,7 @@
                             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
                             <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Đã duyệt</option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Từ chối</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
                         </select>
                     </div>
                 </div>
@@ -207,6 +208,8 @@
                                     <span class="badge bg-warning text-dark">Chờ duyệt</span>
                                 @elseif($transaction->status === 'approved')
                                     <span class="badge bg-success text-white">Đã duyệt</span>
+                                @elseif($transaction->status === 'completed')
+                                    <span class="badge bg-primary text-white">Hoàn thành</span>
                                 @else
                                     <span class="badge bg-danger text-white">Từ chối</span>
                                 @endif
@@ -501,3 +504,5 @@ function loadFundSummaryFromFilters() {
 }
 </style>
 @endsection
+
+.

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class FundTransaction extends Model
 {
@@ -36,6 +37,16 @@ class FundTransaction extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function media(): MorphMany
+    {
+        return $this->morphMany(Media::class, 'related');
+    }
+
+    public function receipts(): MorphMany
+    {
+        return $this->media()->where('file_type', 'like', 'image%');
     }
 
     // Scopes
@@ -71,6 +82,7 @@ class FundTransaction extends Model
             'pending' => 'warning',
             'approved' => 'success',
             'rejected' => 'danger',
+            'completed' => 'primary',
         ];
 
         return $badges[$this->status] ?? 'secondary';

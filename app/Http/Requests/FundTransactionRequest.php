@@ -27,7 +27,8 @@ class FundTransactionRequest extends FormRequest
             'amount' => 'required|numeric|min:0',
             'description' => 'required|string|max:1000',
             'category' => 'nullable|string|max:255',
-            'status' => 'sometimes|in:pending,approved,rejected',
+            'status' => 'sometimes|in:pending,approved,rejected,completed',
+            'receipt' => 'sometimes|file|mimes:jpg,jpeg,png,webp|max:5120',
         ];
     }
 
