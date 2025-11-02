@@ -35,8 +35,12 @@ public function user()
 {
     return $this->belongsTo(User::class);
 }
+    public function member()
+    {
+        return $this->hasOne(Member::class, 'user_id');
+    }
 
-public function clubs()
+    public function clubs()
 {
     return $this->belongsToMany(Club::class, 'club_members', 'member_id', 'club_id')
                 ->withPivot(['role', 'joined_at'])

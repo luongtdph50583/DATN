@@ -140,6 +140,22 @@ Route::prefix('admin')
                 Route::post('/{id}/handle', 'handleRequest')->name('handle');
             });
 
+        Route::controller(ClubJoinRequestController::class)
+            ->prefix('club-join-requests')
+            ->as('club_join_requests.')
+            ->group(function () {
+                // ✅ AJAX filter/search (nên đặt trước {id} để tránh xung đột)
+                Route::get('/filter', 'filter')->name('filter');
+
+                // ✅ Danh sách yêu cầu
+                Route::get('/', 'index')->name('index');
+
+                // ✅ Xem chi tiết yêu cầu (offcanvas hoặc trang riêng)
+                Route::get('/{id}', 'showRequest')->name('show');
+
+                // ✅ Duyệt hoặc từ chối yêu cầu
+                Route::post('/{id}/handle', 'handleRequest')->name('handle');
+            });
 
 
 
