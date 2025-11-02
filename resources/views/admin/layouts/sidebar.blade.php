@@ -93,7 +93,7 @@
                 </li>
 
                 <!-- Quản lý CLB -->
-                <li class="nav-item">
+                {{-- <li class="nav-item">
                     <a class="nav-link menu-link" href="#sidebarclb" data-bs-toggle="collapse" role="button" aria-expanded="false"
                         aria-controls="sidebarclb">
                         <i class="ri-team-line"></i> <span>Quản lý CLB</span>
@@ -117,7 +117,7 @@
                             </li>
                         </ul>
                     </div>
-                </li>
+                </li> --}}
 
                 <!-- Quản lý thành viên -->
                 <li class="nav-item">
