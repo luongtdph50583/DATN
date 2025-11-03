@@ -26,16 +26,21 @@ class ClubJoinRequestController extends Controller
     }
 
 
+public function destroy($id)
+{
+    $request = ClubJoinRequest::findOrFail($id);
+    $request->delete();
+
+    return redirect()->back()->with('success', 'Yêu cầu đã được xóa thành công.');
+}
 
 
     public function handleRequest(Request $req, $id)
     {
         $request = ClubJoinRequest::with(['user.member', 'club'])->findOrFail($id);
 
-        Log::info("Bắt đầu xử lý yêu cầu #{$request->id} từ user #{$request->user_id}");
-
         if ($request->status !== 'pending') {
-            Log::warning("Yêu cầu #{$request->id} đã được xử lý trước đó.");
+           
             return back()->with('error', 'Yêu cầu đã được xử lý trước đó.');
         }
 
@@ -44,6 +49,7 @@ class ClubJoinRequestController extends Controller
 
         $user = $request->user;
         $club = $request->club;
+        $member = $user->member;
 
         // Kiểm tra trạng thái CLB
         if ($club->status !== 'active') {
@@ -51,19 +57,25 @@ class ClubJoinRequestController extends Controller
             return back()->with('error', 'Chỉ có thể tham gia CLB đang hoạt động.');
         }
 
+        // Kiểm tra nếu người dùng chưa có thông tin thành viên
+        if (!$member) {
+            Log::warning("User #{$user->id} chưa có thông tin thành viên.");
+            return back()->with('error', 'Người dùng chưa có thông tin thành viên.');
+        }
+
         // Kiểm tra nếu đã là thành viên CLB
         $alreadyMember = ClubMember::where('club_id', $club->id)
-            ->where('member_id', $user->id)
+            ->where('member_id', $member->id)
             ->exists();
 
         if ($alreadyMember) {
-            Log::warning("User #{$user->id} đã là thành viên CLB #{$club->id}");
+            Log::warning("Member #{$member->id} đã là thành viên CLB #{$club->id}");
             return back()->with('error', 'Người dùng đã là thành viên của CLB này.');
         }
 
         // Kiểm tra số lượng thành viên hiện tại
         $memberCount = ClubMember::where('club_id', $club->id)->count();
-        $maxMembers = $club->limit ?? 50;
+        $maxMembers = $club->member_limit ?? 50;
 
         if ($memberCount >= $maxMembers) {
             Log::warning("CLB #{$club->id} đã đạt giới hạn thành viên ({$memberCount}/{$maxMembers})");
@@ -71,22 +83,16 @@ class ClubJoinRequestController extends Controller
         }
 
         // Kiểm tra xác thực thông tin cá nhân
-        $memberInfo = $user->member;
-        $isVerified = $memberInfo &&
-            $memberInfo->citizen_id &&
-            $memberInfo->issued_date &&
-            $memberInfo->issued_place;
+        $isVerified = $member->citizen_id && $member->issued_date && $member->issued_place;
 
         if (!$isVerified) {
-            Log::warning("User #{$user->id} chưa xác thực đầy đủ thông tin cá nhân.");
             return back()->with('error', 'Người dùng chưa xác thực đầy đủ thông tin cá nhân.');
         }
 
         if ($action === 'approve') {
-            // Tạo thành viên mới
             ClubMember::create([
                 'club_id' => $club->id,
-                'member_id' => $user->id,
+                'member_id' => $member->id,
                 'status' => 'active',
                 'joined_at' => now(),
                 'role' => 'member',
@@ -95,18 +101,17 @@ class ClubJoinRequestController extends Controller
 
             $request->status = 'approved';
             $request->note = $note;
+            $request->handled_by = auth()->id();
             $request->save();
 
-            Log::info("Yêu cầu #{$request->id} đã được duyệt. Tạo thành viên thành công.");
 
             // Gửi thông báo
             $batchId = uniqid();
-            Log::info("Gửi thông báo đến user #{$user->id} với batchId {$batchId}");
 
             SendNotificationJob::dispatch(
                 $user->id,
-                "Yêu cầu tham gia CLB được duyệt",
                 "Yêu cầu của bạn tham gia CLB '{$club->name}' đã được duyệt.",
+                $note,
                 'both',
                 $batchId,
                 false
@@ -118,14 +123,56 @@ class ClubJoinRequestController extends Controller
         if ($action === 'reject') {
             $request->status = 'rejected';
             $request->note = $note;
+            $request->handled_by = auth()->id();
             $request->save();
 
-            Log::info("Yêu cầu #{$request->id} đã bị từ chối.");
 
             return redirect()->route('admin.club_join_requests.index')->with('success', 'Yêu cầu đã bị từ chối.');
         }
 
-        Log::error("Hành động không hợp lệ: {$action}");
         return back()->with('error', 'Hành động không hợp lệ.');
     }
+
+    public function show2($id)
+    {
+        $request = ClubJoinRequest::with([
+            'user.member',
+            'club.manager',
+            'club.members'
+        ])->findOrFail($id);
+
+        return view('admin.club_join_requests.show2', compact('request'));
+    }
+    public function filter(Request $request)
+    {
+        $query = ClubJoinRequest::with(['user', 'club']);
+
+        if ($request->keyword) {
+            $keyword = $request->keyword;
+            $query->where(function ($q) use ($keyword) {
+                $q->whereHas('user', fn($u) => $u->where('name', 'like', "%$keyword%"))
+                    ->orWhereHas('club', fn($c) => $c->where('name', 'like', "%$keyword%"));
+            });
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        $requests = $query->orderByDesc('requested_at')->get();
+
+        // ✅ Trả JSON thô
+        return response()->json([
+            'data' => $requests->map(fn($r) => [
+                'id' => $r->id,
+                'user' => $r->user->name ?? '—',
+                'club' => $r->club->name ?? '—',
+                'requested_at' => optional($r->requested_at)->format('d/m/Y') ?? '—',
+                'status' => $r->status,
+                'show_url' => route('admin.club_join_requests.show2', $r->id),
+            ])
+        ]);
+    }
+
+
 }

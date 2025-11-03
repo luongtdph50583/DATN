@@ -1,16 +1,16 @@
-@extends('admin.layouts.blank')
+@extends('admin.layouts.app')
 
-@section('title', 'Chi tiết yêu cầu tham gia CLB')
+@section('title', 'Chi tiết yêu cầu rời CLB')
+@section('card-header')
+        Chi tiết yêu cầu rời CLB
+@endsection
 
 @section('card-body')
     <div class="container py-3">
 
-        <h5 class="mb-3 text-primary fw-semibold">
-            <i class="bi bi-person-plus-fill me-2"></i>Chi tiết yêu cầu tham gia CLB
-        </h5>
+       
 
-        {{-- 🧩 Card tổng hợp: người gửi + CLB --}}
-        <div class="card mb-3 shadow-sm">
+        {{-- Card tổng hợp: người gửi + CLB --}}
             <div class="card-header bg-light fw-bold">Thông tin yêu cầu</div>
             <div class="card-body">
                 <div class="row g-3">
@@ -27,8 +27,8 @@
                                 <span class="badge bg-secondary">Không hoạt động</span>
                             @endif
                         </p>
-                        <p><strong>Ngày gửi yêu cầu:</strong> {{ $request->requested_at?->format('d/m/Y') ?? '—' }}</p>
-                        <p><strong>Lý do tham gia:</strong> {{ $request->reason ?? 'Không có lý do cụ thể' }}</p>
+                        <p><strong>Ngày gửi yêu cầu:</strong> {{ $request->requested_at->format('d/m/Y') }}</p>
+                        <p><strong>Lý do rời CLB:</strong> {{ $request->reason ?? 'Không có lý do cụ thể' }}</p>
                     </div>
 
                     {{-- Bên phải: CLB --}}
@@ -39,14 +39,11 @@
                         <p><strong>Giới hạn thành viên:</strong> {{ $request->club->member_limit ?? '—' }}</p>
                         <p><strong>Số lượng thành viên hiện tại:</strong> {{ $request->club->members()->count() }}</p>
                         <p><strong>Mô tả:</strong> {!! $request->club->description !!}</p>
-                        <p><strong>Người quản lý:</strong> {{ $request->club->manager->name ?? '—' }}</p>
                     </div>
-
                 </div>
             </div>
-        </div>
 
-        {{-- 🧩 Thông tin cá nhân thành viên --}}
+        {{-- Thông tin cá nhân thành viên --}}
         @if($request->user->member)
             <div class="card mb-3 shadow-sm">
                 <div class="card-header bg-light fw-bold">Thông tin cá nhân thành viên</div>
@@ -68,34 +65,23 @@
             </div>
         @endif
 
-        {{-- 🧩 Form duyệt / từ chối --}}
-        <div class="card shadow-sm">
-            <div class="card-header bg-light fw-bold">Xử lý yêu cầu</div>
+        {{-- Trạng thái xử lý --}}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-header bg-light fw-bold">Trạng thái xử lý</div>
             <div class="card-body">
-                @if($request->status === 'pending')
-                    <form method="POST" action="{{ route('admin.club_join_requests.handle', $request->id) }}">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label">Ghi chú của người xử lý (nếu có)</label>
-                            <textarea name="note" class="form-control" rows="2">{{ old('note', $request->note) }}</textarea>
-                        </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="submit" name="action" value="approve" class="btn btn-success">
-                                <i class="bi bi-check-circle me-1"></i> Duyệt
-                            </button>
-                            <button type="submit" name="action" value="reject" class="btn btn-danger">
-                                <i class="bi bi-x-circle me-1"></i> Từ chối
-                            </button>
-                        </div>
-                    </form>
-                @else
-                    <div class="alert alert-info">
-                        Yêu cầu đã được xử lý: <strong>{{ ucfirst($request->status) }}</strong>
-                    </div>
-                    @if($request->note)
-                        <div class="mb-2"><strong>Ghi chú xử lý:</strong> {{ $request->note }}</div>
+                <p><strong>Trạng thái:</strong>
+                    @if($request->status === 'pending')
+                        <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                    @elseif($request->status === 'approved')
+                        <span class="badge bg-success">Đã duyệt</span>
+                    @elseif($request->status === 'rejected')
+                        <span class="badge bg-danger">Từ chối</span>
                     @endif
-                @endif
+                </p>
+                <p><strong>Người xử lý:</strong> {{ optional($request->handledBy)->name ?? '—' }}</p>
+                <p><strong>Thời gian xử lý:</strong>
+                    {{ $request->handled_at ? $request->handled_at->format('d/m/Y H:i') : '—' }}</p>
+                <p><strong>Ghi chú xử lý:</strong> {{ $request->note ?? '—' }}</p>
             </div>
         </div>
 

@@ -46,9 +46,9 @@
             </tr>
         </thead>
         <tbody id="clubRequestTableBody">
-            @foreach($requests as $request)
+            @foreach($requests as $index => $request)
                 <tr>
-                    <td>{{ $request->id }}</td>
+                    <td>{{ $index + 1 }}</td>
                     <td>{{ $request->name }}</td>
                     <td>{{ $request->user->name ?? '—' }}</td>
                     <td>{{ $request->created_at->format('d/m/Y') }}</td>
@@ -62,6 +62,12 @@
                         @endif
                     </td>
                     <td>
+                        <form action="{{ route('admin.club_requests.destroy', $request->id) }}" method="POST" style="display:inline;"
+                            onsubmit="return confirm('Bạn có chắc muốn xóa yêu cầu này?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
+                        </form>
                         @if($request->status === 'pending')
                             <button class="btn btn-success btn-sm" type="button" data-bs-toggle="offcanvas"
                                 data-bs-target="#clubRequestDetail{{ $request->id }}"

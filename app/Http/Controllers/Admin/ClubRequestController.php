@@ -169,6 +169,14 @@ class ClubRequestController extends Controller
         // Trả về JSON để JS render lại tbody
         return response()->json($requests);
     }
+    public function destroy($id)
+    {
+        $request = ClubRequest::findOrFail($id); // dùng ClubRequest
+        $request->delete();
+
+        return redirect()->back()->with('success', 'Yêu cầu đã được xóa thành công.');
+    }
+
 
 
 

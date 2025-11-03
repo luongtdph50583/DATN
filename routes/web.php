@@ -25,7 +25,8 @@ use App\Http\Controllers\Admin\{
     ClubJoinRequestController,
     PlanController,
     DocumentPostController,
-    DocumentClubController
+    DocumentClubController,
+    ClubLeaveRequestController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -97,6 +98,7 @@ Route::prefix('admin')
 
 
         // Routes cho CLB
+    
         Route::controller(ClubController::class)
             ->prefix('clubs')
             ->as('clubs.')
@@ -113,6 +115,9 @@ Route::prefix('admin')
 
                 // ✅ AJAX: lọc tất cả thành viên hệ thống
                 Route::get('/members/search', 'searchMembers')->name('members.search');
+
+                // 🔍 AJAX: tìm kiếm câu lạc bộ real-time
+                Route::post('/search', 'searchJson')->name('search');
 
                 // 🗑️ Xóa CLB
                 Route::delete('/{club}', 'destroy')->name('destroy');
@@ -138,6 +143,9 @@ Route::prefix('admin')
 
                 // ✅ Duyệt hoặc từ chối yêu cầu
                 Route::post('/{id}/handle', 'handleRequest')->name('handle');
+
+                // ✅ Xóa yêu cầu
+                Route::delete('/{id}', 'destroy')->name('destroy');
             });
 
         Route::controller(ClubJoinRequestController::class)
@@ -153,9 +161,27 @@ Route::prefix('admin')
                 // ✅ Xem chi tiết yêu cầu (offcanvas hoặc trang riêng)
                 Route::get('/{id}', 'showRequest')->name('show');
 
+                // ✅ Trang chi tiết riêng (bổ sung thêm)
+                Route::get('/{id}/full', 'show2')->name('show2');
+
                 // ✅ Duyệt hoặc từ chối yêu cầu
                 Route::post('/{id}/handle', 'handleRequest')->name('handle');
+                Route::delete('/{id}', 'destroy')->name('destroy'); // ✅ Xóa
+        
             });
+        Route::controller(ClubLeaveRequestController::class)
+            ->prefix('club-leave-requests')
+            ->as('club_leave_requests.')
+            ->group(function () {
+                Route::get('/filter', 'filter')->name('filter'); // AJAX filter
+                Route::get('/', 'index')->name('index');         // Danh sách
+                Route::get('/{id}/full', 'show2')->name('show2'); // Trang chi tiết riêng (đặt trước {id})
+                Route::get('/{id}', 'showRequest')->name('show'); // Chi tiết offcanvas
+                Route::post('/{id}/handle', 'handleRequest')->name('handle'); // Duyệt / từ chối
+                Route::delete('/{id}', 'destroy')->name('destroy'); // Xóa
+            });
+
+
 
 
 
@@ -440,6 +466,6 @@ Route::prefix('admin')
 //         });
 //     });
 
-  
+
 // === Auth Routes ===
 require __DIR__ . '/auth.php';

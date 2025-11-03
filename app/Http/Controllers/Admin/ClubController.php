@@ -29,12 +29,12 @@ class ClubController extends Controller
      */
     public function index()
     {
-        // Lấy danh sách CLB cùng thông tin người quản lý
-        $clubs = Club::with('manager')
+        $clubs = Club::with(['manager.member.user'])
             ->orderBy('created_at', 'desc')
             ->get();
-        // Trả dữ liệu sang view
+
         return view('admin.clubs.index', compact('clubs'));
+
     }
     public function show($id)
     {
@@ -104,6 +104,26 @@ class ClubController extends Controller
             ->toArray();
 
         return view('admin.clubs.edit', compact('club', 'clubMembers'));
+    }
+    public function searchJson(Request $request)
+    {
+        $keyword = $request->input('keyword');
+        $status = $request->input('status');
+
+        $clubs = Club::with(['manager.member.user'])
+            ->when($keyword, function ($query, $keyword) {
+                $query->where('name', 'like', "%$keyword%")
+                    ->orWhere('field', 'like', "%$keyword%")
+                    ->orWhereHas('manager.member.user', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%$keyword%");
+                    });
+            })
+            ->when($status, function ($query, $status) {
+                $query->where('status', $status);
+            })
+            ->get();
+
+        return response()->json($clubs);
     }
 
 
