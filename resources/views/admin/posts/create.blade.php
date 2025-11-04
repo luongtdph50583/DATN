@@ -16,95 +16,111 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <form id="postForm" action="{{ route('admin.posts.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
+    <form id="postForm" action="{{ route('admin.posts.store') }}" method="POST" enctype="multipart/form-data">
+        @csrf
 
-            {{-- Tiêu đề --}}
-            <div class="mb-3">
-                <label for="title" class="form-label">Tiêu đề</label>
-                <input type="text" name="title" id="title" class="form-control" value="{{ old('title') }}">
-                @error('title') <div class="text-danger small">{{ $message }}</div> @enderror
+        {{-- Tiêu đề --}}
+        <div class="mb-3">
+            <label for="title" class="form-label">Tiêu đề</label>
+            <input type="text" name="title" id="title" class="form-control" value="{{ old('title') }}">
+            @error('title') <div class="text-danger small">{{ $message }}</div> @enderror
+        </div>
+
+        {{-- Ảnh đại diện --}}
+        <div class="mb-3">
+            <label for="thumbnail" class="form-label">Ảnh đại diện</label>
+            <input type="file" name="thumbnail" id="thumbnail" class="form-control">
+            @error('thumbnail') <div class="text-danger small">{{ $message }}</div> @enderror
+        </div>
+
+        {{-- Loại bài viết --}}
+        <div class="mb-3">
+            <label for="type" class="form-label">Loại bài viết</label>
+            <select name="type" id="type" class="form-select" required>
+                <option value="">-- Chọn loại --</option>
+                <option value="post" {{ old('type') === 'post' ? 'selected' : '' }}>Post</option>
+                <option value="notice" {{ old('type') === 'notice' ? 'selected' : '' }}>Notice</option>
+                <option value="document" {{ old('type') === 'document' ? 'selected' : '' }}>Document</option>
+            </select>
+            @error('type') <div class="text-danger small">{{ $message }}</div> @enderror
+        </div>
+
+        {{-- Trạng thái duyệt --}}
+        
+
+        
+
+        {{-- Câu lạc bộ --}}
+        <div class="mb-3">
+            <label for="club_id" class="form-label">Câu lạc bộ</label>
+            <select name="club_id" id="club_id" class="form-select" required>
+                <option value="">-- Chọn CLB --</option>
+                @foreach($clubs ?? [] as $club)
+                    <option value="{{ $club->id }}" {{ old('club_id') == $club->id ? 'selected' : '' }}>
+                        {{ $club->name }}
+                    </option>
+                @endforeach
+            </select>
+            @error('club_id') <div class="text-danger small">{{ $message }}</div> @enderror
+        </div>
+
+        {{-- Hiển thị bài viết (ẩn/hiện) --}}
+        <div class="mb-3">
+            <label for="is_visible" class="form-label">Ẩn/Hiện bài viết</label>
+            <select name="is_visible" id="is_visible" class="form-select">
+                <option value="1" {{ old('is_visible', '1') == '1' ? 'selected' : '' }}>Hiển thị</option>
+                <option value="0" {{ old('is_visible') == '0' ? 'selected' : '' }}>Ẩn</option>
+            </select>
+            @error('is_visible') <div class="text-danger small">{{ $message }}</div> @enderror
+        </div>
+
+        {{-- Gắn nổi bật --}}
+        <div class="mb-3">
+            <label for="is_featured" class="form-label">Gắn nổi bật</label>
+            <select name="is_featured" id="is_featured" class="form-select">
+                <option value="0" {{ old('is_featured') == '0' ? 'selected' : '' }}>Không</option>
+                <option value="1" {{ old('is_featured') == '1' ? 'selected' : '' }}>Có</option>
+            </select>
+            @error('is_featured') <div class="text-danger small">{{ $message }}</div> @enderror
+        </div>
+
+        {{-- Hiển thị cho ai --}}
+        <div class="mb-3">
+            <label for="visibility" class="form-label">Hiển thị</label>
+            <select name="visibility" id="visibility" class="form-select" required>
+                <option value="">-- Chọn chế độ --</option>
+                <option value="internal" {{ old('visibility') === 'internal' ? 'selected' : '' }}>Nội bộ CLB</option>
+                <option value="public" {{ old('visibility') === 'public' ? 'selected' : '' }}>Công khai</option>
+            </select>
+            @error('visibility') <div class="text-danger small">{{ $message }}</div> @enderror
+        </div>
+
+
+        {{-- Quill Editor --}}
+        <div class="mb-3">
+            <label for="editor" class="form-label">Nội dung</label>
+            <div id="editor"
+                style="min-height: 300px; max-height: 600px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px; background-color: #fff;">
+                {!! old('content') !!}
             </div>
-            {{-- Ảnh đại diện --}}
-    <div class="mb-3">
-        <label for="thumbnail" class="form-label">Ảnh đại diện</label>
-        <input type="file" name="thumbnail" id="thumbnail" class="form-control">
-        @error('thumbnail') <div class="text-danger small">{{ $message }}</div> @enderror
-    </div>
+            <input type="hidden" name="content" id="contentInput">
+            @error('content') <div class="text-danger small">{{ $message }}</div> @enderror
+        </div>
 
+        {{-- Upload file và chèn vào nội dung --}}
+        <div class="mb-3">
+            <label for="fileUpload" class="form-label">Đính kèm file</label>
+            <input type="file" id="fileUpload" class="form-control">
+            <button type="button" class="btn btn-secondary mt-2" onclick="uploadAndInsertFile()">Tải lên & chèn vào nội
+                dung</button>
+            <div id="uploadStatus" class="text-muted small mt-1"></div>
+        </div>
 
-            {{-- Loại bài viết --}}
-            <div class="mb-3">
-                <label for="type" class="form-label">Loại bài viết</label>
-                <select name="type" id="type" class="form-select" required>
-                    <option value="">-- Chọn loại --</option>
-                    <option value="post" {{ old('type') === 'post' ? 'selected' : '' }}>Post</option>
-                    <option value="notice" {{ old('type') === 'notice' ? 'selected' : '' }}>Notice</option>
-                    <option value="document" {{ old('type') === 'document' ? 'selected' : '' }}>Document</option>
-                </select>
-                @error('type') <div class="text-danger small">{{ $message }}</div> @enderror
-            </div>
+        <div class="text-end">
+            <button type="submit" class="btn btn-primary">Thêm bài viết</button>
+        </div>
+    </form>
 
-            {{-- Trạng thái --}}
-            <div class="mb-3">
-                <label for="status" class="form-label">Trạng thái</label>
-                <select name="status" id="status" class="form-select" required>
-                    <option value="">-- Chọn trạng thái --</option>
-                    <option value="visible" {{ old('status') === 'visible' ? 'selected' : '' }}>Hiển thị</option>
-                    <option value="hidden" {{ old('status') === 'hidden' ? 'selected' : '' }}>Ẩn</option>
-                </select>
-                @error('status') <div class="text-danger small">{{ $message }}</div> @enderror
-            </div>
-
-            {{-- Hiển thị --}}
-            <div class="mb-3">
-                <label for="visibility" class="form-label">Hiển thị</label>
-                <select name="visibility" id="visibility" class="form-select" required>
-                    <option value="">-- Chọn chế độ --</option>
-                    <option value="internal" {{ old('visibility') === 'internal' ? 'selected' : '' }}>Nội bộ CLB</option>
-                    <option value="public" {{ old('visibility') === 'public' ? 'selected' : '' }}>Công khai</option>
-                </select>
-                @error('visibility') <div class="text-danger small">{{ $message }}</div> @enderror
-            </div>
-
-            {{-- Câu lạc bộ --}}
-            <div class="mb-3">
-                <label for="club_id" class="form-label">Câu lạc bộ</label>
-                <select name="club_id" id="club_id" class="form-select" required>
-                    <option value="">-- Chọn CLB --</option>
-                    @foreach($clubs ?? [] as $club)
-                        <option value="{{ $club->id }}" {{ old('club_id') == $club->id ? 'selected' : '' }}>
-                            {{ $club->name }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('club_id') <div class="text-danger small">{{ $message }}</div> @enderror
-            </div>
-
-            {{-- Quill Editor --}}
-            <div class="mb-3">
-                <label for="editor" class="form-label">Nội dung</label>
-                <div id="editor"
-                    style="min-height: 300px; max-height: 600px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px; background-color: #fff;">
-                    {!! old('content') !!}
-                </div>
-                <input type="hidden" name="content" id="contentInput">
-                @error('content') <div class="text-danger small">{{ $message }}</div> @enderror
-            </div>
-
-            {{-- Upload file và chèn vào nội dung --}}
-            <div class="mb-3">
-                <label for="fileUpload" class="form-label">Đính kèm file</label>
-                <input type="file" id="fileUpload" class="form-control">
-                <button type="button" class="btn btn-secondary mt-2" onclick="uploadAndInsertFile()">Tải lên & chèn vào nội
-                    dung</button>
-                <div id="uploadStatus" class="text-muted small mt-1"></div>
-            </div>
-
-            <div class="text-end">
-                <button type="submit" class="btn btn-primary">Thêm bài viết</button>
-            </div>
-        </form>
         <style>
             select.form-select {
                 height: 42px;

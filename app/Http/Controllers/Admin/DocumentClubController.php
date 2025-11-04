@@ -6,6 +6,8 @@ use App\Models\Club;
 use App\Models\Document;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Jobs\SendNotificationJob;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -17,24 +19,30 @@ class DocumentClubController extends Controller
     {
         $documents = Document::with('club', 'uploader')->latest()->get();
 
-        $tagGroups = collect();
+        // Nhóm theo CLB trước, sau đó nhóm theo tag
+        $documentsByClub = $documents->groupBy(function ($doc) {
+            return $doc->club->name ?? 'Không CLB';
+        })->map(function ($clubDocs) {
+            $tagGroups = collect();
 
-        foreach ($documents as $doc) {
-            $tags = array_filter(array_map('trim', explode(',', $doc->tags ?? '')));
-            if (empty($tags)) {
-                $tagGroups->push(['tag' => 'Không có tag', 'doc' => $doc]);
-            } else {
-                foreach ($tags as $tag) {
-                    $tagGroups->push(['tag' => $tag, 'doc' => $doc]);
+            foreach ($clubDocs as $doc) {
+                $tags = array_filter(array_map('trim', explode(',', $doc->tags ?? '')));
+                if (empty($tags)) {
+                    $tagGroups->push(['tag' => 'Không có tag', 'doc' => $doc]);
+                } else {
+                    foreach ($tags as $tag) {
+                        $tagGroups->push(['tag' => $tag, 'doc' => $doc]);
+                    }
                 }
             }
-        }
 
-        $documentsByTag = $tagGroups->groupBy('tag')->map(function ($group) {
-            return $group->pluck('doc');
+            // Nhóm theo tag
+            return $tagGroups->groupBy('tag')->map(function ($group) {
+                return $group->pluck('doc');
+            });
         });
 
-        return view('admin.documentclub.index', compact('documentsByTag'));
+        return view('admin.documentclub.index', compact('documentsByClub'));
     }
 
 
@@ -49,32 +57,38 @@ class DocumentClubController extends Controller
     // Lưu tài liệu mới
     public function store(Request $request)
     {
+        // Ghi log toàn bộ request
+        Log::info('DocumentClubStore Request:', $request->all());
+
+        // Validate input
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'file' => 'required|file|mimes:pdf,doc,docx,xlsx,jpeg,png,jpg,svg,mp3,wav,mp4',
+            'file' => 'required|file|mimes:pdf,doc,docx,xlsx,jpeg,png,jpg,svg,mp3,wav,mp4,sql',
             'clb_id' => 'required|exists:clubs,id',
-            'access_level' => 'required|in:public,member,admin',
+            'access_level' => 'required|array',
+            'access_level.*' => 'in:public,guest,member,communication,event_manager,secretary,treasurer,deputy_manager,club_manager,admin',
             'tags' => 'nullable|string'
         ]);
 
         $file = $request->file('file');
+
+        // Kiểm tra file có hợp lệ
+        if (!$file->isValid()) {
+            Log::error('Uploaded file is not valid', ['error' => $file->getError()]);
+            return back()->withErrors(['file' => 'File tải lên không hợp lệ.']);
+        }
+
         $mime = $file->getMimeType();
         $extension = $file->getClientOriginalExtension();
-        $fileName = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $extension;
+        $originalName = $file->getClientOriginalName();
+        $fileName = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $extension;
 
-        // 📁 Phân loại thư mục theo MIME
+        // Phân loại thư mục theo MIME
         $folder = match (true) {
-            // Hình ảnh (bao gồm cả SVG và logo)
             Str::startsWith($mime, 'image/') || Str::contains($mime, 'svg') => 'images',
-
-            // Âm thanh
             Str::startsWith($mime, 'audio/') => 'audio',
-
-            // Video
             Str::startsWith($mime, 'video/') => 'videos',
-
-            // Tài liệu văn bản, bao gồm cả Excel
             Str::contains($mime, [
                 'pdf',
                 'msword',
@@ -83,67 +97,93 @@ class DocumentClubController extends Controller
                 'application/vnd.ms-excel',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'application/vnd.ms-powerpoint',
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'sql',
             ]) => 'documents',
-
-            // Mặc định
             default => 'others',
         };
 
-
-        // 📥 Lưu file vào thư mục tương ứng
-        $filePath = $file->storeAs($folder, $fileName, 'public');
-
-        // 📝 Lưu vào DB
-        Document::create([
-            'title' => $request->title,
-            'description' => $request->description,
+        // Log thông tin trước khi lưu file
+        Log::info('Saving file', [
+            'original_name' => $originalName,
             'file_name' => $fileName,
-            'file_path' => $filePath,
-            'file_type' => $extension,
-            'clb_id' => $request->clb_id,
-            'uploaded_by' => Auth::id(),
-            'access_level' => $request->access_level,
-            'tags' => $request->tags
+            'mime' => $mime,
+            'folder' => $folder,
         ]);
+
+        // Lưu file vào storage
+        try {
+            $filePath = $file->storeAs($folder, $fileName, 'public');
+        } catch (\Exception $e) {
+            Log::error('Failed to store file', ['exception' => $e->getMessage()]);
+            return back()->withErrors(['file' => 'Không lưu được file.']);
+        }
+
+        // Log access_level
+        Log::info('Access level selected', ['access_level' => $request->access_level]);
+
+        // Lưu vào DB
+        try {
+            $document = Document::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'file_name' => $fileName,
+                'file_path' => $filePath,
+                'file_type' => $extension,
+                'clb_id' => $request->clb_id,
+                'uploaded_by' => Auth::id(),
+                'access_level' => $request->access_level, // Laravel sẽ tự cast sang JSON
+                'tags' => $request->tags,
+                'status' => 'approved'
+            ]);
+            Log::info('Document created successfully', ['id' => $document->id]);
+        } catch (\Exception $e) {
+            Log::error('Failed to save document to DB', ['exception' => $e->getMessage()]);
+            return back()->withErrors(['db' => 'Không lưu được dữ liệu vào cơ sở dữ liệu.']);
+        }
 
         return redirect()->route('admin.documentclub.index')->with('success', 'Tài liệu đã được tải lên thành công 🎉');
     }
+
+
 
     // Form chỉnh sửa tài liệu
     public function update(Request $request, $id)
     {
         $document = Document::findOrFail($id);
 
+        // Validate input
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'file' => 'nullable|file|mimes:pdf,doc,docx,xlsx,jpeg,png,jpg,svg,mp3,wav,mp4',
             'clb_id' => 'required|exists:clubs,id',
-            'access_level' => 'required|in:public,member,club_manager,admin',
-            'tags' => 'nullable|string'
+            'access_level' => 'required|array', // Multi-select
+            'access_level.*' => 'in:public,guest,member,communication,event_manager,secretary,treasurer,deputy_manager,club_manager,admin',
+            'tags' => 'nullable|string',
         ]);
 
         $data = $request->only([
             'title',
             'description',
             'clb_id',
-            'access_level',
-            'tags'
+            'tags',
         ]);
 
+        // Lưu access_level dưới dạng JSON
+        $data['access_level'] = json_encode($request->access_level);
+
         // Nếu có file mới
-        if ($request->hasFile('file')) {
+        if ($request->hasFile('file') && $request->file('file')->isValid()) {
             $file = $request->file('file');
-            $mime = $file->getMimeType();
             $extension = $file->getClientOriginalExtension();
             $fileName = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $extension;
 
             $folder = match (true) {
-                Str::startsWith($mime, 'image/') || Str::contains($mime, 'svg') => 'images',
-                Str::startsWith($mime, 'audio/') => 'audio',
-                Str::startsWith($mime, 'video/') => 'videos',
-                Str::contains($mime, [
+                Str::startsWith($file->getMimeType(), 'image/') || Str::contains($file->getMimeType(), 'svg') => 'images',
+                Str::startsWith($file->getMimeType(), 'audio/') => 'audio',
+                Str::startsWith($file->getMimeType(), 'video/') => 'videos',
+                Str::contains($file->getMimeType(), [
                     'pdf',
                     'msword',
                     'spreadsheet',
@@ -158,12 +198,11 @@ class DocumentClubController extends Controller
 
             $filePath = $file->storeAs($folder, $fileName, 'public');
 
-            // Xóa file cũ nếu cần
+            // Xóa file cũ nếu có
             if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
                 Storage::disk('public')->delete($document->file_path);
             }
 
-            // Cập nhật thông tin file mới
             $data['file_name'] = $fileName;
             $data['file_path'] = $filePath;
             $data['file_type'] = $extension;
@@ -173,6 +212,8 @@ class DocumentClubController extends Controller
 
         return redirect()->route('admin.documentclub.index')->with('success', 'Tài liệu đã được cập nhật thành công ✅');
     }
+
+
     public function edit($id)
     {
         $document = Document::findOrFail($id);
@@ -195,33 +236,33 @@ class DocumentClubController extends Controller
 
         return redirect()->route('admin.documentclub.index')->with('success', 'Tài liệu đã được đưa vào thùng rác 🗑️');
     }
-public function trash()
-{
-    $trashedDocuments = Document::onlyTrashed()->with('club', 'uploader')->latest()->get();
-    return view('admin.trash.documentclub.index', compact('trashedDocuments'));
-}
-
-public function restore($id)
-{
-    $document = Document::onlyTrashed()->findOrFail($id);
-    $document->restore();
-
-    return redirect()->route('admin.documentclub.trash')->with('success', 'Tài liệu đã được khôi phục ✅');
-}
-
-public function forceDelete($id)
-{
-    $document = Document::onlyTrashed()->findOrFail($id);
-
-    // Xóa file vật lý nếu tồn tại
-    if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
-        Storage::disk('public')->delete($document->file_path);
+    public function trash()
+    {
+        $trashedDocuments = Document::onlyTrashed()->with('club', 'uploader')->latest()->get();
+        return view('admin.trash.documentclub.index', compact('trashedDocuments'));
     }
 
-    $document->forceDelete();
+    public function restore($id)
+    {
+        $document = Document::onlyTrashed()->findOrFail($id);
+        $document->restore();
 
-    return redirect()->route('admin.documentclub.trash')->with('success', 'Tài liệu đã bị xóa vĩnh viễn 🗑️');
-}
+        return redirect()->route('admin.documentclub.trash')->with('success', 'Tài liệu đã được khôi phục ✅');
+    }
+
+    public function forceDelete($id)
+    {
+        $document = Document::onlyTrashed()->findOrFail($id);
+
+        // Xóa file vật lý nếu tồn tại
+        if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
+            Storage::disk('public')->delete($document->file_path);
+        }
+
+        $document->forceDelete();
+
+        return redirect()->route('admin.documentclub.trash')->with('success', 'Tài liệu đã bị xóa vĩnh viễn 🗑️');
+    }
 
     // Download tài liệu
     public function download(Document $document)
@@ -242,6 +283,7 @@ public function forceDelete($id)
     }
     public function search(Request $request)
     {
+
         $keyword = $request->input('search');
         $type = $request->input('type');
 
@@ -263,8 +305,65 @@ public function forceDelete($id)
 
         $documents = $query->latest()->get();
 
-        return response()->json($documents);
+        // Chuyển thành mảng để front-end dễ render
+        $results = $documents->map(function ($doc) {
+            return [
+                'id' => $doc->id,
+                'title' => $doc->title,
+                'file_name' => $doc->file_name,
+                'file_type' => $doc->file_type,
+                'club_name' => $doc->club->name ?? 'Không CLB',
+                'uploader_name' => $doc->uploader->name ?? '-',
+                'status' => $doc->status,
+                'is_visible' => $doc->is_visible,
+                'tags' => $doc->tags ?: 'Không có tag',
+            ];
+        });
+
+        return response()->json($results);
     }
+    public function approve(Document $document)
+    {
+        if ($document->status !== 'pending') {
+            return back()->with('error', 'Tài liệu không thể duyệt.');
+        }
+
+        $document->status = 'approved';
+        $document->approved_by = auth()->id();
+        $document->approved_at = now();
+        $document->save();
+
+        // Gửi thông báo In-App
+        $batchId = 'document_approval_' . $document->id . '_' . time();
+        $title = 'Tài liệu đã được duyệt';
+        $content = "Tài liệu '{$document->title}' của bạn đã được duyệt.";
+        dispatch(new SendNotificationJob($document->uploaded_by, $title, $content, 'database', $batchId));
+
+        return back()->with('success', 'Duyệt tài liệu thành công.');
+    }
+
+    public function reject(Request $request, Document $document)
+    {
+        if ($document->status !== 'pending') {
+            return back()->with('error', 'Tài liệu không thể từ chối.');
+        }
+
+        $reason = $request->input('reason', 'Không có lý do');
+        $document->status = 'rejected';
+        $document->rejected_reason = $reason;
+        $document->approved_by = auth()->id();
+        $document->approved_at = now();
+        $document->save();
+
+        // Gửi thông báo In-App
+        $batchId = 'document_rejection_' . $document->id . '_' . time();
+        $title = 'Tài liệu bị từ chối';
+        $content = "Tài liệu '{$document->title}' của bạn bị từ chối. Lý do: {$reason}";
+        dispatch(new SendNotificationJob($document->uploaded_by, $title, $content, 'database', $batchId));
+
+        return back()->with('success', 'Từ chối tài liệu thành công.');
+    }
+
 
 
 

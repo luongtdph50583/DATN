@@ -13,18 +13,35 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->string('title');           // bắt buộc
+
+            $table->string('title');
             $table->text('description')->nullable();
             $table->string('file_name');
             $table->string('file_path');
             $table->string('file_type');
+
             $table->foreignId('clb_id')->constrained('clubs')->onDelete('cascade');
             $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
-            $table->enum('access_level', ['public', 'member', 'admin','club_manager'])->default('public');
-            $table->string('tags')->nullable(); // lưu dạng CSV: tag1,tag2
+
+            // Thay enum bằng JSON để lưu nhiều quyền
+            $table->json('access_level')->nullable()->after('uploaded_by')->comment('Quyền truy cập, có thể chọn nhiều');
+
+            $table->string('tags')->nullable();
+
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->foreignId('approved_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->dateTime('approved_at')->nullable();
+            $table->text('rejected_reason')->nullable();
+
+            // Nếu không cần ẩn/hiện thì bỏ
+            // $table->boolean('is_visible')->default(true);
+
             $table->timestamps();
-            $table->softDeletes(); // thêm cột deleted_at
+            $table->softDeletes();
         });
+
+
+
     }
 
 

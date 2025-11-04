@@ -208,8 +208,8 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.documentclub.create') }}" class="nav-link">
-                                    <i class="ri-add-box-line"></i> Thêm mới
+                                <a href="{{ route('admin.documentclub.trash') }}" class="nav-link">
+                                    <i class="ri-add-box-line"></i> Tài liệu đã xóa
                                 </a>
                             </li>
                         </ul>
@@ -229,19 +229,15 @@
                         <ul class="nav nav-sm flex-column">
                             <li class="nav-item">
                                 <a href="{{ route('admin.posts.index') }}" class="nav-link" data-key="t-nestable-list">
-                                    <i class="ri-file-edit-line"></i> Bài viết
+                                    <i class="ri-file-edit-line"></i> Danh sách
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.documents.index') }}" class="nav-link" data-key="t-sweet-alerts">
-                                    <i class="ri-file-copy-2-line"></i> Tài liệu bài viết
-                                </a>
+                          <li class="nav-item">
+                                <a href="{{ route('admin.posts.trash') }}" class="nav-link" data-key="t-sweet-alerts">
+                                    <i class="ri-file-copy-2-line"></i> Bài viết đã xóa
+                                </a>   
                             </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.trash.media.index') }}" class="nav-link" data-key="t-sweet-alerts">
-                                    <i class="ri-delete-bin-line"></i> Tài liệu bài viết đã xóa
-                                </a>
-                            </li>
+                            
                         </ul>
                     </div>
                 </li>
