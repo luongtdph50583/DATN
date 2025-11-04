@@ -2,12 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
-  
+
     HomeController,
     ProfileController
 };
 use App\Http\Controllers\Admin\{
-      EventFundRequestController,
+    EventFundRequestController,
     EventFundSettlementController,
     UserController,
     MemberController,
@@ -25,7 +25,8 @@ use App\Http\Controllers\Admin\{
     ClubJoinRequestController,
     PlanController,
     DocumentPostController,
-    DocumentClubController
+    DocumentClubController,
+    ClubLeaveRequestController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -72,13 +73,13 @@ Route::prefix('admin')
         Route::resource('events', EventController::class);
         Route::post('events/{event}/approve', [EventController::class, 'approve'])->name('events.approve');
         Route::post('events/{event}/reject', [EventController::class, 'reject'])->name('events.reject');
-  Route::get('events-by-club/{clubId}', [EventController::class, 'getEventsByClub'])
-        ->name('events.byClub');
-Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManagersByClub'])->name('events.getManagers');
+        Route::get('events-by-club/{clubId}', [EventController::class, 'getEventsByClub'])
+            ->name('events.byClub');
+        Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManagersByClub'])->name('events.getManagers');
 
 
         Route::get('/club-balance/{clubId}', [FundController::class, 'getClubBalance'])
-    ->name('clubs.balance');
+            ->name('clubs.balance');
         // 👨‍👩‍👧‍👦 Member Management
         Route::controller(MemberController::class)
             ->prefix('members')
@@ -94,6 +95,99 @@ Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManager
             Route::post('/{member}/toggle-status', 'toggleStatus')->name('toggleStatus');
             Route::get('/export/excel', 'exportExcel')->name('export.excel');
         });
+
+
+        // Routes cho CLB
+    
+        Route::controller(ClubController::class)
+            ->prefix('clubs')
+            ->as('clubs.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{id}', 'show')->name('show');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{club}', 'update')->name('update');
+
+                // ⚙️ AJAX: lọc thành viên trong CLB cụ thể
+                Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
+
+                // ✅ AJAX: lọc tất cả thành viên hệ thống
+                Route::get('/members/search', 'searchMembers')->name('members.search');
+
+                // 🔍 AJAX: tìm kiếm câu lạc bộ real-time
+                Route::post('/search', 'searchJson')->name('search');
+
+                // 🗑️ Xóa CLB
+                Route::delete('/{club}', 'destroy')->name('destroy');
+            });
+
+        // Routes cho yêu cầu thành lập CLB
+    
+        Route::controller(ClubRequestController::class)
+            ->prefix('club-requests')
+            ->as('club_requests.')
+            ->group(function () {
+                // ✅ AJAX filter/search real-time (phải đặt trước {id})
+                Route::get('/filter', 'filterRequests')->name('filter');
+
+                // ✅ Danh sách yêu cầu
+                Route::get('/', 'indexRequests')->name('index');
+
+                // ✅ Xem chi tiết yêu cầu (dùng cho offcanvas duyệt/từ chối)
+                Route::get('/{id}', 'showRequest')->name('show');
+
+                // ✅ Xem chi tiết yêu cầu trên trang riêng (khác với offcanvas)
+                Route::get('/{id}/show2', 'show2')->name('show2');
+
+                // ✅ Duyệt hoặc từ chối yêu cầu
+                Route::post('/{id}/handle', 'handleRequest')->name('handle');
+
+                // ✅ Xóa yêu cầu
+                Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+
+        Route::controller(ClubJoinRequestController::class)
+            ->prefix('club-join-requests')
+            ->as('club_join_requests.')
+            ->group(function () {
+                // ✅ AJAX filter/search (nên đặt trước {id} để tránh xung đột)
+                Route::get('/filter', 'filter')->name('filter');
+
+                // ✅ Danh sách yêu cầu
+                Route::get('/', 'index')->name('index');
+
+                // ✅ Xem chi tiết yêu cầu (offcanvas hoặc trang riêng)
+                Route::get('/{id}', 'showRequest')->name('show');
+
+                // ✅ Trang chi tiết riêng (bổ sung thêm)
+                Route::get('/{id}/full', 'show2')->name('show2');
+
+                // ✅ Duyệt hoặc từ chối yêu cầu
+                Route::post('/{id}/handle', 'handleRequest')->name('handle');
+                Route::delete('/{id}', 'destroy')->name('destroy'); // ✅ Xóa
+        
+            });
+        Route::controller(ClubLeaveRequestController::class)
+            ->prefix('club-leave-requests')
+            ->as('club_leave_requests.')
+            ->group(function () {
+                Route::get('/filter', 'filter')->name('filter'); // AJAX filter
+                Route::get('/', 'index')->name('index');         // Danh sách
+                Route::get('/{id}/full', 'show2')->name('show2'); // Trang chi tiết riêng (đặt trước {id})
+                Route::get('/{id}', 'showRequest')->name('show'); // Chi tiết offcanvas
+                Route::post('/{id}/handle', 'handleRequest')->name('handle'); // Duyệt / từ chối
+                Route::delete('/{id}', 'destroy')->name('destroy'); // Xóa
+            });
+
+
+
+
+
+
+
+
 
         // 📰 Post Management
         Route::controller(PostController::class)
@@ -137,7 +231,7 @@ Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManager
                 Route::get('/create', 'create')->name('create');         // form thêm
                 Route::post('/', 'store')->name('store');
                 Route::get('/search', 'search')->name('search'); // realtime search
-      // lưu mới
+                // lưu mới
                 Route::get('/{document}/edit', 'edit')->name('edit');    // form chỉnh sửa
                 Route::put('/{document}', 'update')->name('update');     // cập nhật
                 Route::delete('/{document}', 'destroy')->name('destroy'); // xóa mềm
@@ -165,46 +259,46 @@ Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManager
         });
 
         // 🏛 Club Management
-        Route::controller(ClubController::class)
-            ->prefix('clubs')
-            ->as('clubs.')
-            ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::get('/{club}', 'show')->name('show');
-            Route::get('/{club}/edit', 'edit')->name('edit');
-            Route::put('/{club}', 'update')->name('update');
-            Route::delete('/{club}', 'destroy')->name('destroy');
-            Route::post('/{club}/approve', 'approve')->name('approve');
-            Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
-            Route::get('/{club}/assign', 'assign')->name('assign');
-            Route::post('/{club}/assign', 'assignStore')->name('assign.store');
-        });
-
-        // 📝 Club Request Management
-        Route::controller(ClubRequestController::class)
-            ->prefix('club-requests')
-            ->as('club-requests.')
-            ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/{clubRequest}', 'show')->name('show');
-            Route::post('/{clubRequest}/handle', 'handle')->name('handle');
-        });
-
-        // 🙋‍♂️ Club Join Request Management
-        Route::controller(ClubJoinRequestController::class)
-            ->prefix('club-join-requests')
-            ->as('club-join-requests.')
-            ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/{joinRequest}', 'show')->name('show');
-            Route::post('/{joinRequest}', 'handle')->name('handle');
-        });
-
+        // Route::controller(ClubController::class)
+        //     ->prefix('clubs')
+        //     ->as('clubs.')
+        //     ->group(function () {
+        //     Route::get('/', 'index')->name('index');
+        //     Route::get('/create', 'create')->name('create');
+        //     Route::post('/', 'store')->name('store');
+        //     Route::get('/{club}', 'show')->name('show');
+        //     Route::get('/{club}/edit', 'edit')->name('edit');
+        //     Route::put('/{club}', 'update')->name('update');
+        //     Route::delete('/{club}', 'destroy')->name('destroy');
+        //     Route::post('/{club}/approve', 'approve')->name('approve');
+        //     Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
+        //     Route::get('/{club}/assign', 'assign')->name('assign');
+        //     Route::post('/{club}/assign', 'assignStore')->name('assign.store');
+        // });
+    
+        // // 📝 Club Request Management
+        // Route::controller(ClubRequestController::class)
+        //     ->prefix('club-requests')
+        //     ->as('club-requests.')
+        //     ->group(function () {
+        //     Route::get('/', 'index')->name('index');
+        //     Route::get('/{clubRequest}', 'show')->name('show');
+        //     Route::post('/{clubRequest}/handle', 'handle')->name('handle');
+        // });
+    
+        // // 🙋‍♂️ Club Join Request Management
+        // Route::controller(ClubJoinRequestController::class)
+        //     ->prefix('club-join-requests')
+        //     ->as('club-join-requests.')
+        //     ->group(function () {
+        //     Route::get('/', 'index')->name('index');
+        //     Route::get('/{joinRequest}', 'show')->name('show');
+        //     Route::post('/{joinRequest}', 'handle')->name('handle');
+        // });
+    
         // 🔔 Notification Management
         // 🔔 Notification Management
-
+    
         Route::controller(NotificationController::class)
             ->prefix('notifications')
             ->as('notifications.')
@@ -214,7 +308,7 @@ Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManager
                 Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
                 Route::get('/create', 'create')->name('create');           // form tạo thông báo
                 Route::post('/', 'store')->name('store');                  // lưu thông báo
-
+        
                 // AJAX fetch dữ liệu liên quan
                 Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
                 Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
@@ -230,35 +324,35 @@ Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManager
 
             });
 
-    // 📝 Club Request Management
-Route::controller(ClubRequestController::class)
-    ->prefix('club-requests')
-    ->as('club-requests.')
-    ->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('/{clubRequest}', 'show')->name('show');
-        Route::post('/{clubRequest}/handle', 'handle')->name('handle');
-        Route::patch('/{clubRequest}/update-status', 'updateStatus')->name('updateStatus');
-        Route::post('/{clubRequest}/approve', 'approve')->name('approve');
-        Route::post('/{clubRequest}/reject', 'reject')->name('reject');
-        Route::delete('/{clubRequest}', 'destroy')->name('destroy');
-    });
+        // 📝 Club Request Management
+// Route::controller(ClubRequestController::class)
+//     ->prefix('club-requests')
+//     ->as('club-requests.')
+//     ->group(function () {
+//         Route::get('/', 'index')->name('index');
+//         Route::get('/{clubRequest}', 'show')->name('show');
+//         Route::post('/{clubRequest}/handle', 'handle')->name('handle');
+//         Route::patch('/{clubRequest}/update-status', 'updateStatus')->name('updateStatus');
+//         Route::post('/{clubRequest}/approve', 'approve')->name('approve');
+//         Route::post('/{clubRequest}/reject', 'reject')->name('reject');
+//         Route::delete('/{clubRequest}', 'destroy')->name('destroy');
+//     });
+    
 
-
-// 🙋‍♂️ Club Join Request Management
-Route::controller(ClubJoinRequestController::class)
-    ->prefix('club-join-requests')
-    ->as('club-join-requests.')
-    ->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::get('/{joinRequest}', 'show')->name('show');
-        Route::post('/{joinRequest}/approve', 'approve')->name('approve');
-        Route::post('/{joinRequest}/reject', 'reject')->name('reject');
-
-        // Khi user gửi yêu cầu tham gia CLB
-        Route::post('/{club_id}/store', 'store')->name('store');
-    });
-
+        // // 🙋‍♂️ Club Join Request Management
+// Route::controller(ClubJoinRequestController::class)
+//     ->prefix('club-join-requests')
+//     ->as('club-join-requests.')
+//     ->group(function () {
+//         Route::get('/', 'index')->name('index');
+//         Route::get('/{joinRequest}', 'show')->name('show');
+//         Route::post('/{joinRequest}/approve', 'approve')->name('approve');
+//         Route::post('/{joinRequest}/reject', 'reject')->name('reject');
+    
+        //         // Khi user gửi yêu cầu tham gia CLB
+//         Route::post('/{club_id}/store', 'store')->name('store');
+//     });
+    
 
 
         // 📊 Statistics Management
@@ -307,8 +401,8 @@ Route::controller(ClubJoinRequestController::class)
             Route::get('/api/summary', 'summary')->name('summary');
         });
 
-          Route::resource('event_fund_requests', EventFundRequestController::class);
-              Route::resource('event_fund_settlements', EventFundSettlementController::class);
+        Route::resource('event_fund_requests', EventFundRequestController::class);
+        Route::resource('event_fund_settlements', EventFundSettlementController::class);
 
  Route::get('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approveForm'])->name('event_fund_requests.approveForm');
     Route::post('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approve'])->name('event_fund_requests.approve');
@@ -331,11 +425,11 @@ Route::post('event_fund_requests/{id}/reject', [App\Http\Controllers\Admin\Event
             return 'Bạn có quyền truy cập admin!';
         });
 
-            // 📋 Club Plan Management
-    Route::controller(PlanController::class)
-        ->prefix('plans')
-        ->as('plans.')
-        ->group(function () {
+        // 📋 Club Plan Management
+        Route::controller(PlanController::class)
+            ->prefix('plans')
+            ->as('plans.')
+            ->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
             Route::post('/', 'store')->name('store');
@@ -345,32 +439,34 @@ Route::post('event_fund_requests/{id}/reject', [App\Http\Controllers\Admin\Event
             Route::delete('/{plan}', 'destroy')->name('destroy');
             Route::post('/{plan}/approve', 'approve')->name('approve');
             Route::post('/{plan}/reject', 'reject')->name('reject');
-});
+        });
     });
+
+
 
 
 
 
 // === 🏛 Club Manager Routes ===
-Route::prefix('club-manager')
-    ->middleware(['auth', CheckRole::class . ':club_manager'])
-    ->as('club-manager.')
-    ->group(function () {
+// Route::prefix('club-manager')
+//     ->middleware(['auth', CheckRole::class . ':club_manager'])
+//     ->as('club-manager.')
+//     ->group(function () {
 
-        // 💰 Fund Management (Club Manager can only see their club's funds)
-        Route::controller(FundController::class)
-            ->prefix('funds')
-            ->as('funds.')
-            ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::get('/{fund}', 'show')->name('show');
-            Route::get('/{fund}/edit', 'edit')->name('edit');
-            Route::put('/{fund}', 'update')->name('update');
-            Route::get('/api/summary', 'summary')->name('summary');
-        });
-    });
+//         // 💰 Fund Management (Club Manager can only see their club's funds)
+//         Route::controller(FundController::class)
+//             ->prefix('funds')
+//             ->as('funds.')
+//             ->group(function () {
+//             Route::get('/', 'index')->name('index');
+//             Route::get('/create', 'create')->name('create');
+//             Route::post('/', 'store')->name('store');
+//             Route::get('/{fund}', 'show')->name('show');
+//             Route::get('/{fund}/edit', 'edit')->name('edit');
+//             Route::put('/{fund}', 'update')->name('update');
+//             Route::get('/api/summary', 'summary')->name('summary');
+//         });
+//     });
 
 
 // === Auth Routes ===

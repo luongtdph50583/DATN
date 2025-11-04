@@ -1,6 +1,7 @@
 <?php
    namespace Database\Seeders;
 
+use App\Models\Club;
 use App\Models\Member;
 use Illuminate\Database\Seeder;
 
@@ -9,8 +10,14 @@ use Illuminate\Database\Seeder;
        public function run()
        {
            $this->call([
-              PostSeeder::class,
-               CommentSeeder::class,
+                UserSeeder::class,
+                ClubSeeder::class,
+                MemberSeeder::class,
+                EventSeeder::class,
+                PostSeeder::class,
+              ClubMemberSeeder::class,
+                MediaSeeder::class,
+                
               
            ]);
        }

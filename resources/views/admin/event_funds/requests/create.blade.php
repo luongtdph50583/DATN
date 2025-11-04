@@ -97,7 +97,36 @@ document.addEventListener('DOMContentLoaded', function () {
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function () {
+    const clubSelect = $('#club_id');
+    const eventSelect = $('#event_id');
+
+    // ✅ Lưu danh sách event gốc để lọc lại sau
+    const allEvents = $('#event_id option').clone();
+
+    // Khi chọn CLB
+    clubSelect.on('change', function () {
+        const clubId = $(this).val();
+
+        // Xóa toàn bộ event hiện tại
+        eventSelect.empty();
+
+        // Thêm lại option mặc định
+        eventSelect.append('<option value="">-- Chọn sự kiện --</option>');
+
+        // Lọc event theo club_id
+        allEvents.each(function () {
+            const eventClubId = $(this).data('club');
+            if (!clubId || eventClubId == clubId) {
+                eventSelect.append($(this));
+            }
+        });
+
+        // Refresh lại select2
+        eventSelect.val('').trigger('change');
+    });
+
+    // ✅ Khởi tạo Select2
     $('#club_id, #event_id').select2({
         placeholder: '-- Chọn --',
         allowClear: true,

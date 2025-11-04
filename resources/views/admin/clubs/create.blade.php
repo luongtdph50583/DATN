@@ -1,103 +1,221 @@
 @extends('admin.layouts.app')
-
-@section('title', 'Thêm Câu lạc bộ mới')
-
+@section('title', 'Thêm CLB')
+@section('card-title', 'Thêm câu lạc bộ mới')
 @section('card-body')
-<div class="container py-4">
-    <h2 class="mb-4">➕ Thêm Câu lạc bộ mới</h2>
+    <pre>{{ print_r($errors->toArray(), true) }}</pre>
 
-    {{-- Thông báo --}}
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
+        {{-- ⚠️ Hiển thị lỗi tổng quát (nếu có) --}}
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-    {{-- Hiển thị lỗi validate --}}
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+        @if ($errors->has('error'))
+            <div class="alert alert-danger py-2">
+                <i class="bi bi-x-circle"></i> {{ $errors->first('error') }}
+            </div>
+        @endif
 
-    <form method="POST" action="{{ route('admin.clubs.store') }}" enctype="multipart/form-data" class="card shadow-sm p-4">
-        @csrf
+        <form action="{{ route('admin.clubs.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
 
-        {{-- Tên CLB --}}
-        <div class="mb-3">
-            <label for="name" class="form-label fw-bold">Tên CLB</label>
-            <input type="text" name="name" id="name" class="form-control" 
-                   value="{{ old('name') }}" required>
-        </div>
+            <div class="row mb-4">
+                {{-- Cột trái --}}
+                <div class="col-md-4">
+                    {{-- Thông tin cơ bản --}}
+                    <div class="card shadow-sm border-primary mb-4">
+                        <div class="card-header bg-primary text-white">Thông tin cơ bản</div>
+                        <div class="card-body text-center">
+                            <img id="logoPreview" src="{{ asset('images/default-club.png') }}" class="img-fluid rounded mb-3"
+                                style="max-height: 150px;">
+                            <input type="file" name="logo" id="logo" class="form-control mb-3" accept="image/*">
 
-        {{-- Lĩnh vực hoạt động --}}
-        <div class="mb-3">
-            <label for="field" class="form-label fw-bold">Lĩnh vực hoạt động</label>
-            <input type="text" name="field" id="field" class="form-control" 
-                   value="{{ old('field') }}" required>
-        </div>
+                            <div class="mb-3 text-start">
+                                <label class="form-label">Trạng thái</label>
+                                <select name="status" class="form-select">
+                                    <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Hoạt động</option>
+                                    <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Ngưng hoạt động
+                                    </option>
+                                </select>
+                            </div>
 
-        {{-- Mô tả --}}
-        <div class="mb-3">
-            <label for="description" class="form-label fw-bold">Mô tả</label>
-            <textarea name="description" id="description" rows="3" class="form-control">{{ old('description') }}</textarea>
-        </div>
+                            <div class="mb-3 text-start">
+                                <label class="form-label">Giới hạn thành viên</label>
+                                <input type="number" name="member_limit" class="form-control"
+                                    value="{{ old('member_limit', 50) }}">
+                            </div>
+                        </div>
+                    </div>
 
-        {{-- Email liên hệ --}}
-        <div class="mb-3">
-            <label for="email" class="form-label fw-bold">Email liên hệ</label>
-            <input type="email" name="email" id="email" class="form-control" 
-                   value="{{ old('email') }}">
-        </div>
+                    {{-- Ban quản lý --}}
+                    <div class="card shadow-sm border-success">
+                        <div class="card-header bg-success text-white">Ban quản lý CLB</div>
+                        <div class="card-body">
 
-        {{-- Số điện thoại --}}
-        <div class="mb-3">
-            <label for="phone" class="form-label fw-bold">Số điện thoại</label>
-            <input type="text" name="phone" id="phone" class="form-control" 
-                   value="{{ old('phone') }}">
-        </div>
+                            {{-- ⚠️ Hiển thị lỗi riêng của ban quản lý --}}
+                            @if ($errors->has('managers'))
+                                <div class="alert alert-danger py-2 mb-3">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    {{ $errors->first('managers') }}
+                                </div>
+                            @endif
 
-        {{-- Chủ nhiệm CLB --}}
-        <div class="mb-3">
-            <label for="manager_id" class="form-label fw-bold">Chủ nhiệm CLB</label>
-            <select name="manager_id" id="manager_id" class="form-select" required>
-                <option value="">-- Chọn chủ nhiệm --</option>
-                @foreach($users as $user)
-                    <option 
-                        value="{{ $user->id }}"
-                        {{ old('manager_id') == $user->id ? 'selected' : '' }}
-                        {{ in_array($user->id, $managers) ? 'disabled' : '' }}
-                    >
-                        {{ $user->name }} ({{ $user->email }})
-                        {{ in_array($user->id, $managers) ? ' - ĐÃ LÀ CHỦ NHIỆM CLB' : '' }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
+                            @php
+$roles = [
+    'club_manager' => 'Chủ nhiệm',
+    'deputy_manager' => 'Phó chủ nhiệm',
+    'secretary' => 'Thư ký',
+    'treasurer' => 'Thủ quỹ',
+    'event_manager' => 'Quản lý sự kiện',
+    'communication' => 'Truyền thông',
+];
+                            @endphp
 
-        {{-- Giới hạn thành viên --}}
-        <div class="mb-3">
-            <label for="member_limit" class="form-label fw-bold">Giới hạn thành viên</label>
-            <input type="number" name="member_limit" id="member_limit" 
-                   class="form-control" min="1" value="{{ old('member_limit') }}">
-        </div>
+                            @foreach ($roles as $key => $label)
+                                <div class="mb-3">
+                                    <label class="form-label">{{ $label }}</label>
+                                    <select name="managers[{{ $key }}]" class="form-select select2-member"
+                                        data-placeholder="Chọn {{ strtolower($label) }}">
+                                        @if (old("managers.$key"))
+                                            <option value="{{ old("managers.$key") }}" selected>
+                                                Thành viên đã chọn
+                                            </option>
+                                        @endif
+                                    </select>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
 
-        {{-- Logo CLB --}}
-        <div class="mb-3">
-            <label for="logo" class="form-label fw-bold">Logo CLB</label>
-            <input type="file" name="logo" id="logo" class="form-control">
-        </div>
+                {{-- Cột phải --}}
+                <div class="col-md-8">
+                    <div class="card border-info shadow-sm">
+                        <div class="card-header bg-info text-white">Thông tin chi tiết</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Tên CLB</label>
+                                <input type="text" name="name" class="form-control" value="{{ old('name') }}">
+                            </div>
 
-        {{-- Nút hành động --}}
-        <div class="d-flex justify-content-between mt-4">
-            <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary px-4">⬅ Quay lại</a>
-            <button type="submit" class="btn btn-success px-4">💾 Lưu CLB</button>
-        </div>
-    </form>
-</div>
+                            <div class="mb-3">
+                                <label class="form-label">Lĩnh vực</label>
+                                <input type="text" name="field" class="form-control" value="{{ old('field') }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Địa điểm</label>
+                                <input type="text" name="location" class="form-control" value="{{ old('location') }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ old('email') }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Điện thoại</label>
+                                <input type="text" name="phone" class="form-control" value="{{ old('phone') }}">
+                            </div>
+
+                            {{-- Mô tả --}}
+                            <div class="mb-3">
+                                <label class="form-label">Mô tả</label>
+                                <div id="description-editor" style="height: 200px;">{!! old('description') !!}</div>
+                                <input type="hidden" name="description" id="description-input">
+                            </div>
+
+                            {{-- Nội quy --}}
+                            <div class="mb-3">
+                                <label class="form-label">Nội quy</label>
+                                <div id="rules-editor" style="height: 200px;">{!! old('rules') !!}</div>
+                                <input type="hidden" name="rules" id="rules-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary">Thêm CLB</button>
+        </form>
 @endsection
+
+
+
+
+@push('scripts')
+    {{-- Select2 --}}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    {{-- Quill --}}
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <script>
+       $(document).ready(function () {
+            $('#logo').change(function (e) {
+                const [file] = e.target.files;
+                if (file) $('#logoPreview').attr('src', URL.createObjectURL(file));
+            });
+
+            $('.select2-member').select2({
+                placeholder: function () {
+                    return $(this).data('placeholder');
+                },
+                allowClear: true,
+                width: '100%',
+                ajax: {
+                    url: '{{ route("admin.clubs.members.search") }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return { q: params.term };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.map(item => ({
+                                id: item.id,
+                                text: item.text || '—'
+                            }))
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: function (data) {
+                    if (!data.id) return data.text;
+                    return $('<span>' + data.text + '</span>');
+                },
+                templateSelection: function (data) {
+                    return data.text || '—';
+                }
+            });
+
+            // ✅ Fix: đảm bảo select2 append option thật để gửi về Laravel
+            $('.select2-member').on('select2:select select2:unselect', function (e) {
+                const val = $(this).val();
+                if (val) {
+                    if (!$(this).find('option[value="' + val + '"]').length) {
+                        $(this).append(new Option(e.params.data.text, val, true, true)).trigger('change');
+                    }
+                } else {
+                    $(this).find('option').prop('selected', false);
+                }
+            });
+
+            const quillDesc = new Quill('#description-editor', { theme: 'snow' });
+            const quillRules = new Quill('#rules-editor', { theme: 'snow' });
+
+            $('form').on('submit', function () {
+                $('#description-input').val(quillDesc.root.innerHTML);
+                $('#rules-input').val(quillRules.root.innerHTML);
+            });
+        });
+
+    </script>
+@endpush

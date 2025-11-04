@@ -27,9 +27,10 @@
     <!-- Filter -->
     <div class="filter-section">
         <form method="GET" action="{{ route('admin.plans.index') }}">
-            <div class="row g-3">
+            <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <select name="club_id" class="form-select">
+                    <label class="form-label fw-semibold text-secondary">Chọn CLB</label>
+                    <select name="club_id" class="form-select select2-club">
                         <option value="">Tất cả CLB</option>
                         @foreach($clubs as $club)
                             <option value="{{ $club->id }}" {{ request('club_id') == $club->id ? 'selected' : '' }}>
@@ -38,7 +39,9 @@
                         @endforeach
                     </select>
                 </div>
+
                 <div class="col-md-3">
+                    <label class="form-label fw-semibold text-secondary">Trạng thái</label>
                     <select name="status" class="form-select">
                         <option value="">Tất cả trạng thái</option>
                         <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
@@ -46,9 +49,11 @@
                         <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Từ chối</option>
                     </select>
                 </div>
+
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100">Lọc</button>
                 </div>
+
                 @if(request()->hasAny(['club_id', 'status']))
                     <div class="col-md-3">
                         <a href="{{ route('admin.plans.index') }}" class="btn btn-outline-secondary w-100">Xóa lọc</a>
@@ -94,34 +99,22 @@
                         </span>
                     </td>
                     <td class="action-buttons">
-                        <a href="{{ route('admin.plans.show', $plan) }}" class="btn btn-sm btn-info" title="Xem chi tiết">
-                            Xem
-                        </a>
-                        <a href="{{ route('admin.plans.edit', $plan) }}" class="btn btn-sm btn-warning" title="Chỉnh sửa">
-                            Sửa
-                        </a>
+                        <a href="{{ route('admin.plans.show', $plan) }}" class="btn btn-sm btn-info">Xem</a>
+                        <a href="{{ route('admin.plans.edit', $plan) }}" class="btn btn-sm btn-warning">Sửa</a>
 
                         @if($plan->status === 'pending')
-                            <form action="{{ route('admin.plans.approve', $plan) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-success" title="Phê duyệt">
-                                    Duyệt
-                                </button>
+                            <form action="{{ route('admin.plans.approve', $plan) }}" method="POST" class="d-inline">@csrf
+                                <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
                             </form>
-                            <form action="{{ route('admin.plans.reject', $plan) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-danger" title="Từ chối">
-                                    Từ chối
-                                </button>
+                            <form action="{{ route('admin.plans.reject', $plan) }}" method="POST" class="d-inline">@csrf
+                                <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
                             </form>
                         @endif
 
                         <form action="{{ route('admin.plans.destroy', $plan) }}" method="POST" class="d-inline"
                               onsubmit="return confirm('Xóa kế hoạch này? Không thể khôi phục!')">
                             @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa">
-                                Xóa
-                            </button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
                         </form>
                     </td>
                 </tr>
@@ -143,8 +136,81 @@
     </div>
 </div>
 
+{{-- ✅ Thêm Select2 JS + CSS --}}
+@push('scripts')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('.select2-club').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Chọn CLB...',
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
+@endpush
+
 <style>
-    :root {
+/* 🎨 Select2 phong cách mềm, bo tròn, đồng bộ với giao diện */
+/* 🎨 Fix select2 Bootstrap 5 hiển thị gọn, đẹp */
+.select2-container--bootstrap-5 .select2-selection {
+    border-radius: 10px !important;
+    border: 1.5px solid #d1d5db !important;
+    padding: 0 !important;
+    height: 42px !important;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease-in-out;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    background-color: #fff !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus,
+.select2-container--bootstrap-5 .select2-selection:hover {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+
+.select2-container--bootstrap-5 .select2-selection__rendered {
+    color: #1e293b !important;
+    font-weight: 500 !important;
+    padding-left: 12px !important;
+    padding-right: 30px !important;
+    line-height: 40px !important;
+    overflow: visible !important; /* Fix bị ẩn chữ */
+    white-space: nowrap !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection__arrow {
+    top: 8px !important;
+    right: 8px !important;
+    position: absolute !important;
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border-radius: 10px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    background-color: #fff !important;
+}
+
+.select2-results__option {
+    padding: 8px 12px !important;
+    font-size: 0.95rem !important;
+}
+
+.select2-results__option--highlighted {
+    background-color: #6366f1 !important;
+    color: #fff !important;
+}
+    
+
+/* Giữ phần dưới nguyên */
+ :root {
         --primary: #6366f1; --primary-dark: #4f46e5;
         --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #06b6d4;
         --dark: #1e293b; --light: #f8fafc; --border: #e2e8f0;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Club;
 use App\Models\Post;
 use App\Models\Media;
+use App\Models\ClubMember;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Jobs\SendNotificationJob;
@@ -46,51 +47,113 @@ class PostController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $post = Post::findOrFail($id);
-        $user = $post->user;
-        $reason = $request->input('reason', 'Vi phạm nội quy');
+        $club = Club::findOrFail($id);
+        $reason = $request->input('delete_reason', 'Không có lý do');
 
-        // ✅ Xóa tất cả media liên quan
-        $mediaList = Media::withTrashed()
-            ->where('related_type', 'post')
-            ->where('related_id', $post->id)
-            ->get();
+        \DB::beginTransaction();
 
-        foreach ($mediaList as $media) {
-            $filePath = storage_path('app/public/' . $media->file_path);
-            if (file_exists($filePath)) {
-                unlink($filePath);
+        try {
+            // 1️⃣ Lấy manager (Chủ nhiệm) tương tự phần edit/update
+            $managerId = $club->manager_id;
+            $managerUser = null;
+
+            if ($managerId) {
+                $manager = ClubMember::with('member.user')
+                    ->where('club_id', $club->id)
+                    ->where('member_id', $managerId)
+                    ->first();
+
+                if ($manager && $manager->member && $manager->member->user) {
+                    $managerUser = $manager->member->user;
+                }
             }
-            $media->forceDelete();
+
+            // 2️⃣ Xóa cứng posts liên quan
+            $posts = Post::where('club_id', $club->id)->get();
+            foreach ($posts as $post) {
+                // Xóa media liên quan nếu có
+                $mediaList = Media::withTrashed()
+                    ->where('related_type', 'post')
+                    ->where('related_id', $post->id)
+                    ->get();
+
+                foreach ($mediaList as $media) {
+                    $filePath = storage_path('app/public/' . $media->file_path);
+                    if (file_exists($filePath))
+                        unlink($filePath);
+                    $media->forceDelete();
+                }
+
+                // Xóa ảnh thumbnail
+                if ($post->thumbnail && file_exists(storage_path('app/public/' . $post->thumbnail))) {
+                    unlink(storage_path('app/public/' . $post->thumbnail));
+                }
+
+                $post->forceDelete();
+            }
+
+            // 3️⃣ Xóa cứng documents liên quan
+            $documents = Document::where('clb_id', $club->id)->get();
+            foreach ($documents as $doc) {
+                $filePath = storage_path('app/public/' . $doc->file_path);
+                if (file_exists($filePath))
+                    unlink($filePath);
+                $doc->forceDelete();
+            }
+
+            // 4️⃣ Hạ role tất cả club_members về 'member'
+            ClubMember::where('club_id', $club->id)->update([
+                'role' => 'member',
+                'appointed_at' => null,
+                'updated_at' => now(),
+            ]);
+
+            // 5️⃣ Xóa CLB (cứng)
+            if ($club->logo && file_exists(storage_path('app/public/' . $club->logo))) {
+                unlink(storage_path('app/public/' . $club->logo));
+            }
+
+            $clubName = $club->name;
+            $club->delete();
+
+            \DB::commit();
+
+            // 6️⃣ Gửi thông báo/email cho manager
+            if ($managerUser) {
+                $batchId = uniqid();
+
+                SendNotificationJob::dispatch(
+                    $managerUser->email,
+                    new CustomNotification(
+                        "CLB bị xóa",
+                        "Câu lạc bộ '{$clubName}' đã bị xóa. Lý do: {$reason}",
+                        $batchId
+                    )
+                );
+
+                // Debug ra log để kiểm tra
+                \Log::info("DEBUG: Mail gửi tới manager", [
+                    'email' => $managerUser->email,
+                    'club' => $clubName,
+                    'reason' => $reason,
+                    'batchId' => $batchId,
+                ]);
+            }
+
+            return redirect()->route('admin.clubs.index')
+                ->with('success', "Đã xóa CLB '{$clubName}' và gửi thông báo cho Chủ nhiệm.");
+        } catch (\Throwable $e) {
+            \DB::rollBack();
+            \Log::error('Lỗi khi xóa CLB', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
+
+            return redirect()->back()->withErrors(['error' => 'Xảy ra lỗi khi xóa CLB: ' . $e->getMessage()]);
         }
-
-        // ✅ Xóa ảnh đại diện nếu có
-        if ($post->thumbnail && file_exists(storage_path('app/public/' . $post->thumbnail))) {
-            unlink(storage_path('app/public/' . $post->thumbnail));
-        }
-
-        // ✅ Xóa bài viết
-        $post->delete();
-
-        // ✅ Tạo batchId duy nhất cho thông báo
-        $batchId = 'post_deleted_' . $post->id . '_' . Str::random(6);
-
-        // ✅ Gửi thông báo và email qua job
-        if ($user) {
-            dispatch(new SendNotificationJob(
-                userId: $user->id,
-                title: 'Bài viết bị xóa',
-                content: "Bài viết của bạn đã bị xóa vì lý do: {$reason}",
-                sendVia: 'both',
-                batchId: $batchId,
-                force: false
-            ));
-        }
-
-        // ✅ Redirect về danh sách bài viết
-        return redirect()->route('admin.posts.index')
-            ->with('success', 'Đã xóa bài viết và gửi thông báo + email cho người dùng.');
     }
+
 
 
     /**

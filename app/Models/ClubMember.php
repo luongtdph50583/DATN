@@ -15,8 +15,12 @@ class ClubMember extends Model
         'club_id',
         'member_id',
         'role',
-        'joined_at'
+        'joined_at',
+        'appointed_at',   // ngày bổ nhiệm
+        'status',         // trạng thái active/inactive
+        'note'            // nếu muốn lưu lý do hay ghi chú
     ];
+
 
     public $timestamps = true;
 
@@ -30,9 +34,9 @@ class ClubMember extends Model
         return $this->belongsTo(User::class, 'member_id');
     }
     public function member()
-{
-    return $this->belongsTo(User::class, 'member_id');
-}
+    {
+        return $this->belongsTo(Member::class, 'member_id');
+    }
 protected static function boot()
     {
         parent::boot();

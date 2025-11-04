@@ -12,10 +12,14 @@ class CreateClubJoinRequestsTable extends Migration
             $table->foreignId('club_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->text('note')->nullable(); // ✅ ghi chú xử lý
+            $table->foreignId('handled_by')->nullable()->constrained('users')->onDelete('set null'); // ✅ người xử lý
             $table->timestamp('requested_at')->useCurrent();
             $table->timestamps();
         });
     }
+
+
 
     public function down()
     {

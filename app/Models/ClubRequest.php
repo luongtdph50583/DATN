@@ -35,5 +35,10 @@ class ClubRequest extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function handler()
+    {
+        return $this->belongsTo(User::class, 'handled_by'); // admin xử lý
+    }
+
 
 }

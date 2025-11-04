@@ -16,6 +16,8 @@ class ClubJoinRequest extends Model
         'user_id',
         'reason',
         'status',
+        'note',         // ✅ thêm ghi chú xử lý
+        'handled_by',   // ✅ thêm người xử lý
         'requested_at'
     ];
 
@@ -31,5 +33,10 @@ class ClubJoinRequest extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function handler()
+    {
+        return $this->belongsTo(User::class, 'handled_by');
     }
 }

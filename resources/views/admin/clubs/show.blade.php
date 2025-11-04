@@ -1,110 +1,202 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Chi tiết CLB')
+@section('card-title', 'Chi tiết CLB: ' . $club->name)
 
 @section('card-body')
-    <h1 class="mb-4">Chi tiết Câu lạc bộ</h1>
 
-    {{-- Thông báo --}}
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
+        <div class="row mb-4">
+            {{-- Logo và thông tin cơ bản --}}
+            <div class="col-md-4 text-center">
+                <img src="{{ $club->logo ? asset('storage/' . $club->logo) : asset('images/default-club.png') }}" 
+                     alt="Logo CLB" class="img-fluid rounded mb-3" style="max-height: 150px;">
+                <p><strong>Trạng thái:</strong>
+                    @if($club->status === 'active') Hoạt động
+                    @elseif($club->status === 'pending') Chờ duyệt
+                    @else Ngưng hoạt động @endif
+                </p>
+                <p><strong>Ngày thành lập:</strong> {{ $club->founded_at?->format('d/m/Y') ?? '—' }}</p>
+                <p><strong>Giới hạn thành viên:</strong> {{ $club->member_limit ?? '—' }}</p>
+            </div>
 
-    {{-- Thông tin cơ bản --}}
-    <div class="card mb-4">
-        <div class="card-header fw-bold">Thông tin CLB</div>
-        <div class="card-body">
-            <div class="row">
-                {{-- Logo --}}
-                <div class="col-md-3 text-center">
-                    @if($club->logo)
-                        <img src="{{ asset('storage/' . $club->logo) }}" alt="Logo CLB" class="img-fluid rounded mb-2" style="max-height: 150px;">
-                    @else
-                        <img src="https://via.placeholder.com/150?text=No+Logo" alt="No logo" class="img-fluid rounded mb-2">
-                    @endif
+            {{-- Thông tin chi tiết CLB --}}
+            <div class="col-md-8">
+                <h5></h5>
+                        <p><strong>Tên clb:</strong> {{ $club->name }}</p>
+
+                <p><strong>Lĩnh vực:</strong> {{ $club->field }}</p>
+                <p><strong>Địa điểm:</strong> {{ $club->location ?? '—' }}</p>
+                <p><strong>Email:</strong> {{ $club->email ?? '—' }}</p>
+                <p><strong>Điện thoại:</strong> {{ $club->phone ?? '—' }}</p>
+                
+
+                {{-- Nội quy CLB hiển thị HTML --}}
+                <p><strong>Nội quy CLB:</strong></p>
+                <div class="border rounded p-2 bg-light mb-2">
+                    {!! $club->rules ?? '<em>Chưa có nội quy</em>' !!}
                 </div>
 
-                {{-- Thông tin --}}
-                <div class="col-md-9">
-                    <p><strong>Tên CLB:</strong> {{ $club->name }}</p>
-                    <p><strong>Lĩnh vực:</strong> {{ $club->field }}</p>
-                    <p><strong>Email CLB:</strong> {{ $club->email ?? '—' }}</p>
-                    <p><strong>Điện thoại CLB:</strong> {{ $club->phone ?? '—' }}</p>
-                    <p><strong>Giới hạn thành viên:</strong> {{ $club->member_limit ?? 'Không giới hạn' }}</p>
-                    <p><strong>Trạng thái:</strong>
-                        @if($club->status === 'active')
-                            <span class="badge bg-success">Đang hoạt động</span>
-                        @else
-                            <span class="badge bg-secondary">Ngừng hoạt động</span>
-                        @endif
-                    </p>
-                    <p><strong>Mô tả:</strong><br> {!! nl2br(e($club->description)) !!}</p>
+                {{-- Mô tả CLB hiển thị HTML --}}
+                <p><strong>Mô tả:</strong></p>
+                <div class="border rounded p-2 bg-light">
+                    {!! $club->description ?? '<em>Chưa có mô tả</em>' !!}
                 </div>
             </div>
         </div>
-    </div>
 
-    {{-- Chủ nhiệm --}}
-    <div class="card mb-4">
-        <div class="card-header fw-bold">Chủ nhiệm CLB</div>
-        <div class="card-body">
-            @if($manager)
-                <p><strong>Họ tên:</strong> {{ $manager->name }}</p>
-                <p><strong>Email:</strong> {{ $manager->email }}</p>
-            @else
-                <p class="text-muted">Không tìm thấy thông tin chủ nhiệm.</p>
-            @endif
-        </div>
-    </div>
+        <hr>
 
-    {{-- Danh sách thành viên --}}
-    <div class="card">
-        <div class="card-header fw-bold">Danh sách thành viên ({{ $members->count() }})</div>
-        <div class="card-body">
-            @if($members->isEmpty())
-                <p class="text-muted">Chưa có thành viên nào trong CLB này.</p>
-            @else
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle">
-                        <thead class="table-light">
+        {{-- Ban quản lý CLB --}}
+        <h5>Ban quản lý CLB</h5>
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Tên</th>
+                        <th>Mã SV</th>
+                        <th>Vai trò</th>
+                        <th>Ngày bổ nhiệm</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+    $index = 1;
+    $roleLabels = [
+        'club_manager' => 'Chủ nhiệm',
+        'deputy_manager' => 'Phó chủ nhiệm',
+        'secretary' => 'Thư ký',
+        'treasurer' => 'Thủ quỹ',
+        'event_manager' => 'Quản lý sự kiện',
+        'communication' => 'Truyền thông',
+        'member' => 'Thành viên',
+    ];
+                    @endphp
+                    @foreach($clubMembers as $member)
+                        @if(in_array($member['role'], ['club_manager', 'deputy_manager', 'secretary', 'treasurer', 'event_manager', 'communication']))
                             <tr>
-                                <th>#</th>
-                                <th>Họ tên</th>
-                                <th>Email</th>
-                                <th>Vai trò</th>
-                                <th>Ngày tham gia</th>
+                                <td>{{ $index++ }}</td>
+                                <td>{{ $member['member']['user']['name'] ?? $member['member']['name'] ?? '—' }}</td>
+                                <td>{{ $member['member']['student_code'] ?? '—' }}</td>
+                                <td>{{ $roleLabels[$member['role']] ?? $member['role'] }}</td>
+                                <td>{{ isset($member['appointed_at']) ? \Carbon\Carbon::parse($member['appointed_at'])->format('d/m/Y') : '—' }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $member['status'] === 'active' ? 'success' : 'secondary' }}">
+                                        {{ $member['status'] === 'active' ? 'Hoạt động' : 'Ngưng' }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if(!empty($member['member']['id']))
+                                        <a href="{{ url('admin/members/' . $member['member']['id']) }}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> Chi tiết
+                                        </a>
+                                    @endif
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($members as $index => $member)
-                                <tr>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td>{{ $member->user->name ?? 'Không xác định' }}</td>
-                                    <td>{{ $member->user->email ?? '—' }}</td>
-                                    <td>
-                                        @if($member->role === 'leader')
-                                            <span class="badge bg-primary">Chủ nhiệm</span>
-                                        @else
-                                            <span class="badge bg-secondary">Thành viên</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ \Carbon\Carbon::parse($member->joined_at)->format('d/m/Y') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
+                        @endif
+                    @endforeach
+                </tbody>
+            </table>
         </div>
-    </div>
 
-    <div class="mt-3">
-        <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Quay lại danh sách
-        </a>
-       
-    </div>
+        <hr>
+
+        {{-- Lọc & tìm kiếm thành viên thường --}}
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <select id="statusFilter" class="form-select">
+                    <option value="">-- Chọn trạng thái --</option>
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Ngưng hoạt động</option>
+                    <option value="banned">Bị cấm</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="text" id="searchInput" class="form-control" placeholder="Tìm theo tên hoặc MSSV">
+            </div>
+        </div>
+
+        {{-- Danh sách thành viên thường --}}
+        <h5>Danh sách thành viên</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="membersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Tên</th>
+                        <th>Mã SV</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tham gia</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="membersTableBody">
+                    @php $index = 1; @endphp
+                    @foreach($clubMembers as $member)
+                        @if($member['role'] === 'member')
+                            <tr data-name="{{ strtolower($member['member']['user']['name'] ?? $member['member']['name'] ?? '') }}"
+                                data-code="{{ strtolower($member['member']['student_code'] ?? '') }}"
+                                data-status="{{ $member['status'] }}">
+                                <td>{{ $index++ }}</td>
+                                <td>{{ $member['member']['user']['name'] ?? $member['member']['name'] ?? '—' }}</td>
+                                <td>{{ $member['member']['student_code'] ?? '—' }}</td>
+                                <td>{{ $roleLabels[$member['role']] ?? $member['role'] }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $member['status'] === 'active' ? 'success' : 'secondary' }}">
+                                        {{ $member['status'] === 'active' ? 'Hoạt động' : 'Ngưng' }}
+                                    </span>
+                                </td>
+                                <td>{{ isset($member['joined_at']) ? \Carbon\Carbon::parse($member['joined_at'])->format('d/m/Y') : '—' }}</td>
+                                <td class="text-center">
+                                    @if(!empty($member['member']['id']))
+                                        <a href="{{ url('admin/members/' . $member['member']['id']) }}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> Chi tiết
+                                        </a>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endif
+                    @endforeach
+                    @if($clubMembers->where('role', 'member')->isEmpty())
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Chưa có thành viên nào.</td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+
 @endsection
+
+@push('scripts')
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('searchInput');
+    const tableBody = document.getElementById('membersTableBody');
+
+    function filterMembers() {
+        const status = statusFilter.value.toLowerCase();
+        const keyword = searchInput.value.toLowerCase();
+
+        tableBody.querySelectorAll('tr').forEach(row => {
+            const name = row.getAttribute('data-name');
+            const code = row.getAttribute('data-code');
+            const rowStatus = row.getAttribute('data-status');
+
+            const matchStatus = status === '' || rowStatus === status;
+            const matchKeyword = name.includes(keyword) || code.includes(keyword);
+
+            row.style.display = matchStatus && matchKeyword ? '' : 'none';
+        });
+    }
+
+    statusFilter.addEventListener('change', filterMembers);
+    searchInput.addEventListener('input', filterMembers);
+});
+</script>
+@endpush

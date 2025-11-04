@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+
 class Club extends Model
 {
     use HasFactory;
@@ -11,53 +12,63 @@ class Club extends Model
     protected $fillable = [
         'name',
         'description',
-        'field',
-        'email',
-        'phone',
         'logo',
-        'member_limit',
+        'field',
         'status',
         'manager_id',
+        'email',
+        'phone',
+        'member_limit',
+        'founded_at',
+        'location',
+        'rules',
     ];
 
-    // Chủ nhiệm CLB (User có role = club_manager)
+    protected $casts = [
+        'social_links' => 'array',
+        'founded_at' => 'date',
+        'description' => 'string',
+    ];
+
+    /** Người quản lý / chủ nhiệm CLB */
     public function manager()
     {
         return $this->belongsTo(User::class, 'manager_id');
     }
 
-    // Thành viên CLB (qua bảng trung gian)
+    /** Thành viên CLB (qua bảng club_members) */
     public function members()
     {
-        return $this->belongsToMany(Member::class, 'club_members', 'club_id', 'member_id')
-                    ->withPivot(['role', 'joined_at'])
-                    ->withTimestamps();
+        return $this->belongsToMany(User::class, 'club_members', 'club_id', 'member_id')
+            ->withPivot(['role', 'status', 'note', 'joined_at'])
+            ->withTimestamps();
     }
 
-    // Bài viết CLB
+    /** Bài viết CLB */
     public function posts()
     {
         return $this->hasMany(Post::class, 'club_id');
     }
 
-    // Sự kiện CLB
+    /** Sự kiện CLB */
     public function events()
     {
         return $this->hasMany(Event::class, 'club_id');
     }
 
-    // Giao dịch quỹ
+    /** Giao dịch quỹ */
     public function fundTransactions()
     {
         return $this->hasMany(FundTransaction::class, 'club_id');
     }
 
+    /** Quỹ CLB */
     public function fund()
-{
-    return $this->hasOne(Fund::class);
-}
+    {
+        return $this->hasOne(Fund::class);
+    }
 
-    // Khi tạo CLB mới => tự tạo quỹ
+    /** Tự động tạo quỹ khi tạo CLB mới */
     protected static function booted()
     {
         static::created(function ($club) {
@@ -68,13 +79,15 @@ class Club extends Model
         });
     }
 
-    protected $casts = [
-          'description' => 'string',
-      ];
-
-    // 🔗 Các yêu cầu tham gia CLB
+    /** Yêu cầu tham gia CLB */
     public function joinRequests()
     {
         return $this->hasMany(ClubJoinRequest::class, 'club_id');
     }
+    public function documents()
+    {
+        return $this->hasMany(Document::class, 'clb_id');
+    }
+
+
 }

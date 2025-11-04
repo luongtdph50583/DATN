@@ -93,7 +93,7 @@
                 </li>
 
                 <!-- Quản lý CLB -->
-                <li class="nav-item">
+                 <li class="nav-item">
                     <a class="nav-link menu-link" href="#sidebarclb" data-bs-toggle="collapse" role="button" aria-expanded="false"
                         aria-controls="sidebarclb">
                         <i class="ri-team-line"></i> <span>Quản lý CLB</span>
@@ -106,18 +106,18 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.club-requests.index') }}" class="nav-link">
+                                <a href="{{ route('admin.club_requests.index') }}" class="nav-link">
                                     <i class="ri-file-add-line"></i> Yêu cầu tạo CLB
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.club-join-requests.index') }}" class="nav-link">
+                                <a href="{{ route('admin.club_join_requests.index') }}" class="nav-link">
                                     <i class="ri-user-add-line"></i> Yêu cầu tham gia CLB
                                 </a>
                             </li>
                         </ul>
                     </div>
-                </li>
+                </li> 
 
                 <!-- Quản lý thành viên -->
                 <li class="nav-item">
