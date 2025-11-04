@@ -120,6 +120,9 @@ Route::prefix('admin')
 
                 // 🗑️ Xóa CLB
                 Route::delete('/{club}', 'destroy')->name('destroy');
+                Route::delete('clubs/{club}/members/{member}', [ClubController::class, 'removeMember'])
+     ->name('members.remove');
+
             });
 
         // Routes cho yêu cầu thành lập CLB

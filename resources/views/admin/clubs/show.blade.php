@@ -4,6 +4,19 @@
 @section('card-title', 'Chi tiết CLB: ' . $club->name)
 
 @section('card-body')
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
 <div class="container-fluid py-4">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -83,6 +96,7 @@
                                         </a>
                                     @endif
                                 </td>
+                                
                             </tr>
                         @endif
                     @endforeach
@@ -139,13 +153,51 @@
                                     </span>
                                 </td>
                                 <td>{{ isset($member['joined_at']) ? \Carbon\Carbon::parse($member['joined_at'])->format('d/m/Y') : '—' }}</td>
-                                <td class="text-center">
-                                    @if(!empty($member['member']['id']))
-                                        <a href="{{ url('admin/members/' . $member['member']['id']) }}" class="btn btn-info btn-sm">
-                                            <i class="fas fa-eye"></i> Chi tiết
-                                        </a>
-                                    @endif
-                                </td>
+                          <td class="text-center">
+    @if(!empty($member['member']['id']))
+        <a href="{{ url('admin/members/' . $member['member']['id']) }}" class="btn btn-info btn-sm">
+            <i class="fas fa-eye"></i> Chi tiết
+        </a>
+    @endif
+    @if($member['role'] !== 'club_manager')
+        <!-- Nút Xóa Thành Viên -->
+        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#removeMemberModal" data-member-id="{{ $member['member']['id'] }}" data-club-id="{{ $club->id }}">
+            <i class="fas fa-trash-alt"></i> Xóa
+        </button>
+    @else
+        <span class="text-muted">Chủ nhiệm</span>
+    @endif
+</td>
+
+<!-- Modal Confirm Xóa Thành Viên -->
+<div class="modal fade" id="removeMemberModal" tabindex="-1" aria-labelledby="removeMemberModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="removeMemberForm" action="{{ route('admin.clubs.members.remove', ['club' => 'club_id', 'member' => 'member_id']) }}" method="POST">
+      @csrf
+      @method('DELETE')
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="removeMemberModalLabel">Xóa Thành Viên</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Bạn có chắc chắn muốn xóa thành viên này khỏi CLB?</p>
+          <div class="mb-3">
+            <label for="removal_reason" class="form-label">Lý do xóa</label>
+            <textarea name="reason" id="removal_reason" class="form-control" rows="4" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-danger">Xóa Thành Viên</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+                              
                             </tr>
                         @endif
                     @endforeach
@@ -186,6 +238,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     statusFilter.addEventListener('change', filterMembers);
     searchInput.addEventListener('input', filterMembers);
+});
+  document.addEventListener('DOMContentLoaded', function () {
+    // Xử lý sự kiện khi mở modal
+    $('#removeMemberModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); // Nút kích hoạt modal
+        var memberId = button.data('member-id'); // Lấy member_id
+        var clubId = button.data('club-id'); // Lấy club_id
+
+        // Cập nhật form action với club_id và member_id
+        var form = $(this).find('form');
+        var actionUrl = form.attr('action')
+            .replace('club_id', clubId)  // Thay 'club_id' bằng clubId
+            .replace('member_id', memberId); // Thay 'member_id' bằng memberId
+        form.attr('action', actionUrl);
+    });
 });
 </script>
 @endpush

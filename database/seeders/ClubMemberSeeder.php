@@ -16,140 +16,85 @@ class ClubMemberSeeder extends Seeder
         $faker = Faker::create('vi_VN');
 
         $clubs = Club::with('manager')->get();
-        $members = Member::with('user')->get();
+        $members = Member::all();
 
         if ($clubs->isEmpty() || $members->isEmpty()) {
             $this->command->warn('Không có dữ liệu trong bảng clubs hoặc members.');
             return;
         }
 
+        // Xóa dữ liệu cũ
         DB::table('club_members')->truncate();
 
         $records = [];
-        $usedPairs = []; // Tránh trùng (club_id, member_id)
+        $usedLeaderIds = []; // đảm bảo 1 người chỉ làm chủ nhiệm 1 CLB
 
         foreach ($clubs as $club) {
             $clubId = $club->id;
-            $availableMembers = $members->all(); // array of Member objects
 
-            // 1. Chủ nhiệm (club_manager) - ưu tiên manager của CLB
+            // 1️⃣ Chọn chủ nhiệm
             $leaderMember = null;
-            if ($club->manager) {
-                $leaderMember = collect($availableMembers)
-                    ->first(fn($m) => $m->user_id == $club->manager->id);
+
+            if ($club->manager_id) {
+                $leaderMember = $members
+                    ->where('user_id', $club->manager_id)
+                    ->whereNotIn('id', $usedLeaderIds)
+                    ->first();
             }
 
+            // Nếu chưa có leader, lấy ngẫu nhiên
             if (!$leaderMember) {
-                $leaderMember = collect($availableMembers)->random();
+                $availableMembers = $members->whereNotIn('id', $usedLeaderIds);
+                if ($availableMembers->isEmpty()) {
+                    $this->command->warn("Không còn member nào để làm chủ nhiệm cho CLB $clubId");
+                    continue;
+                }
+                $leaderMember = $availableMembers->random();
             }
 
-            $this->addMember(
-                $records, $usedPairs, $faker,
-                $clubId, $leaderMember->id,
-                'club_manager', 'active',
-                $faker->dateTimeBetween('-2 years', '-1 year'),
-                $faker->dateTimeBetween('-2 years', '-1 year'),
-                'Chủ nhiệm CLB từ khi thành lập'
-            );
+            // Đánh dấu member đã làm leader
+            $usedLeaderIds[] = $leaderMember->id;
 
-            // Loại leader khỏi danh sách còn lại
-            $remainingMembers = collect($availableMembers)
-                ->reject(fn($m) => $m->id == $leaderMember->id);
+            // Thêm chủ nhiệm vào bảng club_members
+            $records[] = [
+                'club_id' => $clubId,
+                'member_id' => $leaderMember->id,
+                'role' => 'club_manager',
+                'status' => 'active',
+                'note' => 'Chủ nhiệm CLB từ khi thành lập',
+                'joined_at' => $faker->dateTimeBetween('-2 years', '-1 year'),
+                'appointed_at' => $faker->dateTimeBetween('-2 years', '-1 year'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
 
-            // 2. Ban quản lý (2-4 người)
-            $managementRoles = ['deputy_manager', 'secretary', 'treasurer', 'event_manager', 'communication'];
-            $numManagers = min($faker->numberBetween(2, 4), $remainingMembers->count());
-            $managers = $numManagers > 0 ? $remainingMembers->random($numManagers) : collect();
-
-            foreach ($managers as $idx => $member) {
-                $role = $managementRoles[$idx] ?? 'communication';
-                $this->addMember(
-                    $records, $usedPairs, $faker,
-                    $clubId, $member->id,
-                    $role, 'active',
-                    $faker->dateTimeBetween('-1 year', 'now'),
-                    $faker->dateTimeBetween('-1 year', 'now'),
-                    $faker->sentence()
-                );
-            }
-
-            // Loại managers khỏi danh sách
-            $remainingMembers = $remainingMembers->reject(fn($m) => $managers->pluck('id')->contains($m->id));
-
-            // 3. Thành viên thường (5–20 người)
-            $numMembers = min($faker->numberBetween(5, 20), $remainingMembers->count());
-            $regularMembers = $numMembers > 0 ? $remainingMembers->random($numMembers) : collect();
+            // 2️⃣ Thêm các thành viên còn lại (role = 'member')
+            $numMembers = $faker->numberBetween(5, 15);
+            $availableMembers = $members->whereNotIn('id', [$leaderMember->id]);
+            $regularMembers = $availableMembers->count() > 0
+                ? $availableMembers->random(min($numMembers, $availableMembers->count()))
+                : collect();
 
             foreach ($regularMembers as $member) {
-                $status = $faker->randomElement(['active', 'active', 'inactive']); // 66% active
-                $this->addMember(
-                    $records, $usedPairs, $faker,
-                    $clubId, $member->id,
-                    'member', $status,
-                    $faker->dateTimeBetween('-1 year', 'now'),
-                    null,
-                    $status === 'inactive' ? 'Nghỉ học / chuyển trường' : null
-                );
-            }
-
-            // Loại thành viên thường khỏi danh sách
-            $remainingMembers = $remainingMembers->reject(fn($m) => $regularMembers->pluck('id')->contains($m->id));
-
-            // 4. Khách mời (0–3 người)
-            if ($remainingMembers->isNotEmpty() && $faker->boolean(50)) {
-                $numGuests = min($faker->numberBetween(1, 3), $remainingMembers->count());
-                $guests = $remainingMembers->random($numGuests);
-
-                foreach ($guests as $member) {
-                    $this->addMember(
-                        $records, $usedPairs, $faker,
-                        $clubId, $member->id,
-                        'guest', 'active',
-                        $faker->dateTimeBetween('-1 month', 'now'),
-                        null,
-                        'Khách mời tham gia sự kiện'
-                    );
-                }
+                $records[] = [
+                    'club_id' => $clubId,
+                    'member_id' => $member->id,
+                    'role' => 'member',
+                    'status' => $faker->randomElement(['active', 'active', 'inactive']),
+                    'note' => null,
+                    'joined_at' => $faker->dateTimeBetween('-1 year', 'now'),
+                    'appointed_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
         }
 
-        // Chèn hàng loạt
+        // Chèn dữ liệu
         if (!empty($records)) {
             ClubMember::insert($records);
         }
 
         $this->command->info("Seed bảng club_members thành công với " . count($records) . " bản ghi!");
-    }
-
-    private function addMember(
-        array &$records,
-        array &$usedPairs,
-        $faker,
-        $clubId,
-        $memberId,
-        $role,
-        $status,
-        $joinedAt,
-        $appointedAt,
-        $note
-    ) {
-        $key = "$clubId-$memberId";
-        if (isset($usedPairs[$key])) return;
-
-        $usedPairs[$key] = true;
-
-        $records[] = [
-            'club_id' => $clubId,
-            'member_id' => $memberId,
-            'role' => $role,
-            'status' => $status,
-            'note' => $note,
-            'joined_at' => $joinedAt,
-            'appointed_at' => in_array($role, ['club_manager', 'deputy_manager', 'secretary', 'treasurer', 'event_manager', 'communication'])
-                ? $appointedAt
-                : null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
     }
 }

@@ -2,6 +2,9 @@
 
 @section('title', 'Quản lý Sự kiện')
 
+{{-- THÊM CSS SELECT2 --}}
+
+
 @section('card-body')
 <div class="container-fluid py-4">
     <!-- Header -->
@@ -11,7 +14,7 @@
             <p class="text-muted small mb-0">Theo dõi, duyệt và quản lý toàn bộ sự kiện của các CLB</p>
         </div>
         <a href="{{ route('admin.events.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Thêm sự kiện
+            Thêm sự kiện
         </a>
     </div>
 
@@ -32,9 +35,10 @@
                     <input type="text" name="search_name" class="form-control" 
                            placeholder="Nhập tên..." value="{{ request('search_name') }}">
                 </div>
+
                 <div class="col-md-4">
                     <label class="form-label fw-bold">Câu lạc bộ</label>
-                    <select name="club_id" class="form-select">
+                    <select name="club_id" class="select2-club" id="club-select">
                         <option value="">-- Tất cả CLB --</option>
                         @foreach($clubs as $club)
                             <option value="{{ $club->id }}" {{ request('club_id') == $club->id ? 'selected' : '' }}>
@@ -43,9 +47,10 @@
                         @endforeach
                     </select>
                 </div>
+
                 <div class="col-md-3 d-flex gap-2 align-items-end">
                     <button type="submit" class="btn btn-primary flex-fill">
-                        <i class="fas fa-search me-2"></i>Tìm
+                        Tìm
                     </button>
                     @if (request()->hasAny(['search_name', 'club_id']))
                         <a href="{{ route('admin.events.index') }}" class="btn btn-outline-secondary">
@@ -80,20 +85,16 @@
                             @foreach ($events as $event)
                                 <tr>
                                     <td><span class="badge bg-primary">#{{ $event->id }}</span></td>
-
                                     <td class="fw-bold">
                                         <a href="{{ route('admin.events.show', $event) }}" class="text-decoration-none">
                                             {{ Str::limit($event->name, 40) }}
                                         </a>
                                     </td>
-
                                     <td class="small">
                                         <div><strong>Bắt đầu:</strong> {{ $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('d/m H:i') : '—' }}</div>
                                         <div><strong>Kết thúc:</strong> {{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('d/m H:i') : '—' }}</div>
                                     </td>
-
                                     <td>{{ Str::limit($event->location, 30) }}</td>
-
                                     <td>
                                         @if($event->max_participants)
                                             <span class="text-primary fw-bold">{{ $event->max_participants }}</span>
@@ -101,7 +102,6 @@
                                             <span class="text-muted">Không giới hạn</span>
                                         @endif
                                     </td>
-
                                     <td>
                                         @php
                                             $statusLabels = [
@@ -113,9 +113,7 @@
                                         @endphp
                                         <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
                                     </td>
-
                                     <td class="small">{{ $event->createdBy->name ?? '—' }}</td>
-
                                     <td>
                                         @if($event->club)
                                             <span class="badge bg-info text-dark">{{ Str::limit($event->club->name, 15) }}</span>
@@ -123,8 +121,6 @@
                                             <span class="text-muted">—</span>
                                         @endif
                                     </td>
-
-                                    <!-- NÚT HÀNH ĐỘNG CHUẨN – ĐỒNG BỘ VỚI USERS -->
                                     <td>
                                         <div class="btn-group" role="group">
                                             @if($event->status === 'pending')
@@ -134,7 +130,6 @@
                                                         <i class="fas fa-check"></i>
                                                     </button>
                                                 </form>
-
                                                 <form action="{{ route('admin.events.reject', $event) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     <button type="submit" class="btn btn-sm btn-danger" title="Từ chối">
@@ -142,15 +137,12 @@
                                                     </button>
                                                 </form>
                                             @endif
-
                                             <a href="{{ route('admin.events.show', $event) }}" class="btn btn-sm btn-info" title="Xem">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-
                                             <a href="{{ route('admin.events.edit', $event) }}" class="btn btn-sm btn-warning" title="Sửa">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-
                                             <form action="{{ route('admin.events.destroy', $event) }}" method="POST" class="d-inline"
                                                   onsubmit="return confirm('Xóa vĩnh viễn?');">
                                                 @csrf @method('DELETE')
@@ -175,11 +167,105 @@
                     <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">Chưa có sự kiện nào</h5>
                     <a href="{{ route('admin.events.create') }}" class="btn btn-primary mt-2">
-                        <i class="fas fa-plus me-2"></i>Thêm sự kiện đầu tiên
+                        Thêm sự kiện đầu tiên
                     </a>
                 </div>
             @endif
         </div>
     </div>
 </div>
+  <style>
+        /* ẨN <select> GỐC */
+        .select2-club { display: none !important; }
+
+        /* Select2 container: GIỐNG HỆT form-control */
+        .select2-container--bootstrap-5 .select2-selection--single {
+            height: 38px !important;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: #212529;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            box-shadow: none;
+            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        }
+
+        /* Text bên trong */
+        .select2-container--bootstrap-5 .select2-selection__rendered {
+            padding-left: 0 !important;
+            padding-right: 2rem !important;
+            line-height: 1.5;
+        }
+
+        /* Mũi tên */
+        .select2-container--bootstrap-5 .select2-selection__arrow {
+            top: 50% !important;
+            right: 0.75rem !important;
+            transform: translateY(-50%);
+        }
+
+        /* Placeholder */
+        .select2-container--bootstrap-5 .select2-selection__placeholder {
+            color: #6c757d !important;
+        }
+
+        /* FOCUS: giống hệt input */
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: #86b7fe !important;
+            outline: 0 !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+        }
+
+        /* Dropdown: đẹp & căn chỉnh */
+        .select2-dropdown {
+            border: 1px solid #86b7fe;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+            margin-top: 4px;
+        }
+
+        /* Item trong dropdown */
+        .select2-results__option {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        /* Khi hover */
+        .select2-results__option--highlighted {
+            background-color: #0d6efd !important;
+            color: white !important;
+        }
+
+        /* Nút xóa (clear) */
+        .select2-selection__clear {
+            margin-right: 10px;
+            color: #6c757d;
+            font-weight: bold;
+        }
+    </style>
 @endsection
+
+{{-- JS SELECT2 – CHỈ GỌI 1 LẦN --}}
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $('#club-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: '-- Tất cả CLB --',
+                allowClear: true,
+                language: {
+                    noResults: () => 'Không tìm thấy CLB nào'
+                }
+            });
+
+            // Tự động submit khi chọn CLB
+            $('#club-select').on('change', function () {
+                this.form.submit();
+            });
+        });
+    </script>
+@endpush

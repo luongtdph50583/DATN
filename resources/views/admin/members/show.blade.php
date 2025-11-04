@@ -64,6 +64,46 @@
                 </div>
             </div>
         </div>
+        <!-- Hoạt động và Tham gia -->
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Hoạt động & Tham gia</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <!-- CLB -->
+            <div class="col-md-6">
+                <h6>CLB đã tham gia</h6>
+                @if($member->clubs->count() > 0)
+                    @foreach($member->clubs as $club)
+                        <span class="badge bg-info mb-1" title="Role: {{ $club->pivot->role }}">
+                            {{ $club->name }} ({{ $club->pivot->role }})
+                        </span>
+                    @endforeach
+                @else
+                    <p class="text-muted">Chưa tham gia CLB nào.</p>
+                @endif
+            </div>
+
+          
+        </div>
+
+        <hr>
+
+        <!-- Bài viết và Comment -->
+        <div class="row g-4 mt-2">
+            <div class="col-md-6">
+                <h6>Bài viết đã đăng</h6>
+                <p>{{ $member->posts->count() }} bài viết</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Bình luận đã đăng</h6>
+                <p>{{ $member->comments->count() }} bình luận</p>
+            </div>
+        </div>
+    </div>
+</div>
+
         <div class="card-footer bg-light d-flex justify-content-end gap-2">
             <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-warning">
                 <i class="fas fa-edit me-2"></i>Sửa thông tin

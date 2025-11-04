@@ -53,7 +53,8 @@
                         </td>
                         <td><strong>{{ $club->name }}</strong></td>
                         <td>{{ $club->field }}</td>
-                        <td>{{ $club->manager?->member?->user?->name ?? '—' }}</td>
+<td>{{ $club->manager?->member?->name ?? '—' }}</td>
+
                         <td>{{ $club->founded_at ? $club->founded_at->format('d/m/Y') : '—' }}</td>
                         <td>
                             @if($club->status === 'active')

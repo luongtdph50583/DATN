@@ -38,6 +38,45 @@ class Member extends Model
                     ->withPivot(['role', 'joined_at'])
                     ->withTimestamps();
     }
+  
+
+    // Bài viết của member (hasMany)
+    // Bài viết của thành viên thông qua user
+    public function posts()
+    {
+        return $this->hasManyThrough(
+            Post::class,   // Model cuối cùng
+            User::class,   // Model trung gian
+            'id',          // Khóa chính của User (trong bảng users)
+            'user_id',     // Khóa ngoại trong bảng posts
+            'user_id',     // Khóa ngoại của Member trỏ tới User
+            'id'           // Khóa chính của Member
+        );
+    }
+
+    // Comment của member (hasMany)
+   public function comments()
+    {
+        return $this->hasManyThrough(
+            Comment::class,
+            User::class,
+            'id',
+            'user_id',
+            'user_id',
+            'id'
+        );
+    }
+
+       public function isInClub($clubId)
+    {
+        return $this->clubs()->where('clubs.id', $clubId)->exists();
+    }
+
+    // Helper: check xem member có tham gia event nào
+    public function hasEvent($eventId)
+    {
+        return $this->events()->where('events.id', $eventId)->exists();
+    }
 
 }
 
