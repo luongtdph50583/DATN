@@ -43,6 +43,7 @@ class ClubController extends Controller
      */
    public function store(Request $request)
 {
+    // dd('$request->all()');
     $request->validate([
         'name'          => 'required|string|max:255|unique:clubs,name',
         'field'         => 'required|string|max:255',
@@ -79,7 +80,7 @@ class ClubController extends Controller
      ClubMember::create([
     'club_id' => $club->id,
     'member_id' => $club->manager_id,
-    'role' => 'leader',
+    'role' => 'admin',
     'joined_at' => now(),
 ]);
 
@@ -172,7 +173,7 @@ class ClubController extends Controller
         // Cập nhật vai trò trong club_members
         \App\Models\ClubMember::where('club_id', $club->id)
             ->where('member_id', $newManagerId)
-            ->update(['role' => 'leader']);
+            ->update(['role' => 'admin']);
     } else {
         // Nếu bỏ trống thì bỏ chủ nhiệm
         $club->manager_id = null;
@@ -251,11 +252,11 @@ public function assignStore(Request $request, $clubId)
         \App\Models\ClubMember::create([
             'club_id' => $clubId,
             'member_id' => $validated['manager_id'],
-            'role' => 'leader',
+            'role' => 'admin',
             'joined_at' => now(),
         ]);
     } else {
-        $member->update(['role' => 'leader']);
+        $member->update(['role' => 'admin']);
     }
 
     return redirect()->route('admin.clubs.show', $clubId)

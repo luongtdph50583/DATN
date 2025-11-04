@@ -314,6 +314,8 @@ Route::controller(ClubJoinRequestController::class)
     Route::post('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approve'])->name('event_fund_requests.approve');
 Route::post('event_fund_requests/{id}/reject', [App\Http\Controllers\Admin\EventFundRequestController::class, 'reject'])
     ->name('event_fund_requests.reject');
+    Route::post('event_fund_settlements/{id}/approve', [EventFundSettlementController::class, 'approve'])
+    ->name('event_fund_settlements.approve');
         // 🗑️ Trash Management
         Route::prefix('trash/media')
             ->as('trash.media.')

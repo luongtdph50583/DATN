@@ -46,6 +46,15 @@
             <td>
                 <a href="{{ route('admin.event_fund_settlements.show', $settlement->id) }}" class="btn btn-sm btn-info">Xem</a>
                 <a href="{{ route('admin.event_fund_settlements.edit', $settlement->id) }}" class="btn btn-sm btn-warning">Sửa</a>
+                  {{-- Nút duyệt --}}
+    @if($settlement->status !== 'approved')
+    <form action="{{ route('admin.event_fund_settlements.approve', $settlement->id) }}" 
+          method="POST" style="display:inline-block;" 
+          onsubmit="return confirm('Xác nhận duyệt quyết toán này?');">
+        @csrf
+        <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+    </form>
+    @endif
 
                 <form action="{{ route('admin.event_fund_settlements.destroy', $settlement->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Bạn có chắc muốn xóa quyết toán này?');">
                     @csrf

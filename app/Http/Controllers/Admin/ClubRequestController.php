@@ -78,7 +78,7 @@ class ClubRequestController extends Controller
             ClubMember::create([
                 'club_id'   => $club->id,
                 'member_id' => $clubRequest->user_id,
-                'role'      => 'manager',
+                'role'      => 'admin',
                 'joined_at' => now(),
             ]);
 
