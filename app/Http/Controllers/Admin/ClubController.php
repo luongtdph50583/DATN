@@ -49,45 +49,53 @@ class ClubController extends Controller
         // Trả về view chi tiết CLB
         return view('admin.clubs.show', compact('club', 'clubMembers'));
     }
-    public function filterMembers(Request $request, $id)
-    {
-        $status = $request->get('status');
-        $keyword = $request->get('keyword');
+    // public function filterMembers(Request $request, $id)
+    // {
+    //     $status = $request->get('status');
+    //     $keyword = $request->get('keyword');
 
-        $members = ClubMember::with('member.user')
-            ->where('club_id', $id)
-            ->where('role', 'member')
-            ->when($status, function ($q) use ($status) {
-                $q->where('status', $status);
-            })
-            ->when($keyword, function ($q) use ($keyword) {
-                $q->whereHas('member.user', function ($q2) use ($keyword) {
-                    $q2->where('name', 'like', "%$keyword%")
-                        ->orWhere('email', 'like', "%$keyword%");
-                })
-                    ->orWhereHas('member', function ($q3) use ($keyword) {
-                        $q3->where('student_code', 'like', "%$keyword%");
-                    });
-            })
-            ->get();
+    //     $members = ClubMember::with('member.user')
+    //         ->where('club_id', $id)
+    //         ->where('role', 'member')
+    //         ->when($status, function ($q) use ($status) {
+    //             $q->where('status', $status);
+    //         })
+    //         ->when($keyword, function ($q) use ($keyword) {
+    //             $q->whereHas('member.user', function ($q2) use ($keyword) {
+    //                 $q2->where('name', 'like', "%$keyword%")
+    //                     ->orWhere('email', 'like', "%$keyword%");
+    //             })
+    //                 ->orWhereHas('member', function ($q3) use ($keyword) {
+    //                     $q3->where('student_code', 'like', "%$keyword%");
+    //                 });
+    //         })
+    //         ->get();
 
-        return view('admin.clubs.partials.members_table', compact('members'));
-    }
+    //     return view('admin.clubs.partials.members_table', compact('members'));
+    // }
     public function edit($id)
     {
-        // Lấy CLB
         $club = Club::findOrFail($id);
 
-        // Lấy danh sách ClubMember kèm member và user
+        // Lấy danh sách thành viên trong CLB hiện tại
         $clubMembers = ClubMember::with('member.user')
             ->where('club_id', $id)
             ->get()
-            ->map(function ($item) {
-                // Nếu member hoặc user null → loại bỏ
+            ->filter(function ($item) {
                 if (!$item->member || !$item->member->user) {
-                    return null;
+                    return false;
                 }
 
+                // Kiểm tra xem member này có từng giữ chức vụ khác ngoài 'member' ở CLB khác không
+                $hasOtherRole = ClubMember::where('member_id', $item->member_id)
+                    ->where('role', '!=', 'member')
+                    ->where('club_id', '!=', $item->club_id)
+                    ->exists();
+
+                // Giữ lại nếu KHÔNG có chức vụ nào khác ngoài 'member'
+                return !$hasOtherRole;
+            })
+            ->map(function ($item) {
                 return [
                     'role' => $item->role,
                     'member' => [
@@ -100,11 +108,12 @@ class ClubController extends Controller
                     ],
                 ];
             })
-            ->filter() // loại bỏ các null
+            ->values()
             ->toArray();
 
         return view('admin.clubs.edit', compact('club', 'clubMembers'));
     }
+
     public function searchJson(Request $request)
     {
         $keyword = $request->input('keyword');
@@ -152,7 +161,6 @@ class ClubController extends Controller
                         })->orWhere('student_code', 'like', "%$keyword%");
                     });
                 })
-                ->limit(20)
                 ->get();
 
             $results = $members->map(function ($m) {

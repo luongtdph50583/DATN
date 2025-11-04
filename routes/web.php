@@ -97,7 +97,7 @@ Route::prefix('admin')
 
 
         // Routes cho CLB
-    
+
         Route::controller(ClubController::class)
             ->prefix('clubs')
             ->as('clubs.')
@@ -109,21 +109,20 @@ Route::prefix('admin')
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{club}', 'update')->name('update');
 
-                // ⚙️ AJAX: lọc thành viên trong CLB cụ thể
+                // lọc viên trong CLB cụ thể
                 Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
 
-                // ✅ AJAX: lọc tất cả thành viên hệ thống
+                // lọc tất cả thành viên hệ thống
                 Route::get('/members/search', 'searchMembers')->name('members.search');
 
-                // 🔍 AJAX: tìm kiếm câu lạc bộ real-time
+                // tìm kiếm câu lạc bộ real-time
                 Route::post('/search', 'searchJson')->name('search');
 
-                // 🗑️ Xóa CLB
                 Route::delete('/{club}', 'destroy')->name('destroy');
             });
 
         // Routes cho yêu cầu thành lập CLB
-    
+
         Route::controller(ClubRequestController::class)
             ->prefix('club-requests')
             ->as('club_requests.')
@@ -146,7 +145,7 @@ Route::prefix('admin')
                 Route::get('/{id}/full', 'show2')->name('show2');
                 Route::post('/{id}/handle', 'handleRequest')->name('handle');
                 Route::delete('/{id}', 'destroy')->name('destroy'); // ✅ Xóa
-        
+
             });
         Route::controller(ClubLeaveRequestController::class)
             ->prefix('club-leave-requests')
@@ -171,7 +170,7 @@ Route::prefix('admin')
             Route::post('/filter', 'filter')->name('filter');             // Lọc bài viết
             Route::post('/upload-image', 'uploadImage')->name('uploadImage'); // Upload ảnh từ editor
             Route::post('/upload-file', 'uploadFile')->name('uploadFile');    // Upload file từ editor
-    
+
             Route::get('/{id}', 'show')->name('show');                    // Xem chi tiết
             Route::get('/{id}/edit', 'edit')->name('edit');               // Form sửa
             Route::put('/{id}', 'update')->name('update');                // Cập nhật bài viết
@@ -200,17 +199,17 @@ Route::prefix('admin')
                 Route::post('/', 'store')->name('store');                // lưu mới
                 Route::get('/search', 'search')->name('search');         // realtime search
                 Route::get('/trash', 'trash')->name('trash');            // thùng rác
-        
-        
+
+
                 Route::post('/{document}/approve', 'approve')->name('approve');   // duyệt
                 Route::post('/{document}/reject', 'reject')->name('reject');      // từ chối
-        
+
                 Route::get('/{document}/edit', 'edit')->name('edit');             // form chỉnh sửa
                 Route::put('/{document}', 'update')->name('update');              // cập nhật
                 Route::delete('/{document}', 'destroy')->name('destroy');         // xóa mềm
                 Route::get('/{document}/download', 'download')->name('download'); // tải xuống
                 Route::get('/{document}', 'show')->name('show');                  // xem chi tiết
-        
+
                 Route::put('/{id}/restore', 'restore')->name('restore');          // khôi phục
                 Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
             });
@@ -229,7 +228,7 @@ Route::prefix('admin')
             Route::delete('/{comment}', 'destroy')->name('destroy');
             Route::post('/{comment}/toggle-status', 'toggleStatus')->name('toggleStatus');
         });
-    
+
         Route::controller(NotificationController::class)
             ->prefix('notifications')
             ->as('notifications.')
@@ -237,7 +236,7 @@ Route::prefix('admin')
                 Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
                 Route::get('/create', 'create')->name('create');           // form tạo thông báo
                 Route::post('/', 'store')->name('store');                  // lưu thông báo
-    
+
                 Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
                 Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
                 Route::get('/fetch-club-members', 'fetchClubMembers')->name('fetchClubMembers');

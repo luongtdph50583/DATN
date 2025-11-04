@@ -6,7 +6,7 @@
 @section('card-header')
     <div class="d-flex justify-content-between align-items-center mb-2">
         <span>Quản lý các câu lạc bộ trong hệ thống</span>
-        <a href="#" class="btn btn-primary btn-sm">
+        <a href="{{ route('admin.clubs.create') }}" class="btn btn-primary btn-sm">
             <i class="fas fa-plus"></i> Thêm CLB mới
         </a>
     </div>
@@ -53,7 +53,10 @@
                         </td>
                         <td><strong>{{ $club->name }}</strong></td>
                         <td>{{ $club->field }}</td>
-                        <td>{{ $club->manager?->member?->user?->name ?? '—' }}</td>
+                        <td class="{{ $club->manager?->member?->user?->name ? '' : 'text-danger fw-bold' }}">
+                            {{ $club->manager?->member?->user?->name ?? 'Chưa gán chủ nhiệm' }}
+                        </td>
+
                         <td>{{ $club->founded_at ? $club->founded_at->format('d/m/Y') : '—' }}</td>
                         <td>
                             @if($club->status === 'active')
@@ -158,27 +161,27 @@
                             }
 
                             html += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td><img src="${logo}" class="rounded-circle" width="40" height="40"></td>
-                                <td><strong>${club.name}</strong></td>
-                                <td>${club.field}</td>
-                                <td>${managerName}</td>
-                                <td>${founded}</td>
-                                <td>${statusBadge}</td>
-                                <td class="text-center">
-                                    <a href="/admin/clubs/${club.id}" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> Chi tiết
-                                    </a>
-                                    <a href="/admin/clubs/${club.id}/edit" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i> Sửa
-                                    </a>
-                                    <button type="button" class="btn btn-danger btn-sm btn-show-delete" data-id="${club.id}">
-                                        <i class="fas fa-trash"></i> Xóa
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td><img src="${logo}" class="rounded-circle" width="40" height="40"></td>
+                                    <td><strong>${club.name}</strong></td>
+                                    <td>${club.field}</td>
+                                    <td>${managerName}</td>
+                                    <td>${founded}</td>
+                                    <td>${statusBadge}</td>
+                                    <td class="text-center">
+                                        <a href="/admin/clubs/${club.id}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> Chi tiết
+                                        </a>
+                                        <a href="/admin/clubs/${club.id}/edit" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i> Sửa
+                                        </a>
+                                        <button type="button" class="btn btn-danger btn-sm btn-show-delete" data-id="${club.id}">
+                                            <i class="fas fa-trash"></i> Xóa
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
                         });
                     }
 

@@ -2,7 +2,6 @@
 @section('title', 'Thêm CLB')
 @section('card-title', 'Thêm câu lạc bộ mới')
 @section('card-body')
-    <pre>{{ print_r($errors->toArray(), true) }}</pre>
 
         {{-- ⚠️ Hiển thị lỗi tổng quát (nếu có) --}}
         @if ($errors->any())
@@ -196,7 +195,6 @@ $roles = [
                 }
             });
 
-            // ✅ Fix: đảm bảo select2 append option thật để gửi về Laravel
             $('.select2-member').on('select2:select select2:unselect', function (e) {
                 const val = $(this).val();
                 if (val) {
