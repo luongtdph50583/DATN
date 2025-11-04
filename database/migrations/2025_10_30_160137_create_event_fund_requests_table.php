@@ -20,7 +20,6 @@ return new class extends Migration {
 
             // Khóa ngoại kiểu bigint
             $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');
-            $table->foreign('source_id')->references('id')->on('fund_sources')->onDelete('cascade');
             $table->foreign('requested_by')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('approved_by')->references('id')->on('users')->onDelete('set null');
         });

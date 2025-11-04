@@ -43,16 +43,43 @@
 
         <div class="mb-3">
             <label for="access_level" class="form-label">Mức truy cập</label>
-            <select name="access_level" class="form-select" required>
-                <option value="public" {{ old('access_level', $document->access_level) == 'public' ? 'selected' : '' }}>Công
-                    khai</option>
-                <option value="member" {{ old('access_level', $document->access_level) == 'member' ? 'selected' : '' }}>Thành
-                    viên</option>
-                <option value="club_manager" {{ old('access_level', $document->access_level) == 'club_manager' ? 'selected' : '' }}>Quản lý CLB</option>
-                <option value="admin" {{ old('access_level', $document->access_level) == 'admin' ? 'selected' : '' }}>Quản trị
-                </option>
+
+            @php
+                $levels = [
+                    'public' => 'Công khai',
+                    'guest' => 'Khách tạm thời',
+                    'member' => 'Thành viên',
+                    'communication' => 'Truyền thông',
+                    'event_manager' => 'Quản lý sự kiện',
+                    'secretary' => 'Thư ký',
+                    'treasurer' => 'Thủ quỹ',
+                    'deputy_manager' => 'Phó chủ nhiệm',
+                    'club_manager' => 'Chỉ chủ nhiệm',
+                    'admin' => 'Quản trị hệ thống',
+                ];
+
+                // Lấy giá trị cũ, hỗ trợ JSON array trong DB
+                $oldLevels = old('access_level');
+                if (!$oldLevels) {
+                    if (is_string($document->access_level)) {
+                        $oldLevels = json_decode($document->access_level, true) ?? [];
+                    } elseif (is_array($document->access_level)) {
+                        $oldLevels = $document->access_level;
+                    } else {
+                        $oldLevels = [];
+                    }
+                }
+            @endphp
+
+            <select name="access_level[]" class="form-select select2" multiple required>
+                @foreach($levels as $value => $label)
+                    <option value="{{ $value }}" {{ in_array($value, $oldLevels) ? 'selected' : '' }}>
+                        {{ $label }}
+                    </option>
+                @endforeach
             </select>
         </div>
+
 
         <div class="mb-3">
             <label for="description" class="form-label">Mô tả</label>
@@ -67,3 +94,17 @@
         <button type="submit" class="btn btn-primary">Cập nhật</button>
     </form>
 @endsection
+
+@push('scripts')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $('.select2').select2({
+                placeholder: "Chọn mức truy cập",
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
+@endpush

@@ -2,6 +2,9 @@
 
 @section('title', 'Danh sách yêu cầu thành lập CLB')
 @section('card-title', 'Danh sách yêu cầu CLB')
+@section('card-header')
+ Danh sách
+@endsection
 
 @section('card-body')
     @if(session('success'))

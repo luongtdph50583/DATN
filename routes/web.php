@@ -21,7 +21,6 @@ use App\Http\Controllers\Admin\{
     StatisticsController,
     ClubReportController,
     ClubRequestController,
-    TrashController,
     ClubJoinRequestController,
     PlanController,
     DocumentPostController,
@@ -129,22 +128,11 @@ Route::prefix('admin')
             ->prefix('club-requests')
             ->as('club_requests.')
             ->group(function () {
-                // ✅ AJAX filter/search real-time (phải đặt trước {id})
                 Route::get('/filter', 'filterRequests')->name('filter');
-
-                // ✅ Danh sách yêu cầu
                 Route::get('/', 'indexRequests')->name('index');
-
-                // ✅ Xem chi tiết yêu cầu (dùng cho offcanvas duyệt/từ chối)
                 Route::get('/{id}', 'showRequest')->name('show');
-
-                // ✅ Xem chi tiết yêu cầu trên trang riêng (khác với offcanvas)
                 Route::get('/{id}/show2', 'show2')->name('show2');
-
-                // ✅ Duyệt hoặc từ chối yêu cầu
                 Route::post('/{id}/handle', 'handleRequest')->name('handle');
-
-                // ✅ Xóa yêu cầu
                 Route::delete('/{id}', 'destroy')->name('destroy');
             });
 
@@ -152,19 +140,10 @@ Route::prefix('admin')
             ->prefix('club-join-requests')
             ->as('club_join_requests.')
             ->group(function () {
-                // ✅ AJAX filter/search (nên đặt trước {id} để tránh xung đột)
                 Route::get('/filter', 'filter')->name('filter');
-
-                // ✅ Danh sách yêu cầu
                 Route::get('/', 'index')->name('index');
-
-                // ✅ Xem chi tiết yêu cầu (offcanvas hoặc trang riêng)
                 Route::get('/{id}', 'showRequest')->name('show');
-
-                // ✅ Trang chi tiết riêng (bổ sung thêm)
                 Route::get('/{id}/full', 'show2')->name('show2');
-
-                // ✅ Duyệt hoặc từ chối yêu cầu
                 Route::post('/{id}/handle', 'handleRequest')->name('handle');
                 Route::delete('/{id}', 'destroy')->name('destroy'); // ✅ Xóa
         
@@ -180,40 +159,28 @@ Route::prefix('admin')
                 Route::post('/{id}/handle', 'handleRequest')->name('handle'); // Duyệt / từ chối
                 Route::delete('/{id}', 'destroy')->name('destroy'); // Xóa
             });
-
-
-
-
-
-
-
-
-
         // 📰 Post Management
         Route::controller(PostController::class)
             ->prefix('posts')
             ->as('posts.')
             ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::post('/filter', 'filter')->name('filter');
-            Route::post('/upload-image', 'uploadImage')->name('uploadImage');
-            Route::post('/upload-file', 'uploadFile')->name('uploadFile');
-            Route::patch('/{id}/toggle', 'toggle')->name('toggle');
-            Route::get('/{id}/edit', 'edit')->name('edit');
-            Route::put('/{id}', 'update')->name('update');
-            Route::delete('/{id}', 'destroy')->name('destroy');
-            Route::get('/{id}', 'show')->name('show');
-        });
-
-        // 📚 Document Management
-        Route::controller(DocumentPostController::class)
-            ->prefix('documents')
-            ->as('documents.')
-            ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::post('/filter', 'filter')->name('filter');
+            Route::get('/trash', 'trash')->name('trash');                 // Danh sách bài viết đã xóa
+            Route::get('/', 'index')->name('index');                      // Danh sách bài viết
+            Route::get('/create', 'create')->name('create');              // Form tạo bài viết
+            Route::post('/', 'store')->name('store');                     // Lưu bài viết mới
+            Route::post('/filter', 'filter')->name('filter');             // Lọc bài viết
+            Route::post('/upload-image', 'uploadImage')->name('uploadImage'); // Upload ảnh từ editor
+            Route::post('/upload-file', 'uploadFile')->name('uploadFile');    // Upload file từ editor
+    
+            Route::get('/{id}', 'show')->name('show');                    // Xem chi tiết
+            Route::get('/{id}/edit', 'edit')->name('edit');               // Form sửa
+            Route::put('/{id}', 'update')->name('update');                // Cập nhật bài viết
+            Route::delete('/{id}', 'destroy')->name('destroy');           // Xóa mềm bài viết
+            Route::patch('/{id}/toggle', 'toggle')->name('toggle');       // Ẩn/hiện bài viết
+            Route::put('/{id}/approve', 'approve')->name('approve');      // Duyệt bài viết
+            Route::put('/{id}/reject', 'reject')->name('reject');         // Từ chối bài viết
+            Route::patch('/{id}/restore', 'restore')->name('restore');    // Khôi phục bài viết
+            Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // Xóa vĩnh viễn
         });
 
         // 🕓 History Management
@@ -227,23 +194,28 @@ Route::prefix('admin')
             ->prefix('documentclub')
             ->as('documentclub.')
             ->group(function () {
+
                 Route::get('/', 'index')->name('index');                 // danh sách
-                Route::get('/create', 'create')->name('create');         // form thêm
-                Route::post('/', 'store')->name('store');
-                Route::get('/search', 'search')->name('search'); // realtime search
-                // lưu mới
-                Route::get('/{document}/edit', 'edit')->name('edit');    // form chỉnh sửa
-                Route::put('/{document}', 'update')->name('update');     // cập nhật
-                Route::delete('/{document}', 'destroy')->name('destroy'); // xóa mềm
-                Route::get('/{document}/download', 'download')->name('download');
-                Route::get('/{document}', 'show')->name('show');
-
-
-                // ✅ Thùng rác và quản lý tài liệu đã xóa mềm
-                Route::get('/trash', 'trash')->name('trash'); // danh sách tài liệu đã xóa mềm
-                Route::put('/{id}/restore', 'restore')->name('restore'); // khôi phục
+                Route::get('/create', 'create')->name('create');         // form thêm mới
+                Route::post('/', 'store')->name('store');                // lưu mới
+                Route::get('/search', 'search')->name('search');         // realtime search
+                Route::get('/trash', 'trash')->name('trash');            // thùng rác
+        
+        
+                Route::post('/{document}/approve', 'approve')->name('approve');   // duyệt
+                Route::post('/{document}/reject', 'reject')->name('reject');      // từ chối
+        
+                Route::get('/{document}/edit', 'edit')->name('edit');             // form chỉnh sửa
+                Route::put('/{document}', 'update')->name('update');              // cập nhật
+                Route::delete('/{document}', 'destroy')->name('destroy');         // xóa mềm
+                Route::get('/{document}/download', 'download')->name('download'); // tải xuống
+                Route::get('/{document}', 'show')->name('show');                  // xem chi tiết
+        
+                Route::put('/{id}/restore', 'restore')->name('restore');          // khôi phục
                 Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
             });
+
+
 
 
 
@@ -257,103 +229,24 @@ Route::prefix('admin')
             Route::delete('/{comment}', 'destroy')->name('destroy');
             Route::post('/{comment}/toggle-status', 'toggleStatus')->name('toggleStatus');
         });
-
-        // 🏛 Club Management
-        // Route::controller(ClubController::class)
-        //     ->prefix('clubs')
-        //     ->as('clubs.')
-        //     ->group(function () {
-        //     Route::get('/', 'index')->name('index');
-        //     Route::get('/create', 'create')->name('create');
-        //     Route::post('/', 'store')->name('store');
-        //     Route::get('/{club}', 'show')->name('show');
-        //     Route::get('/{club}/edit', 'edit')->name('edit');
-        //     Route::put('/{club}', 'update')->name('update');
-        //     Route::delete('/{club}', 'destroy')->name('destroy');
-        //     Route::post('/{club}/approve', 'approve')->name('approve');
-        //     Route::post('/{club}/assign-manager', 'assignManager')->name('assignManager');
-        //     Route::get('/{club}/assign', 'assign')->name('assign');
-        //     Route::post('/{club}/assign', 'assignStore')->name('assign.store');
-        // });
-    
-        // // 📝 Club Request Management
-        // Route::controller(ClubRequestController::class)
-        //     ->prefix('club-requests')
-        //     ->as('club-requests.')
-        //     ->group(function () {
-        //     Route::get('/', 'index')->name('index');
-        //     Route::get('/{clubRequest}', 'show')->name('show');
-        //     Route::post('/{clubRequest}/handle', 'handle')->name('handle');
-        // });
-    
-        // // 🙋‍♂️ Club Join Request Management
-        // Route::controller(ClubJoinRequestController::class)
-        //     ->prefix('club-join-requests')
-        //     ->as('club-join-requests.')
-        //     ->group(function () {
-        //     Route::get('/', 'index')->name('index');
-        //     Route::get('/{joinRequest}', 'show')->name('show');
-        //     Route::post('/{joinRequest}', 'handle')->name('handle');
-        // });
-    
-        // 🔔 Notification Management
-        // 🔔 Notification Management
     
         Route::controller(NotificationController::class)
             ->prefix('notifications')
             ->as('notifications.')
             ->group(function () {
-
-                // Danh sách, tạo, lưu
                 Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
                 Route::get('/create', 'create')->name('create');           // form tạo thông báo
                 Route::post('/', 'store')->name('store');                  // lưu thông báo
-        
-                // AJAX fetch dữ liệu liên quan
+    
                 Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
                 Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
                 Route::get('/fetch-club-members', 'fetchClubMembers')->name('fetchClubMembers');
                 Route::get('/fetch-events', 'fetchEvents')->name('fetchEvents');
                 Route::get('/fetch-event-members', 'fetchEventMembers')->name('fetchEventMembers');
-
-                // Gửi lại thông báo cho từng user theo batch
                 Route::post('/resend/{batchId}/{userId}', 'resend')->name('resend');
-
-                // ✅ Xóa thông báo hàng loạt
                 Route::post('/bulk-delete', 'bulkDelete')->name('bulkDelete');
 
             });
-
-        // 📝 Club Request Management
-// Route::controller(ClubRequestController::class)
-//     ->prefix('club-requests')
-//     ->as('club-requests.')
-//     ->group(function () {
-//         Route::get('/', 'index')->name('index');
-//         Route::get('/{clubRequest}', 'show')->name('show');
-//         Route::post('/{clubRequest}/handle', 'handle')->name('handle');
-//         Route::patch('/{clubRequest}/update-status', 'updateStatus')->name('updateStatus');
-//         Route::post('/{clubRequest}/approve', 'approve')->name('approve');
-//         Route::post('/{clubRequest}/reject', 'reject')->name('reject');
-//         Route::delete('/{clubRequest}', 'destroy')->name('destroy');
-//     });
-    
-
-        // // 🙋‍♂️ Club Join Request Management
-// Route::controller(ClubJoinRequestController::class)
-//     ->prefix('club-join-requests')
-//     ->as('club-join-requests.')
-//     ->group(function () {
-//         Route::get('/', 'index')->name('index');
-//         Route::get('/{joinRequest}', 'show')->name('show');
-//         Route::post('/{joinRequest}/approve', 'approve')->name('approve');
-//         Route::post('/{joinRequest}/reject', 'reject')->name('reject');
-    
-        //         // Khi user gửi yêu cầu tham gia CLB
-//         Route::post('/{club_id}/store', 'store')->name('store');
-//     });
-    
-
 
         // 📊 Statistics Management
         Route::controller(StatisticsController::class)
@@ -441,32 +334,6 @@ Route::post('event_fund_requests/{id}/reject', [App\Http\Controllers\Admin\Event
             Route::post('/{plan}/reject', 'reject')->name('reject');
         });
     });
-
-
-
-
-
-
-// === 🏛 Club Manager Routes ===
-// Route::prefix('club-manager')
-//     ->middleware(['auth', CheckRole::class . ':club_manager'])
-//     ->as('club-manager.')
-//     ->group(function () {
-
-//         // 💰 Fund Management (Club Manager can only see their club's funds)
-//         Route::controller(FundController::class)
-//             ->prefix('funds')
-//             ->as('funds.')
-//             ->group(function () {
-//             Route::get('/', 'index')->name('index');
-//             Route::get('/create', 'create')->name('create');
-//             Route::post('/', 'store')->name('store');
-//             Route::get('/{fund}', 'show')->name('show');
-//             Route::get('/{fund}/edit', 'edit')->name('edit');
-//             Route::put('/{fund}', 'update')->name('update');
-//             Route::get('/api/summary', 'summary')->name('summary');
-//         });
-//     });
 
 
 // === Auth Routes ===

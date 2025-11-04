@@ -13,12 +13,8 @@ use Illuminate\Database\Seeder;
                 UserSeeder::class,
                 ClubSeeder::class,
                 MemberSeeder::class,
-                EventSeeder::class,
-                PostSeeder::class,
               ClubMemberSeeder::class,
-                MediaSeeder::class,
-                
-              
+               EventSeeder::class,
            ]);
        }
    }

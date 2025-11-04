@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('event_fund_requests', function (Blueprint $table) {
             $table->enum('source_type', ['school', 'sponsor', 'club'])
                   ->default('school')
-                  ->after('event_id');
+                  ->after('id');
         });
     }
 

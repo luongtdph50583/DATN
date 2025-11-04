@@ -2,6 +2,9 @@
 
 @section('title', 'Yêu cầu tham gia CLB')
 @section('card-title', 'Danh sách yêu cầu tham gia CLB')
+@section('card-header')
+Danh sách
+@endsection
 
 @section('card-body')
     @if(session('success'))
@@ -80,7 +83,7 @@
                         </div>
                     @else
                         <a href="{{ route('admin.club_join_requests.show2', $request->id) }}"
-                            class="btn btn-sm btn-outline-secondary">
+                            class="btn btn-sm btn-secondary">
                             Xem chi tiết
                         </a>
                     @endif

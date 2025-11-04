@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Club;
 use App\Models\Post;
 use App\Models\Media;
-use App\Models\ClubMember;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Jobs\SendNotificationJob;
@@ -38,127 +37,95 @@ class PostController extends Controller
 
         return redirect()->route('admin.posts.index')->with('success', 'Đã cập nhật trạng thái bài viết.');
     }
+    public function restore($id)
+    {
+        $post = Post::onlyTrashed()->findOrFail($id);
+        $post->restore();
 
-    /**
-     * Xóa bài viết
-     */
+        Media::onlyTrashed()
+            ->where('related_type', 'post')
+            ->where('related_id', $post->id)
+            ->restore();
 
+        return redirect()->route('admin.posts.trash')
+            ->with('success', 'Bài viết và media đã được khôi phục.');
+    }
+
+    public function forceDelete($id)
+    {
+        $post = Post::withTrashed()->findOrFail($id);
+
+        // ✅ Xóa file media vật lý và bản ghi
+        $mediaList = Media::withTrashed()
+            ->where('related_type', 'post')
+            ->where('related_id', $post->id)
+            ->get();
+
+        foreach ($mediaList as $media) {
+            $filePath = storage_path('app/public/' . $media->file_path);
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+            $media->forceDelete();
+        }
+
+        // ✅ Xóa ảnh đại diện nếu có
+        if ($post->thumbnail && file_exists(storage_path('app/public/' . $post->thumbnail))) {
+            unlink(storage_path('app/public/' . $post->thumbnail));
+        }
+
+        // ✅ Xóa vĩnh viễn bài viết
+        $post->forceDelete();
+
+        return redirect()->route('admin.posts.trash')
+            ->with('success', 'Bài viết đã bị xóa vĩnh viễn.');
+    }
+    public function trash()
+    {
+           $posts = Post::onlyTrashed()
+            ->with(['user', 'club']) // nếu bạn cần hiển thị người đăng và CLB
+            ->latest('deleted_at')
+            ->get();
+
+        return view('admin.posts.trash', compact('posts'));
+    }
 
 
     public function destroy(Request $request, $id)
     {
-        $club = Club::findOrFail($id);
-        $reason = $request->input('delete_reason', 'Không có lý do');
+        $post = Post::findOrFail($id);
+        $reason = $request->input('reason', 'Vi phạm nội quy');
 
-        \DB::beginTransaction();
+        // ✅ Xóa mềm media liên quan
+        Media::where('related_type', 'post')
+            ->where('related_id', $post->id)
+            ->delete(); // chỉ gán deleted_at
 
-        try {
-            // 1️⃣ Lấy manager (Chủ nhiệm) tương tự phần edit/update
-            $managerId = $club->manager_id;
-            $managerUser = null;
+        // ✅ Không xóa file thumbnail — giữ nguyên để khôi phục
+        // Nếu bạn muốn ẩn thumbnail, có thể gán cờ hoặc xử lý ở view
 
-            if ($managerId) {
-                $manager = ClubMember::with('member.user')
-                    ->where('club_id', $club->id)
-                    ->where('member_id', $managerId)
-                    ->first();
+        // ✅ Xóa mềm bài viết
+        $post->delete();
 
-                if ($manager && $manager->member && $manager->member->user) {
-                    $managerUser = $manager->member->user;
-                }
-            }
+        // ✅ Gửi thông báo cho người đăng bài
+        if ($post->user) {
+            $batchId = 'post_deleted_' . $post->id . '_' . Str::random(6);
 
-            // 2️⃣ Xóa cứng posts liên quan
-            $posts = Post::where('club_id', $club->id)->get();
-            foreach ($posts as $post) {
-                // Xóa media liên quan nếu có
-                $mediaList = Media::withTrashed()
-                    ->where('related_type', 'post')
-                    ->where('related_id', $post->id)
-                    ->get();
-
-                foreach ($mediaList as $media) {
-                    $filePath = storage_path('app/public/' . $media->file_path);
-                    if (file_exists($filePath))
-                        unlink($filePath);
-                    $media->forceDelete();
-                }
-
-                // Xóa ảnh thumbnail
-                if ($post->thumbnail && file_exists(storage_path('app/public/' . $post->thumbnail))) {
-                    unlink(storage_path('app/public/' . $post->thumbnail));
-                }
-
-                $post->forceDelete();
-            }
-
-            // 3️⃣ Xóa cứng documents liên quan
-            $documents = Document::where('clb_id', $club->id)->get();
-            foreach ($documents as $doc) {
-                $filePath = storage_path('app/public/' . $doc->file_path);
-                if (file_exists($filePath))
-                    unlink($filePath);
-                $doc->forceDelete();
-            }
-
-            // 4️⃣ Hạ role tất cả club_members về 'member'
-            ClubMember::where('club_id', $club->id)->update([
-                'role' => 'member',
-                'appointed_at' => null,
-                'updated_at' => now(),
-            ]);
-
-            // 5️⃣ Xóa CLB (cứng)
-            if ($club->logo && file_exists(storage_path('app/public/' . $club->logo))) {
-                unlink(storage_path('app/public/' . $club->logo));
-            }
-
-            $clubName = $club->name;
-            $club->delete();
-
-            \DB::commit();
-
-            // 6️⃣ Gửi thông báo/email cho manager
-            if ($managerUser) {
-                $batchId = uniqid();
-
-                SendNotificationJob::dispatch(
-                    $managerUser->email,
-                    new CustomNotification(
-                        "CLB bị xóa",
-                        "Câu lạc bộ '{$clubName}' đã bị xóa. Lý do: {$reason}",
-                        $batchId
-                    )
-                );
-
-                // Debug ra log để kiểm tra
-                \Log::info("DEBUG: Mail gửi tới manager", [
-                    'email' => $managerUser->email,
-                    'club' => $clubName,
-                    'reason' => $reason,
-                    'batchId' => $batchId,
-                ]);
-            }
-
-            return redirect()->route('admin.clubs.index')
-                ->with('success', "Đã xóa CLB '{$clubName}' và gửi thông báo cho Chủ nhiệm.");
-        } catch (\Throwable $e) {
-            \DB::rollBack();
-            \Log::error('Lỗi khi xóa CLB', [
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-            ]);
-
-            return redirect()->back()->withErrors(['error' => 'Xảy ra lỗi khi xóa CLB: ' . $e->getMessage()]);
+            dispatch(new SendNotificationJob(
+                userId: $post->user->id,
+                title: 'Bài viết bị xóa',
+                content: "Bài viết \"{$post->title}\" đã bị xóa. Lý do: {$reason}",
+                sendVia: 'both',
+                batchId: $batchId,
+                force: false
+            ));
         }
+
+        return redirect()->route('admin.posts.index')
+            ->with('success', 'Đã xóa bài viết và gửi thông báo cho tác giả.');
     }
 
 
-
-    /**
-     * Hiển thị chi tiết bài viết
-     */
     public function show($id)
     {
         $post = Post::with(['club', 'user', 'media'])->findOrFail($id);
@@ -250,188 +217,180 @@ class PostController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
-    {
-        $post = Post::findOrFail($id);
+   public function update(Request $request, $id)
+{
+    $post = Post::findOrFail($id);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'type' => 'required|in:post,notice,document',
-            'status' => 'required|in:visible,hidden',
-            'visibility' => 'required|in:internal,public',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'files.*' => 'file',
-        ]);
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'content' => 'required|string',
+        'type' => 'required|in:post,notice,document',
+        'status' => 'required|in:pending,approved,rejected',
+        'visibility' => 'required|in:internal,public',
+        'club_id' => 'required|exists:clubs,id',
+        'is_visible' => 'boolean',
+        'is_featured' => 'boolean',
+        'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        'files.*' => 'file',
+    ]);
 
-        // =============================
-        // 1. Xử lý Thumbnail (chỉ posts.thumbnail)
-        // =============================
-        if ($request->hasFile('thumbnail')) {
-            $file = $request->file('thumbnail');
-            $folder = storage_path('app/public/uploads/thumbnails');
+    // ✅ Xử lý thumbnail
+    if ($request->hasFile('thumbnail')) {
+        $file = $request->file('thumbnail');
+        $folder = storage_path('app/public/uploads/thumbnails');
 
-            if (!file_exists($folder))
-                mkdir($folder, 0755, true);
+        if (!file_exists($folder)) mkdir($folder, 0755, true);
 
-            $fileName = $file->getClientOriginalName();
+        $fileName = $file->getClientOriginalName();
+        $i = 1;
+        $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+        $ext = $file->getClientOriginalExtension();
+        $finalName = $fileName;
+        while (file_exists($folder . '/' . $finalName)) {
+            $finalName = $baseName . "($i)." . $ext;
+            $i++;
+        }
+
+        $file->move($folder, $finalName);
+        $post->thumbnail = 'uploads/thumbnails/' . $finalName;
+    }
+
+    // ✅ Cập nhật thông tin bài viết
+    $post->title = $validated['title'];
+    $post->content = $validated['content'];
+    $post->type = $validated['type'];
+    $post->status = $validated['status'];
+    $post->visibility = $validated['visibility'];
+    $post->club_id = $validated['club_id'];
+    $post->is_visible = $validated['is_visible'] ?? true;
+    $post->is_featured = $validated['is_featured'] ?? false;
+
+    // ✅ Gán thông tin duyệt nếu status là approved
+    if ($validated['status'] === 'approved') {
+        $post->approved_by = auth()->id();
+        $post->approved_at = now();
+        $post->published_at = now();
+    }
+
+    $post->save();
+
+    // ✅ Upload file mới từ editor
+    if ($request->hasFile('files')) {
+        foreach ($request->file('files') as $file) {
+            $fileType = $file->getMimeType();
+            $originalName = $file->getClientOriginalName();
+            $tempFolder = storage_path('app/public/uploads/posts');
+
+            if (!file_exists($tempFolder)) mkdir($tempFolder, 0755, true);
+
             $i = 1;
-            $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
             $ext = $file->getClientOriginalExtension();
-            $finalName = $fileName;
-            while (file_exists($folder . '/' . $finalName)) {
+            $finalName = $originalName;
+            while (file_exists($tempFolder . '/' . $finalName)) {
                 $finalName = $baseName . "($i)." . $ext;
                 $i++;
             }
 
-            $file->move($folder, $finalName);
-            $post->thumbnail = 'uploads/thumbnails/' . $finalName;
+            $file->move($tempFolder, $finalName);
         }
-
-        // =============================
-        // 2. Cập nhật thông tin khác của post
-        // =============================
-        $post->title = $validated['title'];
-        $post->content = $validated['content'];
-        $post->type = $validated['type'];
-        $post->status = $validated['status'];
-        $post->visibility = $validated['visibility'];
-        $post->save();
-
-        // =============================
-        // 3. Upload file mới từ editor (files[])
-        // =============================
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $fileType = $file->getMimeType();
-                $originalName = $file->getClientOriginalName();
-                $tempFolder = storage_path('app/public/uploads/posts');
-
-                if (!file_exists($tempFolder))
-                    mkdir($tempFolder, 0755, true);
-
-                $i = 1;
-                $baseName = pathinfo($originalName, PATHINFO_FILENAME);
-                $ext = $file->getClientOriginalExtension();
-                $finalName = $originalName;
-                while (file_exists($tempFolder . '/' . $finalName)) {
-                    $finalName = $baseName . "($i)." . $ext;
-                    $i++;
-                }
-
-                $file->move($tempFolder, $finalName);
-            }
-        }
-
-        // =============================
-        // 4. Lấy danh sách file editor đang dùng
-        // =============================
-        $usedFiles = [];
-        $dom = new \DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadHTML($post->content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        libxml_clear_errors();
-
-        $tags = array_merge(
-            iterator_to_array($dom->getElementsByTagName('img')),
-            iterator_to_array($dom->getElementsByTagName('a'))
-        );
-
-        foreach ($tags as $tag) {
-            if (!$tag instanceof \DOMElement)
-                continue;
-            $attr = $tag->tagName === 'img' ? 'src' : 'href';
-            $url = $tag->getAttribute($attr);
-            if (!Str::contains($url, '/storage/'))
-                continue;
-            $usedFiles[] = basename(Str::after($url, '/storage/'));
-        }
-
-        // =============================
-        // 5. Soft delete Media không còn trong editor
-        // =============================
-        $allMedia = Media::withTrashed()
-            ->where('related_type', 'post')
-            ->where('related_id', $post->id)
-            ->get()
-            ->keyBy('file_name');
-
-        foreach ($allMedia as $fileName => $media) {
-            if (!in_array($fileName, $usedFiles)) {
-                $media->delete();
-            } else {
-                if ($media->trashed())
-                    $media->restore();
-            }
-        }
-        // =============================
-        // 6. Move tất cả file editor trong uploads/posts -> folder đúng, cập nhật Media
-        // Thumbnail KHÔNG có trong uploads/posts, nên sẽ không bị tạo Media
-        // =============================
-        $tempFiles = glob(storage_path('app/public/uploads/posts/*'));
-
-        foreach ($tempFiles as $fullPath) {
-            if (!file_exists($fullPath))
-                continue;
-
-            $fileName = basename($fullPath);
-            $mime = mime_content_type($fullPath);
-            $lowerFileName = Str::lower($fileName);
-
-            $folderType = match (true) {
-                Str::startsWith($mime, 'image/') => 'images',
-                Str::startsWith($mime, 'video/') => 'video',
-                Str::startsWith($mime, 'audio/') => 'audio',
-                Str::startsWith($mime, 'application/pdf')
-                || Str::startsWith($mime, 'application/msword')
-                || Str::startsWith($mime, 'application/vnd')
-                || Str::endsWith($lowerFileName, '.txt')
-                || Str::endsWith($lowerFileName, '.csv')
-                || Str::endsWith($lowerFileName, '.xlsx') => 'documents',
-                default => 'other',
-            };
-
-            $newRelativePath = $folderType . '/' . $fileName;
-            $newFullPath = storage_path('app/public/' . $newRelativePath);
-
-            if (!file_exists(dirname($newFullPath)))
-                mkdir(dirname($newFullPath), 0755, true);
-            if (file_exists($newFullPath))
-                unlink($newFullPath);
-
-            rename($fullPath, $newFullPath);
-
-            Media::updateOrCreate(
-                [
-                    'file_name' => $fileName,
-                    'related_type' => 'post',
-                    'related_id' => $post->id,
-                ],
-                [
-                    'file_path' => $newRelativePath,
-                    'file_type' => $mime,
-                    'uploaded_by' => auth()->id(),
-                    'deleted_at' => null
-                ]
-            );
-        }
-
-        // =============================
-        // 7. Cleanup Media có related_id = 0
-        // =============================
-        Media::where('related_type', 'post')
-            ->where('related_id', 0)
-            ->get()
-            ->each(function ($media) {
-                $fullPath = storage_path('app/public/' . $media->file_path);
-                if (file_exists($fullPath))
-                    unlink($fullPath);
-                $media->forceDelete();
-            });
-
-        return redirect()->route('admin.posts.show', $post->id)
-            ->with('success', 'Đã cập nhật bài viết thành công!');
     }
+
+    // ✅ Lấy danh sách file đang dùng trong editor
+    $usedFiles = [];
+    $dom = new \DOMDocument();
+    libxml_use_internal_errors(true);
+    $dom->loadHTML($post->content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    libxml_clear_errors();
+
+    $tags = array_merge(
+        iterator_to_array($dom->getElementsByTagName('img')),
+        iterator_to_array($dom->getElementsByTagName('a'))
+    );
+
+    foreach ($tags as $tag) {
+        if (!$tag instanceof \DOMElement) continue;
+        $attr = $tag->tagName === 'img' ? 'src' : 'href';
+        $url = $tag->getAttribute($attr);
+        if (!Str::contains($url, '/storage/')) continue;
+        $usedFiles[] = basename(Str::after($url, '/storage/'));
+    }
+
+    // ✅ Soft delete Media không còn dùng
+    $allMedia = Media::withTrashed()
+        ->where('related_type', 'post')
+        ->where('related_id', $post->id)
+        ->get()
+        ->keyBy('file_name');
+
+    foreach ($allMedia as $fileName => $media) {
+        if (!in_array($fileName, $usedFiles)) {
+            $media->delete();
+        } else {
+            if ($media->trashed()) $media->restore();
+        }
+    }
+
+    // ✅ Di chuyển file từ uploads/posts sang thư mục đúng
+    $tempFiles = glob(storage_path('app/public/uploads/posts/*'));
+
+    foreach ($tempFiles as $fullPath) {
+        if (!file_exists($fullPath)) continue;
+
+        $fileName = basename($fullPath);
+        $mime = mime_content_type($fullPath);
+        $lowerFileName = Str::lower($fileName);
+
+        $folderType = match (true) {
+            Str::startsWith($mime, 'image/') => 'images',
+            Str::startsWith($mime, 'video/') => 'video',
+            Str::startsWith($mime, 'audio/') => 'audio',
+            Str::startsWith($mime, 'application/pdf')
+            || Str::startsWith($mime, 'application/msword')
+            || Str::startsWith($mime, 'application/vnd')
+            || Str::endsWith($lowerFileName, '.txt')
+            || Str::endsWith($lowerFileName, '.csv')
+            || Str::endsWith($lowerFileName, '.xlsx') => 'documents',
+            default => 'other',
+        };
+
+        $newRelativePath = $folderType . '/' . $fileName;
+        $newFullPath = storage_path('app/public/' . $newRelativePath);
+
+        if (!file_exists(dirname($newFullPath))) mkdir(dirname($newFullPath), 0755, true);
+        if (file_exists($newFullPath)) unlink($newFullPath);
+
+        rename($fullPath, $newFullPath);
+
+        Media::updateOrCreate(
+            [
+                'file_name' => $fileName,
+                'related_type' => 'post',
+                'related_id' => $post->id,
+            ],
+            [
+                'file_path' => $newRelativePath,
+                'file_type' => $mime,
+                'uploaded_by' => auth()->id(),
+                'deleted_at' => null
+            ]
+        );
+    }
+
+    // ✅ Xóa media mồ côi
+    Media::where('related_type', 'post')
+        ->where('related_id', 0)
+        ->get()
+        ->each(function ($media) {
+            $fullPath = storage_path('app/public/' . $media->file_path);
+            if (file_exists($fullPath)) unlink($fullPath);
+            $media->forceDelete();
+        });
+
+    return redirect()->route('admin.posts.show', $post->id)
+        ->with('success', 'Đã cập nhật bài viết thành công!');
+}
+
 
     public function create()
     {
@@ -445,15 +404,26 @@ class PostController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'type' => 'required|in:post,notice,document',
-            'status' => 'required|in:visible,hidden',
             'visibility' => 'required|in:internal,public',
             'club_id' => 'required|exists:clubs,id',
             'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'is_visible' => 'boolean',
+            'is_featured' => 'boolean',
         ]);
 
         $post = new Post();
         $post->fill($validated);
         $post->user_id = Auth::id();
+
+        // ✅ Mặc định duyệt bài viết
+        $post->status = 'approved';
+        $post->approved_by = Auth::id();
+        $post->approved_at = now();
+        $post->published_at = now();
+
+        // ✅ Gán mặc định nếu không có trong form
+        $post->is_visible = $validated['is_visible'] ?? true;
+        $post->is_featured = $validated['is_featured'] ?? false;
 
         // ✅ Ảnh đại diện
         if ($request->hasFile('thumbnail')) {
@@ -472,7 +442,6 @@ class PostController extends Controller
         $dom->loadHTML($validated['content'], LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
 
-        // Lấy <img>, <a> và <source> (trong video/audio)
         $tags = array_merge(
             iterator_to_array($dom->getElementsByTagName('img')),
             iterator_to_array($dom->getElementsByTagName('a')),
@@ -483,7 +452,6 @@ class PostController extends Controller
             if (!$tag instanceof \DOMElement)
                 continue;
 
-            // ✅ Lấy đường dẫn file
             $attr = $tag->hasAttribute('src') ? 'src' : ($tag->hasAttribute('href') ? 'href' : null);
             if (!$attr)
                 continue;
@@ -501,7 +469,6 @@ class PostController extends Controller
             $mime = mime_content_type($fullPath);
             $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
 
-            // ✅ Phân loại folder
             $folder = match (true) {
                 Str::startsWith($mime, 'image/') => 'images',
                 Str::startsWith($mime, 'video/')
@@ -518,7 +485,6 @@ class PostController extends Controller
             $newRelativePath = $folder . '/' . $fileName;
             $newFullPath = storage_path('app/public/' . $newRelativePath);
 
-            // ✅ Chuyển file sang đúng thư mục
             if ($relativePath !== $newRelativePath) {
                 if (!file_exists(dirname($newFullPath))) {
                     mkdir(dirname($newFullPath), 0755, true);
@@ -529,7 +495,6 @@ class PostController extends Controller
 
             $currentFiles[] = $relativePath;
 
-            // ✅ Cập nhật hoặc tạo mới Media
             Media::updateOrCreate(
                 [
                     'file_path' => $relativePath,
@@ -588,7 +553,9 @@ class PostController extends Controller
     public function edit($id)
     {
         $post = Post::findOrFail($id);
-        return view('admin.posts.edit', compact('post'));
+        $clubs = Club::all(); // Lấy danh sách CLB
+
+        return view('admin.posts.edit', compact('post', 'clubs'));
     }
 
     /**
@@ -600,14 +567,60 @@ class PostController extends Controller
         $query = Post::with(['club', 'user'])->latest();
 
         if (!empty($keyword)) {
-            $query->where('title', 'like', "%{$keyword}%")
-                ->orWhereHas('user', function ($q) use ($keyword) {
-                    $q->where('name', 'like', "%{$keyword}%");
-                });
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'like', "%{$keyword}%")
+                    ->orWhereHas('user', function ($q2) use ($keyword) {
+                        $q2->where('name', 'like', "%{$keyword}%");
+                    });
+            });
         }
 
-        $posts = $query->get();
+        $posts = $query->get()->map(function ($post) {
+            return [
+                'id' => $post->id,
+                'title' => $post->title,
+                'user_name' => $post->user->name ?? 'Không xác định',
+                'created_at' => $post->created_at->format('Y-m-d H:i:s'),
+                'status' => $post->status,
+                'is_visible' => $post->is_visible,
+            ];
+        });
+
         return response()->json(['data' => $posts]);
+    }
+
+    public function approve($id)
+    {
+        $post = Post::findOrFail($id);
+
+        $post->status = 'approved';
+        $post->approved_by = auth()->id();
+        $post->approved_at = now();
+        $post->published_at = now();
+        $post->rejection_reason = null;
+
+        $post->save();
+
+        return redirect()->back()->with('success', 'Bài viết đã được duyệt.');
+    }
+
+    public function reject(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+
+        $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
+        $post->status = 'rejected';
+        $post->approved_by = auth()->id();
+        $post->approved_at = now();
+        $post->published_at = null;
+        $post->rejection_reason = $request->rejection_reason;
+
+        $post->save();
+
+        return redirect()->back()->with('success', 'Bài viết đã bị từ chối.');
     }
 
     /**

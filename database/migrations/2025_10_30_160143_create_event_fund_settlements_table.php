@@ -19,7 +19,6 @@ return new class extends Migration {
             $table->timestamps();
 
             // 🔹 Khóa ngoại
-            $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');
             $table->foreign('reviewed_by')->references('id')->on('users')->onDelete('set null');
         });
     }
