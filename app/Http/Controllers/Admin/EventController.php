@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Container\Attributes\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -33,7 +34,7 @@ class EventController extends Controller
     public function create()
 {
     $clubs = Club::orderBy('name')->get();
-    $users = User::orderBy('name')->get();
+     $users = collect(); // rỗng, sẽ load động bằng AJAX
 
     return view('admin.events.create', compact('clubs', 'users'));
 }
@@ -45,16 +46,20 @@ class EventController extends Controller
         'name' => 'required|string|max:255',
         'description' => 'nullable|string',
         'start_time' => 'required|date',
-        'end_time' => 'required|date|after:start_time',
+        'end_time' => 'required|date|after_or_equal:start_time',
         'location' => 'required|string|max:255',
         'max_participants' => 'nullable|integer|min:1',
         'is_public' => 'nullable|boolean',
         'status' => 'required|in:pending,approved,rejected',
         'created_by' => 'required|exists:users,id',
-        'budget' => 'nullable|numeric|min:0',
+        'budget_estimated' => 'nullable|numeric|min:0',
+        'budget_current' => 'nullable|numeric|min:0',
     ]);
-
     $validated['is_public'] = $request->has('is_public');
+  // Nếu ngân sách hiện có chưa nhập, mặc định = 0
+ $validated['budget_current'] = $validated['budget_current'] ?? 0;
+
+
 
     Event::create($validated);
 
@@ -72,7 +77,13 @@ class EventController extends Controller
     public function edit(Event $event)
 {
     $clubs = Club::orderBy('name')->get();
-    $users = User::orderBy('name')->get();
+    $users = DB::table('users')
+        ->join('club_members', 'users.id', '=', 'club_members.member_id')
+        ->where('club_members.club_id', $event->club_id)
+        ->where('club_members.role', 'admin')
+        ->select('users.id', 'users.name', 'users.email')
+        ->orderBy('users.name')
+        ->get();
 
     $event->load(['club', 'createdBy', 'approvalBy']);
 
@@ -81,18 +92,20 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event)
 {
-    $validated = $request->validate([
+   $validated = $request->validate([
         'club_id' => 'required|exists:clubs,id',
         'name' => 'required|string|max:255',
         'description' => 'nullable|string',
         'start_time' => 'required|date',
-        'end_time' => 'required|date|after:start_time',
+        'end_time' => 'required|date|after_or_equal:start_time',
         'location' => 'required|string|max:255',
         'max_participants' => 'nullable|integer|min:1',
         'is_public' => 'nullable|boolean',
         'status' => 'required|in:pending,approved,rejected',
         'created_by' => 'required|exists:users,id',
-        'budget' => 'nullable|numeric|min:0',
+        'budget_estimated' => 'nullable|numeric|min:0',
+        'budget_current' => 'nullable|numeric|min:0',
+        'budget_used' => 'nullable|numeric|min:0',
     ]);
 
     $validated['is_public'] = $request->has('is_public');
@@ -109,15 +122,21 @@ class EventController extends Controller
         return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được xóa thành công!');
     }
 
-    public function approve(Event $event)
-    {
-        if ($event->status !== 'pending') {
-            return redirect()->back()->with('error', 'Sự kiện không ở trạng thái chờ duyệt!');
-        }
-
-        $event->update(['status' => 'approved', 'updated_by' => auth()->id()]);
-        return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được duyệt thành công!');
+  public function approve(Event $event)
+{
+    if ($event->status !== 'pending') {
+        return redirect()->back()->with('error', 'Sự kiện không ở trạng thái chờ duyệt!');
     }
+
+    $event->update([
+        'status' => 'approved',
+        'approval_by' => auth()->id(), // ← đổi từ updated_by thành approval_by
+        'approved_at' => now(),        // ← thêm nếu muốn lưu thời gian duyệt
+    ]);
+
+    return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được duyệt thành công!');
+}
+
 
     public function reject(Event $event)
     {
@@ -132,4 +151,44 @@ class EventController extends Controller
              return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được xóa thành công.');
 
     }
+
+public function getEventsByClub($clubId)
+{
+    try {
+        $events = \App\Models\Event::where('club_id', $clubId)
+            ->select('id', 'name', 'start_time', 'end_time')
+            ->orderBy('start_time', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $events
+        ]);
+    } catch (\Throwable $th) {
+        return response()->json([
+            'success' => false,
+            'message' => $th->getMessage()
+        ], 500);
+    }
+}
+
+
+public function getManagersByClub($clubId)
+{
+    try {
+        $users = DB::table('users')
+            ->join('club_members', 'users.id', '=', 'club_members.member_id') // đúng cột
+            ->where('club_members.club_id', $clubId)
+            ->where('club_members.role', 'admin') // role lưu trong club_members
+            ->select('users.id', 'users.name', 'users.email')
+            ->orderBy('users.name')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $users]);
+    } catch (\Throwable $th) {
+        return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+    }
+}
+
+
 }

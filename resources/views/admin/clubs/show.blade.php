@@ -3,68 +3,90 @@
 @section('title', 'Chi tiết CLB')
 
 @section('card-body')
-<div class="container-fluid">
-    <h1 class="mb-4">Chi tiết CLB</h1>
-
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    {{-- Card thông tin CLB --}}
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4 text-center">
-                    @if($club->logo)
-                        <img src="{{ asset('storage/' . $club->logo) }}" class="img-fluid border p-2" style="max-height:200px;">
-                    @else
-                        <div class="border p-4 text-muted">Chưa có logo</div>
-                    @endif
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            @if($club->logo)
+                <img src="{{ Storage::url($club->logo) }}" class="rounded me-3" style="width:80px;height:80px;object-fit:cover;">
+            @else
+                <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center me-3" style="width:80px;height:80px;font-size:32px;">
+                    {{ strtoupper(substr($club->name, 0, 1)) }}
                 </div>
-                <div class="col-md-8">
-                    <p><strong>ID:</strong> {{ $club->id }}</p>
-                    <p><strong>Tên:</strong> {{ $club->name }}</p>
-                    <p><strong>Lĩnh vực:</strong> {{ $club->field ?? 'Chưa cập nhật' }}</p>
-                    <p><strong>Trạng thái:</strong> {{ ucfirst($club->status ?? 'Chưa cập nhật') }}</p>
-                    <p><strong>Chủ nhiệm:</strong> 
-                        {{ $club->manager->name ?? 'Chưa có' }}
-                        @if(!$club->manager)
-                            <a href="{{ route('admin.clubs.assign', $club->id) }}" class="btn btn-success btn-sm">Gán</a>
-                        @endif
-                    </p>
-                    <p><strong>Số lượng thành viên:</strong> {{ $club->members->count() }}</p>
-                    <p><strong>Ngày tạo:</strong> {{ optional($club->created_at)->format('d/m/Y H:i') }}</p>
-                    <p><strong>Ngày cập nhật:</strong> {{ optional($club->updated_at)->format('d/m/Y H:i') }}</p>
-                </div>
-            </div>
-            <div class="mt-3 border p-3 bg-light">
-                <strong>Mô tả:</strong>
-                <p>{{ $club->description ?? 'Chưa có mô tả' }}</p>
+            @endif
+            <div>
+                <h1 class="h4 mb-1">{{ $club->name }}</h1>
+                <p class="text-muted small mb-0">{{ $club->field }}</p>
             </div>
         </div>
+        <a href="{{ route('admin.clubs.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
     </div>
 
-    {{-- Danh sách thành viên --}}
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h5>Thành viên CLB ({{ $club->members->count() }})</h5>
-            @if($club->members->isEmpty())
-                <p class="text-muted">Chưa có thành viên nào</p>
-            @else
-                <ul class="list-group list-group-flush">
-                    @foreach($club->members as $member)
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            {{ $member->name }}
-                            <span class="badge bg-primary rounded-pill">{{ $member->email }}</span>
-                        </li>
-                    @endforeach
-                </ul>
+    <!-- Detail Card -->
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">Thông tin CLB</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr><td class="fw-bold text-muted">ID</td><td>#{{ $club->id }}</td></tr>
+                        <tr><td class="fw-bold text-muted">Tên</td><td>{{ $club->name }}</td></tr>
+                        <tr><td class="fw-bold text-muted">Lĩnh vực</td><td>{{ $club->field }}</td></tr>
+                        <tr><td class="fw-bold text-muted">Email</td><td>{{ $club->email ?? '—' }}</td></tr>
+                        <tr><td class="fw-bold text-muted">Điện thoại</td><td>{{ $club->phone ?? '—' }}</td></tr>
+                        <tr><td class="fw-bold text-muted">Giới hạn</td><td>{{ $club->member_limit ?? 'Không giới hạn' }}</td></tr>
+                        <tr><td class="fw-bold text-muted">Thành viên</td><td>{{ $members->count() }}</td></tr>
+                        <tr><td class="fw-bold text-muted">Chủ nhiệm</td><td>
+                            {{ $club->manager->name ?? '—' }}<br>
+                            <small class="text-muted">{{ $club->manager->email ?? '' }}</small>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Trạng thái</td><td>
+                            <span class="badge {{ $club->status == 'active' ? 'bg-success' : 'bg-secondary' }}">
+                                {{ $club->status == 'active' ? 'Hoạt động' : 'Tạm dừng' }}
+                            </span>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Mô tả</td><td>
+                            {!! nl2br(e($club->description ?? '<em class="text-muted">Chưa có</em>')) !!}
+                        </td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">Hành động</h6>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <a href="{{ route('admin.clubs.edit', $club) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Sửa CLB
+                    </a>
+                    <a href="{{ route('admin.clubs.assign', $club) }}" class="btn btn-primary">
+                        <i class="fas fa-user-tie"></i> Gán chủ nhiệm
+                    </a>
+                    <form action="{{ route('admin.clubs.destroy', $club) }}" method="POST"
+                          onsubmit="return confirm('Xóa vĩnh viễn CLB này?');">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt"></i> Xóa CLB
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            @if($club->logo)
+                <div class="card shadow-sm mt-3 text-center">
+                    <div class="card-body">
+                        <img src="{{ Storage::url($club->logo) }}" class="img-fluid rounded" style="max-height: 200px;">
+                    </div>
+                </div>
             @endif
         </div>
-    </div>
-
-    <div class="mt-4">
-        <a href="{{ route('admin.clubs.index') }}" class="btn btn-secondary">Quay lại</a>
     </div>
 </div>
 @endsection

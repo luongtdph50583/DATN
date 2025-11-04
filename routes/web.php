@@ -2,10 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
+  
     HomeController,
     ProfileController
 };
 use App\Http\Controllers\Admin\{
+      EventFundRequestController,
+    EventFundSettlementController,
     UserController,
     MemberController,
     EventController,
@@ -20,7 +23,9 @@ use App\Http\Controllers\Admin\{
     ClubRequestController,
     TrashController,
     ClubJoinRequestController,
-    PlanController
+    PlanController,
+    DocumentPostController,
+    DocumentClubController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -67,7 +72,13 @@ Route::prefix('admin')
         Route::resource('events', EventController::class);
         Route::post('events/{event}/approve', [EventController::class, 'approve'])->name('events.approve');
         Route::post('events/{event}/reject', [EventController::class, 'reject'])->name('events.reject');
+  Route::get('events-by-club/{clubId}', [EventController::class, 'getEventsByClub'])
+        ->name('events.byClub');
+Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManagersByClub'])->name('events.getManagers');
 
+
+        Route::get('/club-balance/{clubId}', [FundController::class, 'getClubBalance'])
+    ->name('clubs.balance');
         // 👨‍👩‍👧‍👦 Member Management
         Route::controller(MemberController::class)
             ->prefix('members')
@@ -103,7 +114,7 @@ Route::prefix('admin')
         });
 
         // 📚 Document Management
-        Route::controller(DocumentController::class)
+        Route::controller(DocumentPostController::class)
             ->prefix('documents')
             ->as('documents.')
             ->group(function () {
@@ -118,6 +129,29 @@ Route::prefix('admin')
             ->group(function () {
             Route::get('/', 'index')->name('index');
         });
+        Route::controller(DocumentClubController::class)
+            ->prefix('documentclub')
+            ->as('documentclub.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');                 // danh sách
+                Route::get('/create', 'create')->name('create');         // form thêm
+                Route::post('/', 'store')->name('store');
+                Route::get('/search', 'search')->name('search'); // realtime search
+      // lưu mới
+                Route::get('/{document}/edit', 'edit')->name('edit');    // form chỉnh sửa
+                Route::put('/{document}', 'update')->name('update');     // cập nhật
+                Route::delete('/{document}', 'destroy')->name('destroy'); // xóa mềm
+                Route::get('/{document}/download', 'download')->name('download');
+                Route::get('/{document}', 'show')->name('show');
+
+
+                // ✅ Thùng rác và quản lý tài liệu đã xóa mềm
+                Route::get('/trash', 'trash')->name('trash'); // danh sách tài liệu đã xóa mềm
+                Route::put('/{id}/restore', 'restore')->name('restore'); // khôi phục
+                Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
+            });
+
+
 
         // 💬 Comment Management
         Route::controller(CommentController::class)
@@ -168,19 +202,47 @@ Route::prefix('admin')
             Route::post('/{joinRequest}', 'handle')->name('handle');
         });
 
-    // 📝 Club Request Management
-   
-        Route::controller(ClubRequestController::class)
-            ->prefix('club-requests')
-            ->as('club-requests.')
+        // 🔔 Notification Management
+        // 🔔 Notification Management
+
+        Route::controller(NotificationController::class)
+            ->prefix('notifications')
+            ->as('notifications.')
             ->group(function () {
-                Route::get('/', 'index')->name('index');
-                // Route model binding
-                Route::get('/{clubRequest}', 'show')->name('show');
-                // PATCH để update status
-                Route::patch('/{clubRequest}/update-status', 'updateStatus')->name('updateStatus');
+
+                // Danh sách, tạo, lưu
+                Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
+                Route::get('/create', 'create')->name('create');           // form tạo thông báo
+                Route::post('/', 'store')->name('store');                  // lưu thông báo
+
+                // AJAX fetch dữ liệu liên quan
+                Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
+                Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
+                Route::get('/fetch-club-members', 'fetchClubMembers')->name('fetchClubMembers');
+                Route::get('/fetch-events', 'fetchEvents')->name('fetchEvents');
+                Route::get('/fetch-event-members', 'fetchEventMembers')->name('fetchEventMembers');
+
+                // Gửi lại thông báo cho từng user theo batch
+                Route::post('/resend/{batchId}/{userId}', 'resend')->name('resend');
+
+                // ✅ Xóa thông báo hàng loạt
+                Route::post('/bulk-delete', 'bulkDelete')->name('bulkDelete');
+
             });
 
+    // 📝 Club Request Management
+Route::controller(ClubRequestController::class)
+    ->prefix('club-requests')
+    ->as('club-requests.')
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{clubRequest}', 'show')->name('show');
+        Route::post('/{clubRequest}/handle', 'handle')->name('handle');
+        Route::patch('/{clubRequest}/update-status', 'updateStatus')->name('updateStatus');
+        Route::post('/{clubRequest}/approve', 'approve')->name('approve');
+        Route::post('/{clubRequest}/reject', 'reject')->name('reject');
+        Route::delete('/{clubRequest}', 'destroy')->name('destroy');
+    });
 
 
 // 🙋‍♂️ Club Join Request Management
@@ -188,31 +250,16 @@ Route::controller(ClubJoinRequestController::class)
     ->prefix('club-join-requests')
     ->as('club-join-requests.')
     ->group(function () {
-        // Danh sách yêu cầu
         Route::get('/', 'index')->name('index');
+        Route::get('/{joinRequest}', 'show')->name('show');
+        Route::post('/{joinRequest}/approve', 'approve')->name('approve');
+        Route::post('/{joinRequest}/reject', 'reject')->name('reject');
 
-        // Xem chi tiết 1 yêu cầu
-        Route::get('/{id}', 'show')->name('show');
-
-        // Duyệt yêu cầu
-        Route::post('/{id}/approve', 'approve')->name('approve');
-
-        // Từ chối yêu cầu
-        Route::post('/{id}/reject', 'reject')->name('reject');
-
-        // Gửi yêu cầu (nếu bạn dùng cho user)
+        // Khi user gửi yêu cầu tham gia CLB
         Route::post('/{club_id}/store', 'store')->name('store');
     });
 
 
-    // 🔔 Notification Management
-    Route::controller(NotificationController::class)
-        ->prefix('notifications')
-        ->as('notifications.')
-        ->group(function () {
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-        });
 
         // 📊 Statistics Management
         Route::controller(StatisticsController::class)
@@ -260,7 +307,14 @@ Route::controller(ClubJoinRequestController::class)
             Route::get('/api/summary', 'summary')->name('summary');
         });
 
-        // 🗑️ Trash Management 
+          Route::resource('event_fund_requests', EventFundRequestController::class);
+              Route::resource('event_fund_settlements', EventFundSettlementController::class);
+
+ Route::get('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approveForm'])->name('event_fund_requests.approveForm');
+    Route::post('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approve'])->name('event_fund_requests.approve');
+Route::post('event_fund_requests/{id}/reject', [App\Http\Controllers\Admin\EventFundRequestController::class, 'reject'])
+    ->name('event_fund_requests.reject');
+        // 🗑️ Trash Management
         Route::prefix('trash/media')
             ->as('trash.media.')
             ->controller(TrashController::class)

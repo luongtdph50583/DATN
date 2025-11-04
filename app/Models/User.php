@@ -8,7 +8,8 @@
     {
         use Notifiable;
 
-        protected $fillable = [
+
+    protected $fillable = [
             'name', 'email', 'password', 'role', 'status', 'phone', 'student_id', 'department', 'avatar',
         ];
 
@@ -21,30 +22,26 @@
             'status' => 'string',
         ];
       
-// public function clubs()
+// public function managedClubs()
 // {
-//     return $this->belongsToMany(Club::class, 'club_members');
+//     return $this->hasMany(Club::class, 'manager_id');
 // }
-/**
- * Quan hệ với Clubs
- */
-// public function member()
-// {
-//     return $this->hasOne(Member::class);
-// }
+
+public function memberProfile()
+{
+    return $this->hasOne(Member::class);
+}
+public function user()
+{
+    return $this->belongsTo(User::class);
+}
 
 public function clubs()
 {
-    return $this->belongsToMany(Club::class, 'club_members', 'user_id', 'club_id')
-                ->withPivot('role', 'created_at')
+    return $this->belongsToMany(Club::class, 'club_members', 'member_id', 'club_id')
+                ->withPivot(['role', 'joined_at'])
                 ->withTimestamps();
 }
-
-// 🔹 Mỗi user có 1 bản ghi mở rộng trong bảng members
-    public function member()
-    {
-        return $this->hasOne(Member::class, 'user_id');
-    }
 
     // 🔹 Các yêu cầu tham gia CLB
     public function clubJoinRequests()

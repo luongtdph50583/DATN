@@ -9,20 +9,9 @@ use Illuminate\Database\Seeder;
        public function run()
        {
            $this->call([
-              MemberSeeder::class,
-               UserSeeder::class,
-               ClubSeeder::class,
-               ClubMemberSeeder::class,
-               MediaSeeder::class, 
-               EventSeeder::class,
-               EventRegistrationSeeder::class,
-               PostSeeder::class,
-               NotificationSeeder::class,
-               ClubJoinRequestSeeder::class,
-               ClubLeaveRequestSeeder::class,
+              PostSeeder::class,
                CommentSeeder::class,
-               SessionSeeder::class,
-               FundTransactionSeeder::class,
+              
            ]);
        }
    }

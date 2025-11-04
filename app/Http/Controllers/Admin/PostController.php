@@ -7,9 +7,13 @@ use App\Models\Post;
 use App\Models\Media;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Jobs\SendNotificationJob;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\GenericNotificationMail;
+use App\Notifications\CustomNotification;
 
 class PostController extends Controller
 {
@@ -37,13 +41,57 @@ class PostController extends Controller
     /**
      * Xóa bài viết
      */
-    public function destroy($id)
+
+
+
+    public function destroy(Request $request, $id)
     {
         $post = Post::findOrFail($id);
+        $user = $post->user;
+        $reason = $request->input('reason', 'Vi phạm nội quy');
+
+        // ✅ Xóa tất cả media liên quan
+        $mediaList = Media::withTrashed()
+            ->where('related_type', 'post')
+            ->where('related_id', $post->id)
+            ->get();
+
+        foreach ($mediaList as $media) {
+            $filePath = storage_path('app/public/' . $media->file_path);
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+            $media->forceDelete();
+        }
+
+        // ✅ Xóa ảnh đại diện nếu có
+        if ($post->thumbnail && file_exists(storage_path('app/public/' . $post->thumbnail))) {
+            unlink(storage_path('app/public/' . $post->thumbnail));
+        }
+
+        // ✅ Xóa bài viết
         $post->delete();
 
-        return redirect()->back()->with('success', 'Đã xóa bài viết.');
+        // ✅ Tạo batchId duy nhất cho thông báo
+        $batchId = 'post_deleted_' . $post->id . '_' . Str::random(6);
+
+        // ✅ Gửi thông báo và email qua job
+        if ($user) {
+            dispatch(new SendNotificationJob(
+                userId: $user->id,
+                title: 'Bài viết bị xóa',
+                content: "Bài viết của bạn đã bị xóa vì lý do: {$reason}",
+                sendVia: 'both',
+                batchId: $batchId,
+                force: false
+            ));
+        }
+
+        // ✅ Redirect về danh sách bài viết
+        return redirect()->route('admin.posts.index')
+            ->with('success', 'Đã xóa bài viết và gửi thông báo + email cho người dùng.');
     }
+
 
     /**
      * Hiển thị chi tiết bài viết
@@ -57,6 +105,88 @@ class PostController extends Controller
     /**
      * Cập nhật bài viết
      */
+    // Helper detect mime type chính xác
+
+
+    // Hàm detectMimeType
+    private function detectMimeType($fullPath)
+    {
+        $mime = mime_content_type($fullPath);
+        if ($mime === false || $mime === 'application/octet-stream') {
+            $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+            return match ($ext) {
+                'mp4' => 'video/mp4',
+                'mov' => 'video/quicktime',
+                'avi' => 'video/x-msvideo',
+                'mkv' => 'video/x-matroska',
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                'mp3' => 'audio/mpeg',
+                'wav' => 'audio/wav',
+                'pdf' => 'application/pdf',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xls' => 'application/vnd.ms-excel',
+                'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                default => 'application/octet-stream',
+            };
+        }
+        return $mime;
+    }
+    public function uploadFile(Request $request)
+    {
+        try {
+            if (!$request->hasFile('file')) {
+                return response()->json(['success' => false, 'message' => 'Không có file nào được gửi.']);
+            }
+
+            $file = $request->file('file');
+            $fileType = $file->getMimeType();
+            $originalName = $file->getClientOriginalName();
+            $folder = storage_path('app/public/uploads/posts');
+
+            // Tạo thư mục nếu chưa tồn tại
+            if (!file_exists($folder)) {
+                mkdir($folder, 0755, true);
+            }
+
+            // Nếu file trùng tên thì thêm số đếm
+            $i = 1;
+            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+            $ext = $file->getClientOriginalExtension();
+            $finalName = $originalName;
+            while (file_exists($folder . '/' . $finalName)) {
+                $finalName = $baseName . "($i)." . $ext;
+                $i++;
+            }
+
+            // Di chuyển file giữ nguyên tên
+            $file->move($folder, $finalName);
+            $path = 'uploads/posts/' . $finalName;
+
+            $media = Media::create([
+                'file_name' => $finalName,
+                'file_path' => $path,
+                'file_type' => $fileType,
+                'related_id' => $request->input('related_id', 0),
+                'related_type' => $request->input('related_type', 'post'),
+                'uploaded_by' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'url' => asset('storage/' . $path),
+                'name' => $finalName,
+                'type' => $fileType,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
     public function update(Request $request, $id)
     {
         $post = Post::findOrFail($id);
@@ -68,34 +198,75 @@ class PostController extends Controller
             'status' => 'required|in:visible,hidden',
             'visibility' => 'required|in:internal,public',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'files.*' => 'file',
         ]);
 
-        // ✅ Nếu có ảnh đại diện mới → xóa ảnh cũ và lưu ảnh mới
+        // =============================
+        // 1. Xử lý Thumbnail (chỉ posts.thumbnail)
+        // =============================
         if ($request->hasFile('thumbnail')) {
-            // Xóa ảnh cũ nếu có
-            if ($post->thumbnail && file_exists(storage_path('app/public/' . $post->thumbnail))) {
-                unlink(storage_path('app/public/' . $post->thumbnail));
+            $file = $request->file('thumbnail');
+            $folder = storage_path('app/public/uploads/thumbnails');
+
+            if (!file_exists($folder))
+                mkdir($folder, 0755, true);
+
+            $fileName = $file->getClientOriginalName();
+            $i = 1;
+            $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+            $ext = $file->getClientOriginalExtension();
+            $finalName = $fileName;
+            while (file_exists($folder . '/' . $finalName)) {
+                $finalName = $baseName . "($i)." . $ext;
+                $i++;
             }
 
-            // Lưu ảnh mới
-            $path = $request->file('thumbnail')->store('thumbnails', 'public');
-            $validated['thumbnail'] = $path;
+            $file->move($folder, $finalName);
+            $post->thumbnail = 'uploads/thumbnails/' . $finalName;
         }
 
-        $post->fill($validated);
+        // =============================
+        // 2. Cập nhật thông tin khác của post
+        // =============================
+        $post->title = $validated['title'];
+        $post->content = $validated['content'];
+        $post->type = $validated['type'];
+        $post->status = $validated['status'];
+        $post->visibility = $validated['visibility'];
         $post->save();
 
-        // ✅ Gán lại các media có related_id = 0 cho bài viết hiện tại
-        Media::where('related_type', 'post')
-            ->where('related_id', 0)
-            ->update(['related_id' => $post->id]);
+        // =============================
+        // 3. Upload file mới từ editor (files[])
+        // =============================
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $fileType = $file->getMimeType();
+                $originalName = $file->getClientOriginalName();
+                $tempFolder = storage_path('app/public/uploads/posts');
 
-        $currentFiles = [];
+                if (!file_exists($tempFolder))
+                    mkdir($tempFolder, 0755, true);
 
-        // ✅ Phân tích nội dung HTML
+                $i = 1;
+                $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+                $ext = $file->getClientOriginalExtension();
+                $finalName = $originalName;
+                while (file_exists($tempFolder . '/' . $finalName)) {
+                    $finalName = $baseName . "($i)." . $ext;
+                    $i++;
+                }
+
+                $file->move($tempFolder, $finalName);
+            }
+        }
+
+        // =============================
+        // 4. Lấy danh sách file editor đang dùng
+        // =============================
+        $usedFiles = [];
         $dom = new \DOMDocument();
         libxml_use_internal_errors(true);
-        $dom->loadHTML($validated['content'], LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $dom->loadHTML($post->content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
 
         $tags = array_merge(
@@ -106,128 +277,98 @@ class PostController extends Controller
         foreach ($tags as $tag) {
             if (!$tag instanceof \DOMElement)
                 continue;
-
             $attr = $tag->tagName === 'img' ? 'src' : 'href';
             $url = $tag->getAttribute($attr);
-
             if (!Str::contains($url, '/storage/'))
                 continue;
+            $usedFiles[] = basename(Str::after($url, '/storage/'));
+        }
 
-            $relativePath = Str::after($url, '/storage/');
-            $fullPath = storage_path('app/public/' . $relativePath);
+        // =============================
+        // 5. Soft delete Media không còn trong editor
+        // =============================
+        $allMedia = Media::withTrashed()
+            ->where('related_type', 'post')
+            ->where('related_id', $post->id)
+            ->get()
+            ->keyBy('file_name');
+
+        foreach ($allMedia as $fileName => $media) {
+            if (!in_array($fileName, $usedFiles)) {
+                $media->delete();
+            } else {
+                if ($media->trashed())
+                    $media->restore();
+            }
+        }
+        // =============================
+        // 6. Move tất cả file editor trong uploads/posts -> folder đúng, cập nhật Media
+        // Thumbnail KHÔNG có trong uploads/posts, nên sẽ không bị tạo Media
+        // =============================
+        $tempFiles = glob(storage_path('app/public/uploads/posts/*'));
+
+        foreach ($tempFiles as $fullPath) {
             if (!file_exists($fullPath))
                 continue;
 
+            $fileName = basename($fullPath);
             $mime = mime_content_type($fullPath);
-            $extension = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+            $lowerFileName = Str::lower($fileName);
 
-            // ✅ Xác định thư mục theo MIME/extension
-            $folder = match (true) {
+            $folderType = match (true) {
                 Str::startsWith($mime, 'image/') => 'images',
-                Str::startsWith($mime, 'video/')
-                || $mime === 'application/octet-stream'
-                || in_array($extension, ['mp4', 'mov', 'avi', 'mkv']) => 'video',
+                Str::startsWith($mime, 'video/') => 'video',
                 Str::startsWith($mime, 'audio/') => 'audio',
                 Str::startsWith($mime, 'application/pdf')
                 || Str::startsWith($mime, 'application/msword')
-                || Str::startsWith($mime, 'application/vnd') => 'documents',
+                || Str::startsWith($mime, 'application/vnd')
+                || Str::endsWith($lowerFileName, '.txt')
+                || Str::endsWith($lowerFileName, '.csv')
+                || Str::endsWith($lowerFileName, '.xlsx') => 'documents',
                 default => 'other',
             };
 
-            $fileName = basename($fullPath);
+            $newRelativePath = $folderType . '/' . $fileName;
+            $newFullPath = storage_path('app/public/' . $newRelativePath);
 
-            // ✅ Nếu file nằm trong uploads/posts thì chuyển sang thư mục đúng
-            if (Str::startsWith($relativePath, 'uploads/posts/')) {
-                $newRelativePath = $folder . '/' . $fileName;
-                $newFullPath = storage_path('app/public/' . $newRelativePath);
+            if (!file_exists(dirname($newFullPath)))
+                mkdir(dirname($newFullPath), 0755, true);
+            if (file_exists($newFullPath))
+                unlink($newFullPath);
 
-                if (!file_exists(dirname($newFullPath))) {
-                    mkdir(dirname($newFullPath), 0755, true);
-                }
+            rename($fullPath, $newFullPath);
 
-                rename($fullPath, $newFullPath);
-
-                // 🔥 Cập nhật lại file_path trong DB nếu có bản ghi cũ
-                Media::where('file_path', $relativePath)
-                    ->where('related_type', 'post')
-                    ->update(['file_path' => $newRelativePath]);
-
-                $relativePath = $newRelativePath;
-            }
-
-            $currentFiles[] = $relativePath;
-
-            // ✅ Cập nhật hoặc tạo mới Media
-            Media::withTrashed()->updateOrCreate(
-                [
-                    'file_path' => $relativePath,
-                    'related_id' => $post->id,
-                    'related_type' => 'post',
-                ],
+            Media::updateOrCreate(
                 [
                     'file_name' => $fileName,
+                    'related_type' => 'post',
+                    'related_id' => $post->id,
+                ],
+                [
+                    'file_path' => $newRelativePath,
                     'file_type' => $mime,
-                    'uploaded_by' => Auth::id(),
-                    'deleted_at' => null, // 👈 khôi phục nếu từng bị xóa tạm
+                    'uploaded_by' => auth()->id(),
+                    'deleted_at' => null
                 ]
             );
         }
 
-        // ✅ Xóa tạm Media không còn trong content
-        $oldMedia = Media::where('related_type', 'post')
-            ->where('related_id', $post->id)
-            ->whereNull('deleted_at')
-            ->get();
-
-        foreach ($oldMedia as $media) {
-            if (!in_array($media->file_path, $currentFiles)) {
-                $media->delete(); // 👈 xóa mềm
-            }
-        }
+        // =============================
+        // 7. Cleanup Media có related_id = 0
+        // =============================
+        Media::where('related_type', 'post')
+            ->where('related_id', 0)
+            ->get()
+            ->each(function ($media) {
+                $fullPath = storage_path('app/public/' . $media->file_path);
+                if (file_exists($fullPath))
+                    unlink($fullPath);
+                $media->forceDelete();
+            });
 
         return redirect()->route('admin.posts.show', $post->id)
             ->with('success', 'Đã cập nhật bài viết thành công!');
     }
-
-
-
-
-
-
-
-
-    public function uploadFile(Request $request)
-    {
-        try {
-            if (!$request->hasFile('file')) {
-                return response()->json(['success' => false, 'message' => 'Không có file nào được gửi.']);
-            }
-
-            $file = $request->file('file');
-            $path = $file->store('uploads/posts', 'public');
-            $fileType = $file->getMimeType();
-
-            $media = Media::create([
-                'file_name' => $file->getClientOriginalName(),
-                'file_path' => $path,
-                'file_type' => $fileType,
-                'related_id' => $request->input('related_id', 0),
-                'related_type' => $request->input('related_type', 'post'), // ✅ giữ nguyên chữ “post”
-                'uploaded_by' => auth()->id(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'url' => asset('storage/' . $path),
-                'name' => $file->getClientOriginalName(),
-                'type' => $fileType,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-
-
 
     public function create()
     {
@@ -362,15 +503,6 @@ class PostController extends Controller
         return redirect()->route('admin.posts.show', $post->id)
             ->with('success', 'Đã thêm bài viết thành công!');
     }
-
-
-
-
-
-
-
-
-
     /**
      * Upload ảnh từ Quill Editor
      */

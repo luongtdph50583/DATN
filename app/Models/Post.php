@@ -16,6 +16,7 @@ class Post extends Model
         'type',
         'status',
         'visibility',
+        'thumbnail'
     ];
 
     protected $morphClass = 'post'; // nếu bạn dùng morphMap, giữ nguyên

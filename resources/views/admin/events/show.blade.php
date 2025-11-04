@@ -3,367 +3,134 @@
 @section('title', 'Chi tiết Sự kiện')
 
 @section('card-body')
-<div class="modern-container">
+<div class="container-fluid py-4">
     <!-- Header -->
-    <div class="header-section">
-        <div class="header-content">
-            <div>
-                <h1 class="page-title">Chi tiết Sự kiện</h1>
-                <p class="page-subtitle">Thông tin chi tiết về sự kiện</p>
-            </div>
-            <a href="{{ route('admin.events.index') }}" class="btn btn-secondary">
-                Quay lại danh sách
-            </a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h4 mb-1">Chi tiết Sự kiện</h1>
+            <p class="text-muted small mb-0">Thông tin chi tiết về sự kiện #{{ $event->id }}</p>
         </div>
+        <a href="{{ route('admin.events.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
     </div>
 
-    <!-- Event Detail Card -->
-    <div class="detail-card">
-        <div class="detail-header">
-            <div class="event-icon">
-                Calendar
+    <!-- Detail Card -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+            <i class="fas fa-calendar-alt fa-2x me-3"></i>
+            <div>
+                <h5 class="mb-0">{{ $event->name }}</h5>
+                <small><i class="fas fa-map-marker-alt"></i> {{ $event->location }}</small>
             </div>
-            <div class="detail-title">
-                <h2 class="event-name">{{ $event->name }}</h2>
-                <p class="event-location">
-                    Location: {{ $event->location }}
-                </p>
-            </div>
-            <div class="status-badge status-{{ $event->status }} ms-auto">
-                <span class="status-dot"></span>
-                {{ ucfirst($event->status) }}
-            </div>
+            <span class="badge 
+                @if($event->status == 'pending') bg-warning text-dark
+                @elseif($event->status == 'approved') bg-success
+                @else bg-danger @endif ms-auto">
+                {{ $event->status == 'pending' ? 'Chờ duyệt' : ($event->status == 'approved' ? 'Đã duyệt' : 'Từ chối') }}
+            </span>
         </div>
 
-        <div class="detail-body">
+        <div class="card-body">
             <div class="row g-4">
                 <!-- Cột 1 -->
-                <div class="col-md-6">
-                    <div class="info-group">
-                        <label>ID Sự kiện</label>
-                        <p>#{{ $event->id }}</p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Câu lạc bộ</label>
-                        <p>
+                <div class="col-lg-6">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-info-circle"></i> Thông tin cơ bản</h6>
+                    
+                    <table class="table table-borderless table-sm">
+                        <tr><td class="fw-bold text-muted">ID</td><td>#{{ $event->id }}</td></tr>
+                        <tr><td class="fw-bold text-muted">CLB</td><td>
                             @if($event->club)
                                 <span class="badge bg-info text-dark">{{ $event->club->name }}</span>
-                            @else
-                                <span class="text-muted">—</span>
+                            @else —
                             @endif
-                        </p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Thời gian bắt đầu</label>
-                        <p>
-                            <strong>{{ $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('d/m/Y') : '—' }}</strong><br>
-                            <small class="text-muted">{{ $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('H:i') : '' }}</small>
-                        </p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Thời gian kết thúc</label>
-                        <p>
-                            <strong>{{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('d/m/Y') : '—' }}</strong><br>
-                            <small class="text-muted">{{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('H:i') : '' }}</small>
-                        </p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Giới hạn tham gia</label>
-                        <p>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Bắt đầu</td><td>
+                            {{ $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('d/m/Y H:i') : '—' }}
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Kết thúc</td><td>
+                            {{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('d/m/Y H:i') : '—' }}
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Giới hạn</td><td>
                             @if($event->max_participants)
-                                <span class="text-primary">{{ $event->max_participants }} người</span>
+                                <span class="badge bg-primary">{{ $event->max_participants }} người</span>
                             @else
-                                <span class="text-muted">Không giới hạn</span>
+                                <span class="badge bg-success">Không giới hạn</span>
                             @endif
-                        </p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Công khai</label>
-                        <p>
-                            <span class="status-badge status-{{ $event->is_public ? 'active' : 'inactive' }}">
-                                <span class="status-dot"></span>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Công khai</td><td>
+                            <span class="badge {{ $event->is_public ? 'bg-success' : 'bg-secondary' }}">
                                 {{ $event->is_public ? 'Công khai' : 'Nội bộ' }}
                             </span>
-                        </p>
-                    </div>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Mô tả</td><td>
+                            {!! nl2br(e($event->description ?? '<em class="text-muted">Chưa có mô tả</em>')) !!}
+                        </td></tr>
+                    </table>
                 </div>
 
                 <!-- Cột 2 -->
-                <div class="col-md-6">
-                    <div class="info-group">
-                        <label>Mô tả chi tiết</label>
-                        <p class="description-text">
-                            {{ $event->description ?? '<em class="text-muted">Chưa có mô tả</em>' }}
-                        </p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Người tạo</label>
-                        <p>
+                <div class="col-lg-6">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-cog"></i> Quản lý & Ngân sách</h6>
+                    
+                    <table class="table table-borderless table-sm">
+                        <tr><td class="fw-bold text-muted">Người tạo</td><td>
                             <strong>{{ $event->createdBy->name ?? '—' }}</strong><br>
                             <small class="text-muted">{{ $event->createdBy->email ?? '' }}</small>
-                        </p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Người duyệt</label>
-                        <p>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Người duyệt</td><td>
                             @if($event->approvalBy)
-                                <strong>{{ $event->approvalBy->name }}</strong><br>
+                                <strong class="text-success">{{ $event->approvalBy->name }}</strong><br>
                                 <small class="text-muted">{{ $event->approvalBy->email }}</small>
                             @else
                                 <span class="text-muted">Chưa duyệt</span>
                             @endif
-                        </p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Ngân sách</label>
-                        <p>
-                            @if($event->budget)
-                                <strong class="text-success">{{ number_format($event->budget, 0, ',', '.') }} VNĐ</strong>
-                            @else
-                                <span class="text-muted">Chưa có</span>
-                            @endif
-                        </p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Thời gian tạo</label>
-                        <p>{{ $event->created_at->format('d/m/Y H:i') }}</p>
-                    </div>
-
-                    <div class="info-group">
-                        <label>Cập nhật lần cuối</label>
-                        <p>{{ $event->updated_at->diffForHumans() }}</p>
-                    </div>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Ngân sách dự kiến</td><td>
+                            <strong class="text-primary">{{ number_format($event->budget_estimated ?? 0) }} VNĐ</strong>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Ngân sách hiện có</td><td>
+                            <strong class="text-info">{{ number_format($event->budget_current ?? 0) }} VNĐ</strong>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Ngân sách đã dùng</td><td>
+                            <strong class="text-warning">{{ number_format($event->budget_used ?? 0) }} VNĐ</strong>
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Tạo lúc</td><td>
+                            {{ $event->created_at->format('d/m/Y H:i') }}
+                        </td></tr>
+                        <tr><td class="fw-bold text-muted">Cập nhật</td><td>
+                            {{ $event->updated_at->diffForHumans() }}
+                        </td></tr>
+                    </table>
                 </div>
             </div>
+
+            <!-- Media -->
+            @if($event->media_id)
+                <div class="mt-4">
+                    <h6 class="fw-bold text-primary"><i class="fas fa-images"></i> Media đính kèm</h6>
+                    <img src="{{ Storage::url('media/' . $event->media_id . '.jpg') }}" 
+                         class="img-fluid rounded shadow" style="max-height: 300px;">
+                </div>
+            @endif
         </div>
 
-        <div class="detail-footer">
-            <a href="{{ route('admin.events.edit', $event->id) }}" class="btn btn-warning">
-                Sửa sự kiện
+        <!-- Footer Actions -->
+        <div class="card-footer bg-light d-flex gap-2 justify-content-end">
+            <a href="{{ route('admin.events.edit', $event) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Sửa
             </a>
-            <form action="{{ route('admin.events.destroy', $event->id) }}" method="POST" style="display:inline;"
-                  onsubmit="return confirm('Xóa sự kiện này? Dữ liệu sẽ mất vĩnh viễn!');">
+            <form action="{{ route('admin.events.destroy', $event) }}" method="POST"
+                  onsubmit="return confirm('Xóa vĩnh viễn sự kiện này?');" class="d-inline">
                 @csrf @method('DELETE')
-                <button type="submit" class="btn btn-danger">Xóa sự kiện</button>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Xóa
+                </button>
             </form>
+            <a href="{{ route('admin.events.index') }}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Danh sách
+            </a>
         </div>
     </div>
 </div>
-
-<style>
-    :root {
-        --primary: #5b5eff;
-        --primary-dark: #4a49d6;
-        --success: #10b981;
-        --danger: #ef4444;
-        --warning: #f59e0b;
-        --info: #0ea5e9;
-        --dark: #1f2937;
-        --light: #f9fafb;
-        --border: #e5e7eb;
-        --shadow: 0 10px 25px -3px rgba(0,0,0,0.1);
-        --radius: 16px;
-    }
-
-    .modern-container {
-        background: linear-gradient(135deg, #f0f4ff 0%, #e0eaff 100%);
-        padding: 2rem;
-        min-height: 100vh;
-        font-family: 'Segoe UI', sans-serif;
-    }
-
-    .header-section {
-        background: white;
-        padding: 1.8rem 2rem;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        margin-bottom: 2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .page-title {
-        font-size: 1.9rem;
-        font-weight: 700;
-        color: var(--dark);
-        margin: 0;
-    }
-
-    .page-subtitle {
-        color: #6b7280;
-        margin: 0.5rem 0 0;
-        font-size: 0.95rem;
-    }
-
-    .btn {
-        border-radius: 10px;
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        font-size: 0.95rem;
-        transition: all 0.3s;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-secondary {
-        background: #e5e7eb;
-        color: var(--dark);
-        border: none;
-    }
-
-    .btn-warning {
-        background: linear-gradient(135deg, #fbbf24, #f59e0b);
-        color: white;
-        border: none;
-    }
-
-    .btn-danger {
-        background: linear-gradient(135deg, #f87171, var(--danger));
-        color: white;
-        border: none;
-    }
-
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-    }
-
-    .detail-card {
-        background: white;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        overflow: hidden;
-    }
-
-    .detail-header {
-        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-        color: white;
-        padding: 2rem;
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        flex-wrap: wrap;
-    }
-
-    .event-icon {
-        width: 70px;
-        height: 70px;
-        background: rgba(255,255,255,0.2);
-        border: 3px solid white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.8rem;
-        font-weight: 700;
-        backdrop-filter: blur(5px);
-    }
-
-    .detail-title h2 {
-        font-size: 1.8rem;
-        margin: 0;
-        font-weight: 700;
-    }
-
-    .event-location {
-        margin: 0.5rem 0 0;
-        opacity: 0.9;
-        font-size: 1rem;
-    }
-
-    .status-badge {
-        padding: 0.5rem 1rem;
-        border-radius: 2rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .status-pending { background: rgba(251, 191, 36, 0.2); color: #d97706; }
-    .status-approved { background: rgba(16, 185, 129, 0.2); color: #065f46; }
-    .status-rejected { background: rgba(239, 68, 68, 0.2); color: #991b1b; }
-    .status-active { background: rgba(16, 185, 129, 0.2); color: #065f46; }
-    .status-inactive { background: rgba(239, 68, 68, 0.2); color: #991b1b; }
-
-    .status-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: currentColor;
-    }
-
-    .detail-body {
-        padding: 2rem;
-    }
-
-    .info-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .info-group label {
-        display: block;
-        font-size: 0.875rem;
-        color: #6b7280;
-        margin-bottom: 0.35rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .info-group p {
-        margin: 0;
-        font-size: 1.1rem;
-        color: var(--dark);
-        font-weight: 500;
-    }
-
-    .description-text {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid var(--primary);
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    .detail-footer {
-        padding: 1.5rem 2rem;
-        background: #f8f9fa;
-        border-top: 1px solid var(--border);
-        display: flex;
-        justify-content: flex-start;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .badge {
-        font-size: 0.85rem;
-        padding: 0.35rem 0.75rem;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .detail-header {
-            flex-direction: column;
-            text-align: center;
-        }
-        .detail-title h2 { font-size: 1.5rem; }
-        .detail-footer { justify-content: center; }
-    }
-</style>
 @endsection

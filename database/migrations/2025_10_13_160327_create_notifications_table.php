@@ -6,20 +6,27 @@
 
      class CreateNotificationsTable extends Migration
      {
-         public function up()
-         {
-             Schema::create('notifications', function (Blueprint $table) {
-                 $table->uuid('id')->primary();
-                 $table->string('type');
-                 $table->morphs('notifiable');
-                 $table->text('data');
-                 $table->timestamp('read_at')->nullable();
-                 $table->timestamps();
-             });
-         }
+    public function up()
+    {
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
 
-         public function down()
-         {
-             Schema::dropIfExists('notifications');
-         }
-     }
+            // 🆕 thêm batch_id để nhóm lượt gửi
+            $table->uuid('batch_id')->nullable();
+
+            // 🆕 thêm status để biết trạng thái gửi
+            $table->string('status')->default('sent');
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('notifications');
+    }
+
+}

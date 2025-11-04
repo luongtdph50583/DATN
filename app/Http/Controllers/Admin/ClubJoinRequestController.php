@@ -3,110 +3,62 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Club;
 use App\Models\ClubJoinRequest;
 use App\Models\ClubMember;
-use App\Models\Member;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class ClubJoinRequestController extends Controller
 {
-    /**
-     * 📨 Người dùng gửi yêu cầu tham gia CLB
-     */
-    public function store($club_id)
-    {
-        $userId = Auth::id();
-
-        // Kiểm tra trùng
-        $existingRequest = ClubJoinRequest::where('club_id', $club_id)
-            ->where('user_id', $userId)
-            ->whereIn('status', ['pending', 'approved'])
-            ->first();
-
-        if ($existingRequest) {
-            return back()->with('error', '⚠️ Bạn đã gửi yêu cầu hoặc đã là thành viên của CLB này.');
-        }
-
-        ClubJoinRequest::create([
-            'club_id' => $club_id,
-            'user_id' => $userId,
-            'status' => 'pending',
-            'requested_at' => now(),
-        ]);
-
-        return back()->with('success', '✅ Đã gửi yêu cầu tham gia CLB thành công!');
-    }
-
-    /**
-     * 📋 Danh sách yêu cầu cho người quản lý CLB
-     */
     public function index()
     {
-        $managerId = Auth::id();
-
-        // CLB mà user này quản lý
-        $clubs = Club::where('manager_id', $managerId)->pluck('id');
-
-        // Lấy yêu cầu "pending"
-        $requests = ClubJoinRequest::whereIn('club_id', $clubs)
-            ->where('status', 'pending')
-            ->with(['club', 'user'])
-            ->latest()
+        $requests = ClubJoinRequest::with(['club', 'user'])
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return view('admin.club-join-requests.index', compact('requests'));
     }
-
-    /**
-     * 🔍 Hiển thị chi tiết một yêu cầu
-     */
     public function show($id)
-    {
-        $joinRequest = ClubJoinRequest::with(['club', 'user'])->findOrFail($id);
-        return view('admin.club-join-requests.show', compact('joinRequest'));
-    }
+{
+    $requestJoin = ClubJoinRequest::with(['club', 'user'])->findOrFail($id);
 
-    /**
-     * ✅ Duyệt yêu cầu
-     */
+    return view('admin.club-join-requests.show', compact('requestJoin'));
+}
+
+
     public function approve($id)
     {
-        $request = ClubJoinRequest::findOrFail($id);
+        $requestJoin = ClubJoinRequest::findOrFail($id);
 
-        // Tìm hoặc tạo member tương ứng với user_id
-        $member = Member::firstOrCreate([
-            'user_id' => $request->user_id
-        ]);
-
-        // Kiểm tra trùng thành viên trong CLB
-        $exists = ClubMember::where('club_id', $request->club_id)
-            ->where('member_id', $member->id)
+        // Kiểm tra người này đã trong CLB chưa
+        $exists = ClubMember::where('club_id', $requestJoin->club_id)
+            ->where('member_id', $requestJoin->user_id)
             ->exists();
 
-        if (!$exists) {
-            ClubMember::create([
-                'club_id' => $request->club_id,
-                'member_id' => $member->id,
-                'role' => 'member',
-                'joined_at' => now(),
-            ]);
+        if ($exists) {
+            return back()->with('error', 'Thành viên đã ở trong CLB này!');
         }
 
-        $request->update(['status' => 'approved']);
+        // Thêm vào bảng club_members
+        ClubMember::create([
+            'club_id' => $requestJoin->club_id,
+            'member_id' => $requestJoin->user_id,
+            'role' => 'member',
+            'joined_at' => now()
+        ]);
 
-        return back()->with('success', '✅ Đã duyệt yêu cầu tham gia CLB.');
+        // Cập nhật trạng thái yêu cầu
+        $requestJoin->status = 'approved';
+        $requestJoin->save();
+
+        return back()->with('success', 'Đã chấp nhận thành viên vào CLB!');
     }
 
-    /**
-     * ❌ Từ chối yêu cầu
-     */
     public function reject($id)
     {
-        $request = ClubJoinRequest::findOrFail($id);
-        $request->update(['status' => 'rejected']);
+        $requestJoin = ClubJoinRequest::findOrFail($id);
+        $requestJoin->status = 'rejected';
+        $requestJoin->save();
 
-        return back()->with('error', '🚫 Đã từ chối yêu cầu tham gia CLB.');
+        return back()->with('success', 'Đã từ chối yêu cầu!');
     }
 }

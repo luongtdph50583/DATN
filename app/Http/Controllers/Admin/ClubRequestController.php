@@ -5,72 +5,122 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ClubRequest;
 use App\Models\Club;
+use App\Models\ClubMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ClubRequestController extends Controller
 {
-    // danh sách (paginate)
-    public function index()
+    /**
+     * 📋 Danh sách yêu cầu tạo CLB
+     */
+    public function index(Request $request)
     {
-        $requests = ClubRequest::with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate(12);
+        $query = ClubRequest::with('user');
+
+        // 🔍 Tìm kiếm theo tên CLB
+        if ($request->filled('keyword')) {
+            $query->where('name', 'like', '%' . $request->keyword . '%');
+        }
+
+        $requests = $query->orderByDesc('created_at')->paginate(10);
 
         return view('admin.club-requests.index', compact('requests'));
     }
 
-    // show chi tiết (route model binding)
-    public function show(ClubRequest $clubRequest)
+    /**
+     * 👁 Xem chi tiết yêu cầu
+     */
+    public function show($id)
     {
-        $clubRequest->load('user');
-        return view('admin.club-requests.show', compact('clubRequest'));
+        $clubRequest = ClubRequest::with('user')->findOrFail($id);
+
+        // 🔗 Kiểm tra xem CLB đã được tạo hay chưa (theo tên)
+        $club = Club::where('name', $clubRequest->name)->first();
+
+        // 👤 Lấy chủ nhiệm nếu CLB đã được tạo
+        $manager = $club?->members()->where('role', 'manager')->first();
+
+        // 👥 Giới hạn số lượng thành viên
+        $memberLimit = $club?->member_limit ?? $clubRequest->member_limit ?? 50;
+
+        return view('admin.club-requests.show', compact('clubRequest', 'club', 'manager', 'memberLimit'));
     }
 
-    // cập nhật trạng thái
-    public function updateStatus(Request $request, ClubRequest $clubRequest)
+    /**
+     * ✅ Duyệt yêu cầu tạo CLB
+     */
+    public function approve($id)
     {
-        $data = $request->validate([
-            'status' => 'required|in:pending,approved,rejected'
-        ]);
+        $clubRequest = ClubRequest::findOrFail($id);
 
-        $status = $data['status'];
-
-        DB::beginTransaction();
-        try {
-            $clubRequest->status = $status;
-            $clubRequest->save();
-
-            if ($status === 'approved') {
-                // kiểm tra trùng tên CLB
-                $exists = Club::where('name', $clubRequest->name)->exists();
-                if ($exists) {
-                    DB::rollBack();
-                    return redirect()->back()->with('error', 'Tên CLB đã tồn tại. Vui lòng đổi tên trước khi duyệt.');
-                }
-
-                // tạo club mới
-                $club = Club::create([
-                    'name' => $clubRequest->name,
-                    'description' => $clubRequest->description,
-                    'logo' => $clubRequest->logo ?? null, // reuse path nếu có
-                    'leader_id' => $clubRequest->user_id,
-                    'field' => $clubRequest->field ?? null,
-                ]);
-
-                // nếu muốn: thêm bản ghi member chủ nhiệm vào bảng membership ở đây
-
-                DB::commit();
-                return redirect()->back()->with('success', 'Yêu cầu đã được duyệt và CLB đã được tạo!');
-            }
-
-            DB::commit();
-            return redirect()->back()->with('success', 'Trạng thái yêu cầu đã được cập nhật!');
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            // Bạn có thể log lỗi: \Log::error($e);
-            return redirect()->back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+        // ⚠️ Kiểm tra trùng tên CLB
+        if (Club::where('name', $clubRequest->name)->exists()) {
+            return back()->with('error', 'Tên CLB này đã tồn tại!');
         }
+
+        DB::transaction(function () use ($clubRequest) {
+            // 🏗 Tạo CLB mới
+            $club = Club::create([
+                'name'         => $clubRequest->name,
+                'description'  => $clubRequest->description,
+                'field'        => $clubRequest->field,
+                'email'        => $clubRequest->email,
+                'phone'        => $clubRequest->phone,
+                'logo'         => $clubRequest->logo,
+                'status'       => 'active',
+                'manager_id'   => $clubRequest->user_id,
+                'member_limit' => $clubRequest->member_limit ?? 50,
+            ]);
+
+            // 👤 Gán người gửi làm chủ nhiệm CLB
+            ClubMember::create([
+                'club_id'   => $club->id,
+                'member_id' => $clubRequest->user_id,
+                'role'      => 'manager',
+                'joined_at' => now(),
+            ]);
+
+            // 🔄 Cập nhật trạng thái yêu cầu
+            $clubRequest->update(['status' => 'approved']);
+        });
+
+        return redirect()
+            ->route('admin.club-requests.index')
+            ->with('success', '✅ Đã duyệt yêu cầu, tạo CLB và gán người gửi làm chủ nhiệm!');
+    }
+
+    /**
+     * ❌ Từ chối yêu cầu
+     */
+    public function reject($id)
+    {
+        $clubRequest = ClubRequest::findOrFail($id);
+
+        $clubRequest->update(['status' => 'rejected']);
+
+        return redirect()
+            ->route('admin.club-requests.index')
+            ->with('success', '❌ Đã từ chối yêu cầu tạo CLB!');
+    }
+
+    /**
+     * 🗑 Xóa yêu cầu
+     */
+    public function destroy($id)
+    {
+        $clubRequest = ClubRequest::findOrFail($id);
+
+        // 🧹 Xóa logo nếu có
+        if ($clubRequest->logo && Storage::exists('public/' . $clubRequest->logo)) {
+            Storage::delete('public/' . $clubRequest->logo);
+        }
+
+        $clubRequest->delete();
+
+        return redirect()
+            ->route('admin.club-requests.index')
+            ->with('success', '🗑 Đã xóa yêu cầu thành công!');
     }
 }

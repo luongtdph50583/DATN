@@ -26,20 +26,17 @@ class Member extends Model
     protected $casts = [
         'status' => 'string',
     ];
+   
     public function user()
     {
-             return $this->belongsTo(User::class, 'user_id', 'id');
+        return $this->belongsTo(User::class);
     }
 
     public function clubs()
     {
         return $this->belongsToMany(Club::class, 'club_members', 'member_id', 'club_id')
-            ->withPivot('role', 'joined_at')
-            ->withTimestamps();
-    }
-     public function clubMembers()
-    {
-        return $this->hasMany(ClubMember::class, 'member_id');
+                    ->withPivot(['role', 'joined_at'])
+                    ->withTimestamps();
     }
 
 }
