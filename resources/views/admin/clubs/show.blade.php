@@ -4,37 +4,26 @@
 @section('card-title', 'Chi tiết CLB: ' . $club->name)
 
 @section('card-body')
-
-        <div class="row mb-4">
-            {{-- Logo và thông tin cơ bản --}}
-            <div class="col-md-4 text-center">
-                <img src="{{ $club->logo ? asset('storage/' . $club->logo) : asset('images/default-club.png') }}" 
-                     alt="Logo CLB" class="img-fluid rounded mb-3" style="max-height: 150px;">
-                <p><strong>Trạng thái:</strong>
-                    @if($club->status === 'active') Hoạt động
-                    @elseif($club->status === 'pending') Chờ duyệt
-                    @else Ngưng hoạt động @endif
-                </p>
-                <p><strong>Ngày thành lập:</strong> {{ $club->founded_at?->format('d/m/Y') ?? '—' }}</p>
-                <p><strong>Giới hạn thành viên:</strong> {{ $club->member_limit ?? '—' }}</p>
-            </div>
-
-            {{-- Thông tin chi tiết CLB --}}
-            <div class="col-md-8">
-                <h5></h5>
-                        <p><strong>Tên clb:</strong> {{ $club->name }}</p>
-
-                <p><strong>Lĩnh vực:</strong> {{ $club->field }}</p>
-                <p><strong>Địa điểm:</strong> {{ $club->location ?? '—' }}</p>
-                <p><strong>Email:</strong> {{ $club->email ?? '—' }}</p>
-                <p><strong>Điện thoại:</strong> {{ $club->phone ?? '—' }}</p>
-                
-
-                {{-- Nội quy CLB hiển thị HTML --}}
-                <p><strong>Nội quy CLB:</strong></p>
-                <div class="border rounded p-2 bg-light mb-2">
-                    {!! $club->rules ?? '<em>Chưa có nội quy</em>' !!}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            @if($club->logo)
+                <img src="{{ Storage::url($club->logo) }}" class="rounded me-3" style="width:80px;height:80px;object-fit:cover;">
+            @else
+                <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center me-3" style="width:80px;height:80px;font-size:32px;">
+                    {{ strtoupper(substr($club->name, 0, 1)) }}
                 </div>
+            @endif
+            <div>
+                <h1 class="h4 mb-1">{{ $club->name }}</h1>
+                <p class="text-muted small mb-0">{{ $club->field }}</p>
+            </div>
+        </div>
+        <a href="{{ route('admin.clubs.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại
+        </a>
+    </div>
 
                 {{-- Mô tả CLB hiển thị HTML --}}
                 <p><strong>Mô tả:</strong></p>
