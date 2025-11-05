@@ -76,6 +76,9 @@ Route::prefix('admin')
             ->name('events.byClub');
         Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManagersByClub'])->name('events.getManagers');
 
+Route::get('events/club-members/{club}', [EventController::class, 'getClubMembers'])
+    ->name('events.club-members');
+
 
         Route::get('/club-balance/{clubId}', [FundController::class, 'getClubBalance'])
             ->name('clubs.balance');

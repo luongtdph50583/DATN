@@ -14,18 +14,17 @@
                 <label for="title" class="form-label">Tiêu đề</label>
                 <input type="text" name="title" class="form-control" value="{{ old('title') }}" required>
             </div>
-
-            <div class="mb-3">
-                <label for="clb_id" class="form-label">CLB</label>
-                <select name="clb_id" class="form-select" required>
-                    <option value="">Chọn CLB</option>
-                    @foreach($clubs as $club)
-                        <option value="{{ $club->id }}" {{ old('clb_id') == $club->id ? 'selected' : '' }}>
-                            {{ $club->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+  <div class="mb-3">
+        <label for="clb_id" class="form-label">CLB</label>
+        <select name="clb_id" class="form-select select2-club" required>
+            <option value="">Chọn CLB</option>
+            @foreach($clubs as $club)
+                <option value="{{ $club->id }}" {{ old('clb_id') == $club->id ? 'selected' : '' }}>
+                    {{ $club->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
 
             <div class="mb-3">
                 <label for="file" class="form-label">File</label>
@@ -80,11 +79,20 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+        
             $('.select2').select2({
                 placeholder: "Chọn mức truy cập",
                 allowClear: true,
                 width: '100%'
             });
         });
+        document.addEventListener('DOMContentLoaded', function () {
+    // Select2 cho CLB
+    $('.select2-club').select2({
+        placeholder: "Chọn CLB",
+        allowClear: true,
+        width: '100%'
+    });
+    });
     </script>
 @endpush

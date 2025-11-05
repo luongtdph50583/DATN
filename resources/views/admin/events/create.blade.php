@@ -3,6 +3,9 @@
 @section('title', 'Thêm mới Sự kiện')
 
 @section('card-body')
+{{-- Thêm CSS Select2 trực tiếp --}}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <div class="container-fluid py-4">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -36,18 +39,19 @@
                 <div class="row g-4">
                     <!-- Cột 1 -->
                     <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Câu lạc bộ <span class="text-danger">*</span></label>
-                            <select name="club_id" id="club_id" class="form-select @error('club_id') is-invalid @enderror" required>
-                                <option value="">-- Chọn CLB --</option>
-                                @foreach($clubs as $club)
-                                    <option value="{{ $club->id }}" {{ old('club_id') == $club->id ? 'selected' : '' }}>
-                                        {{ $club->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('club_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+                        <!-- Select2 CLB -->
+<div class="mb-3">
+    <label class="form-label fw-bold">Câu lạc bộ <span class="text-danger">*</span></label>
+    <select name="club_id" id="club_id" class="form-select select2-club @error('club_id') is-invalid @enderror" style="width: 100%;" required>
+        <option value="">-- Chọn CLB --</option>
+        @foreach($clubs as $club)
+            <option value="{{ $club->id }}" {{ old('club_id') == $club->id ? 'selected' : '' }}>
+                {{ $club->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('club_id') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+</div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Tên sự kiện <span class="text-danger">*</span></label>
@@ -179,4 +183,53 @@ document.getElementById('club_id').addEventListener('change', function() {
         });
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    $('#club_id').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Tìm và chọn câu lạc bộ...',
+        allowClear: true
+    });
+
+    @if(old('club_id'))
+        $('#club_id').val('{{ old('club_id') }}').trigger('change');
+    @endif
+
+    $('#club_id').on('change', function() {
+        const clubId = this.value;
+        const createdBySelect = document.getElementById('created_by');
+        createdBySelect.innerHTML = '<option value="">-- Đang tải... --</option>';
+
+        if (!clubId) {
+            createdBySelect.innerHTML = '<option value="">-- Chọn CLB trước --</option>';
+            return;
+        }
+
+   fetch('{{ url("admin/events/club-members") }}/' + clubId)
+
+            .then(response => response.json())
+            .then(data => {
+                createdBySelect.innerHTML = '<option value="">-- Chọn người tạo --</option>';
+                data.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.name} (${user.email})`;
+                    if ('{{ old('created_by') }}' == user.id) option.selected = true;
+                    createdBySelect.appendChild(option);
+                });
+            })
+            .catch(() => {
+                createdBySelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+            });
+    });
+
+    @if(old('club_id'))
+        $('#club_id').trigger('change');
+    @endif
+});
+</script>
 @endsection
+@push('scripts')
+
+@endpush

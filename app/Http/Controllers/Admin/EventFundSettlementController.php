@@ -33,62 +33,67 @@ class EventFundSettlementController extends Controller
     }
 
     // 3️⃣ Lưu settlement mới
-    public function store(Request $request)
-    {
-        $request->validate([
-            'fund_request_id' => 'required|exists:event_fund_requests,id',
-            'total_spent' => 'required|numeric|min:0',
-            'details' => 'nullable|string',
-            'receipts.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'status' => 'nullable|in:pending_review,approved,needs_revision',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'fund_request_id' => 'required|exists:event_fund_requests,id',
+        'total_spent' => 'required|numeric|min:0',
+        'expense_name.*' => 'nullable|string|max:255',
+        'expense_amount.*' => 'nullable|numeric|min:0',
+        'receipts.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        'status' => 'nullable|in:pending_review,approved,needs_revision',
+    ]);
 
-        $fundRequest = EventFundRequest::findOrFail($request->fund_request_id);
-        $event = $fundRequest->event;
+    $fundRequest = EventFundRequest::findOrFail($request->fund_request_id);
+    $event = $fundRequest->event;
 
-        // Xử lý details JSON
-        $details = null;
-        if ($request->filled('details')) {
-            $json = json_decode($request->details, true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $details = $json;
-            } else {
-                return back()->withErrors(['details' => 'JSON không hợp lệ']);
-            }
+    // 🔹 Xử lý danh sách khoản chi (không cần nhập JSON thủ công nữa)
+    $details = [];
+    $names = $request->expense_name ?? [];
+    $amounts = $request->expense_amount ?? [];
+
+    foreach ($names as $i => $name) {
+        if (!empty($name) && isset($amounts[$i])) {
+            $details[] = [
+                'name' => $name,
+                'amount' => (float) $amounts[$i],
+            ];
         }
-
-        // Upload receipts
-        $files = [];
-        if ($request->hasFile('receipts')) {
-            foreach ($request->file('receipts') as $file) {
-                $files[] = $file->store('settlements/receipts', 'public');
-            }
-        }
-
-        // Tạo settlement
-        $settlement = EventFundSettlement::create([
-            'fund_request_id' => $fundRequest->id,
-            'total_spent' => $request->total_spent,
-            'difference' => $request->total_spent - $fundRequest->amount_requested,
-            'details' => $details,
-            'receipts' => !empty($files) ? json_encode($files) : null,
-            'status' => $request->status ?? 'pending_review',
-        ]);
-
-        // Nếu admin duyệt ngay khi tạo
-        if ($settlement->status === 'approved') {
-            $event->budget_current -= $settlement->total_spent;
-            $event->budget_used += $settlement->total_spent;
-            $event->save();
-
-            $settlement->reviewed_by = Auth::id();
-            $settlement->reviewed_at = now();
-            $settlement->save();
-        }
-
-        return redirect()->route('admin.event_fund_settlements.index')
-            ->with('success', 'Tạo quyết toán thành công!');
     }
+
+    // 🔹 Upload hóa đơn / chứng từ
+    $files = [];
+    if ($request->hasFile('receipts')) {
+        foreach ($request->file('receipts') as $file) {
+            $files[] = $file->store('settlements/receipts', 'public');
+        }
+    }
+
+    // 🔹 Tạo quyết toán
+    $settlement = EventFundSettlement::create([
+        'fund_request_id' => $fundRequest->id,
+        'total_spent' => $request->total_spent,
+        'difference' => $request->total_spent - $fundRequest->amount_requested,
+        'details' => json_encode($details, JSON_UNESCAPED_UNICODE),
+        'receipts' => !empty($files) ? json_encode($files) : null,
+        'status' => $request->status ?? 'pending_review',
+    ]);
+
+    // 🔹 Nếu admin duyệt ngay khi tạo
+    if ($settlement->status === 'approved') {
+        $event->budget_current -= $settlement->total_spent;
+        $event->budget_used += $settlement->total_spent;
+        $event->save();
+
+        $settlement->reviewed_by = Auth::id();
+        $settlement->reviewed_at = now();
+        $settlement->save();
+    }
+
+    return redirect()->route('admin.event_fund_settlements.index')
+        ->with('success', 'Tạo quyết toán thành công!');
+}
+
 
     // 4️⃣ Xem chi tiết settlement
     public function show($id)
@@ -120,50 +125,53 @@ public function update(Request $request, $id)
 
     $settlement = EventFundSettlement::findOrFail($id);
     $fundRequest = EventFundRequest::findOrFail($request->fund_request_id);
-    $event = $fundRequest->event;
 
-    // Chi tiết JSON
-    $details = null;
-    if ($request->filled('details')) {
+    // ✅ Giải mã JSON an toàn
+    $details = [];
+    if (!empty($request->details)) {
         $json = json_decode($request->details, true);
         if (json_last_error() === JSON_ERROR_NONE) {
             $details = $json;
-        } else return back()->withErrors(['details' => 'JSON không hợp lệ']);
+        }
     }
 
-    // Xử lý receipts
-$oldReceipts = is_array($settlement->receipts) 
-    ? $settlement->receipts 
-    : (is_string($settlement->receipts) ? json_decode($settlement->receipts, true) : []);
+    // ✅ Xử lý receipts
+    $oldReceipts = is_array($settlement->receipts)
+        ? $settlement->receipts
+        : (is_string($settlement->receipts) ? json_decode($settlement->receipts, true) : []);
 
     $keepReceipts = $request->input('keep_receipts', []);
 
-    // Xóa file đã bị remove
+    // Xóa file bị bỏ
     foreach (array_diff($oldReceipts, $keepReceipts) as $file) {
         Storage::disk('public')->delete($file);
     }
 
-    // Thêm file mới
+    // Upload mới
     if ($request->hasFile('receipts')) {
         foreach ($request->file('receipts') as $file) {
             $keepReceipts[] = $file->store('settlements/receipts', 'public');
         }
     }
 
-    // Cập nhật settlement
+    // ✅ Cập nhật
     $settlement->update([
         'fund_request_id' => $fundRequest->id,
         'total_spent' => $request->total_spent,
         'difference' => $request->total_spent - $fundRequest->amount_requested,
-        'details' => $details,
+        'details' => json_encode($details), // ✅ luôn ép về JSON, không để null
         'receipts' => !empty($keepReceipts) ? json_encode($keepReceipts) : null,
         'status' => $request->status,
         'reviewed_by' => $request->status !== 'pending_review' ? Auth::id() : null,
         'reviewed_at' => $request->status !== 'pending_review' ? now() : null,
     ]);
 
-    return redirect()->route('admin.event_fund_settlements.index')->with('success', 'Cập nhật quyết toán thành công!');
+    return redirect()->route('admin.event_fund_settlements.index')
+        ->with('success', 'Cập nhật quyết toán thành công!');
 }
+
+
+
 
     // 7️⃣ Xóa settlement
     public function destroy($id)

@@ -25,7 +25,7 @@
 
 @section('card-body')
 
-    @if(session('success'))
+    @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
@@ -53,11 +53,11 @@
                         </td>
                         <td><strong>{{ $club->name }}</strong></td>
                         <td>{{ $club->field }}</td>
-<td>{{ $club->manager?->member?->name ?? '—' }}</td>
+                        <td>{{ $club->manager?->member?->user?->name ?? '—' }}</td>
 
                         <td>{{ $club->founded_at ? $club->founded_at->format('d/m/Y') : '—' }}</td>
                         <td>
-                            @if($club->status === 'active')
+                            @if ($club->status === 'active')
                                 <span class="badge bg-success">Hoạt động</span>
                             @elseif($club->status === 'pending')
                                 <span class="badge bg-warning text-dark">Chờ duyệt</span>
@@ -72,7 +72,8 @@
                             <a href="{{ route('admin.clubs.edit', $club->id) }}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i> Sửa
                             </a>
-                            <button type="button" class="btn btn-danger btn-sm btn-show-delete" data-id="{{ $club->id }}">
+                            <button type="button" class="btn btn-danger btn-sm btn-show-delete"
+                                data-id="{{ $club->id }}">
                                 <i class="fas fa-trash"></i> Xóa
                             </button>
 
@@ -107,7 +108,7 @@
     <script>
         // Show form xóa theo ID
         document.querySelectorAll('.btn-show-delete').forEach(btn => {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', function() {
                 const id = this.dataset.id;
                 const form = document.querySelector(`.delete-form[data-id="${id}"]`);
                 form.classList.remove('d-none');
@@ -117,7 +118,7 @@
 
         // Hủy xóa
         document.querySelectorAll('.btn-cancel-delete').forEach(btn => {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', function() {
                 const id = this.dataset.id;
                 const form = document.querySelector(`.delete-form[data-id="${id}"]`);
                 form.classList.add('d-none');
@@ -130,32 +131,42 @@
         const searchForm = document.getElementById('search-form');
         const tableBody = document.getElementById('club-table-body');
 
-        searchForm.addEventListener('input', function () {
+        searchForm.addEventListener('input', function() {
             const formData = new FormData(searchForm);
 
             fetch("{{ route('admin.clubs.search') }}", {
-                method: "POST",
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: formData
-            })
+                    method: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                })
                 .then(res => res.json())
                 .then(data => {
                     let html = '';
                     if (data.length === 0) {
-                        html = `<tr><td colspan="8" class="text-center text-muted">Không tìm thấy kết quả phù hợp.</td></tr>`;
+                        html =
+                            `<tr><td colspan="8" class="text-center text-muted">Không tìm thấy kết quả phù hợp.</td></tr>`;
                     } else {
                         data.forEach((club, index) => {
-                            const logo = club.logo ? `/storage/${club.logo}` : `/images/default-club.png`;
+                            const logo = club.logo ? `/storage/${club.logo}` :
+                                `/images/default-club.png`;
                             const managerName = club.manager?.member?.user?.name ?? '—';
-                            const founded = club.founded_at ? new Date(club.founded_at).toLocaleDateString('vi-VN') : '—';
+                            const founded = club.founded_at ? new Date(club.founded_at)
+                                .toLocaleDateString('vi-VN') : '—';
 
                             let statusBadge = '';
                             switch (club.status) {
-                                case 'active': statusBadge = '<span class="badge bg-success">Hoạt động</span>'; break;
-                                case 'pending': statusBadge = '<span class="badge bg-warning text-dark">Chờ duyệt</span>'; break;
-                                default: statusBadge = '<span class="badge bg-secondary">Ngưng hoạt động</span>';
+                                case 'active':
+                                    statusBadge = '<span class="badge bg-success">Hoạt động</span>';
+                                    break;
+                                case 'pending':
+                                    statusBadge =
+                                        '<span class="badge bg-warning text-dark">Chờ duyệt</span>';
+                                    break;
+                                default:
+                                    statusBadge =
+                                        '<span class="badge bg-secondary">Ngưng hoạt động</span>';
                             }
 
                             html += `

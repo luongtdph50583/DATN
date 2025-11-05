@@ -6,6 +6,8 @@ use App\Models\Event;
 use App\Models\Club;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\ClubMember;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Support\Facades\DB;
@@ -189,6 +191,30 @@ public function getManagersByClub($clubId)
         return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
     }
 }
+
+public function getClubMembers($clubId)
+{
+    // ✅ Kiểm tra CLB tồn tại
+    $club = Club::find($clubId);
+    if (!$club) {
+        return response()->json(['error' => 'Không tìm thấy CLB.'], 404);
+    }
+
+    // ✅ Lấy danh sách thành viên từ bảng club_members (có quan hệ với users)
+    $members = ClubMember::where('club_id', $clubId)
+        ->with('user:id,name,email') // chỉ lấy id, name, email
+        ->get()
+        ->map(function ($member) {
+            return [
+                'id' => $member->user->id,
+                'name' => $member->user->name,
+                'email' => $member->user->email,
+            ];
+        });
+
+    return response()->json($members);
+}
+
 
 
 }

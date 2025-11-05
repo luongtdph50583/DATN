@@ -16,16 +16,17 @@
             <input type="text" name="title" class="form-control" value="{{ old('title', $document->title) }}" required>
         </div>
 
-        <div class="mb-3">
-            <label for="clb_id" class="form-label">CLB</label>
-            <select name="clb_id" class="form-select" required>
-                @foreach($clubs as $club)
-                    <option value="{{ $club->id }}" {{ old('clb_id', $document->clb_id) == $club->id ? 'selected' : '' }}>
-                        {{ $club->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
+     <div class="mb-3">
+        <label for="clb_id" class="form-label">CLB</label>
+        <select name="clb_id" class="form-select select2-club" required>
+            <option value="">Chọn CLB</option>
+            @foreach($clubs as $club)
+                <option value="{{ $club->id }}" {{ old('clb_id') == $club->id ? 'selected' : '' }}>
+                    {{ $club->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
 
         <div class="mb-3">
             <label class="form-label">File hiện tại</label>
@@ -106,5 +107,13 @@
                 width: '100%'
             });
         });
+          document.addEventListener('DOMContentLoaded', function () {
+    // Select2 cho CLB
+    $('.select2-club').select2({
+        placeholder: "Chọn CLB",
+        allowClear: true,
+        width: '100%'
+    });
+    });
     </script>
 @endpush

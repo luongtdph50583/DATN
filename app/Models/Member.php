@@ -32,6 +32,10 @@ class Member extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+     public function clubMembers()
+    {
+        return $this->hasMany(ClubMember::class, 'member_id');
+    }
     public function clubs()
     {
         return $this->belongsToMany(Club::class, 'club_members', 'member_id', 'club_id')
