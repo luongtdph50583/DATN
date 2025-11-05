@@ -57,6 +57,7 @@
                             {{ $club->manager?->member?->user?->name ?? 'Chưa gán chủ nhiệm' }}
                         </td>
 
+
                         <td>{{ $club->founded_at ? $club->founded_at->format('d/m/Y') : '—' }}</td>
                         <td>
                             @if($club->status === 'active')

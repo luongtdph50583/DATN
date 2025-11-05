@@ -8,6 +8,7 @@ use App\Models\EventFundSettlement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class EventFundSettlementController extends Controller
 {
@@ -183,4 +184,52 @@ $oldReceipts = is_array($settlement->receipts)
         return redirect()->route('admin.event_fund_settlements.index')
             ->with('success', 'Xóa quyết toán thành công!');
     }
+
+   public function approve($id)
+{
+    DB::beginTransaction();
+    try {
+        $settlement = EventFundSettlement::with('fundRequest')->findOrFail($id);
+
+        // Nếu đã duyệt rồi thì không cần duyệt lại
+        if ($settlement->status === 'approved') {
+            return redirect()->back()->with('info', 'Quyết toán này đã được duyệt trước đó.');
+        }
+
+        // Lấy request liên quan
+        $fundRequest = $settlement->fundRequest;
+        if (!$fundRequest) {
+            return redirect()->back()->with('error', 'Không tìm thấy yêu cầu cấp kinh phí liên quan.');
+        }
+
+        // Lấy sự kiện để cập nhật quỹ
+        $event = $fundRequest->event;
+        if (!$event) {
+            return redirect()->back()->with('error', 'Không tìm thấy sự kiện liên quan.');
+        }
+
+        // Cập nhật quỹ
+        $event->budget_current -= $settlement->total_spent;
+        $event->budget_used += $settlement->total_spent;
+
+        if ($event->budget_current < 0) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Ngân sách sự kiện không đủ để duyệt quyết toán này.');
+        }
+
+        $event->save();
+
+        // Cập nhật trạng thái quyết toán
+        $settlement->status = 'approved';
+        $settlement->save();
+
+        DB::commit();
+        return redirect()->route('admin.event_fund_settlements.index')
+                         ->with('success', 'Đã duyệt quyết toán và cập nhật quỹ sự kiện thành công.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->back()->with('error', 'Lỗi khi duyệt quyết toán: ' . $e->getMessage());
+    }
+}
 }

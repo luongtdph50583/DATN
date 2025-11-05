@@ -119,6 +119,9 @@ Route::prefix('admin')
                 Route::post('/search', 'searchJson')->name('search');
 
                 Route::delete('/{club}', 'destroy')->name('destroy');
+                Route::delete('clubs/{club}/members/{member}', [ClubController::class, 'removeMember'])
+     ->name('members.remove');
+
             });
 
         // Routes cho yêu cầu thành lập CLB
@@ -296,10 +299,21 @@ Route::prefix('admin')
         Route::resource('event_fund_requests', EventFundRequestController::class);
         Route::resource('event_fund_settlements', EventFundSettlementController::class);
 
-        Route::get('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approveForm'])->name('event_fund_requests.approveForm');
-        Route::post('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approve'])->name('event_fund_requests.approve');
-        Route::post('event_fund_requests/{id}/reject', [App\Http\Controllers\Admin\EventFundRequestController::class, 'reject'])
-            ->name('event_fund_requests.reject');
+ Route::get('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approveForm'])->name('event_fund_requests.approveForm');
+    Route::post('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approve'])->name('event_fund_requests.approve');
+Route::post('event_fund_requests/{id}/reject', [App\Http\Controllers\Admin\EventFundRequestController::class, 'reject'])
+    ->name('event_fund_requests.reject');
+    Route::post('event_fund_settlements/{id}/approve', [EventFundSettlementController::class, 'approve'])
+    ->name('event_fund_settlements.approve');
+        // 🗑️ Trash Management
+        Route::prefix('trash/media')
+            ->as('trash.media.')
+            ->controller(TrashController::class)
+            ->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::patch('/{id}/restore', 'restore')->name('restore');
+            Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
+        });
 
         // Route test admin
         Route::get('/test-role', function () {

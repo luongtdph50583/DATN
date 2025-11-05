@@ -103,8 +103,17 @@ class MemberController extends Controller
     }
 
     // =================== SHOW =====================
-    public function show(Member $member)
+   public function show(Member $member)
     {
+        // Load tất cả quan hệ
+        $member->load([
+            'user',
+            'clubs',
+         
+            'posts',
+            'comments'
+        ]);
+
         return view('admin.members.show', compact('member'));
     }
 

@@ -38,10 +38,10 @@
     <div class="card-body">
         <form method="GET" class="filter-form" action="{{ route(Auth::user()->role === 'admin' ? 'admin.funds.index' : 'club-manager.funds.index') }}">
             <div class="row align-items-end">
-                <div class="col-md-3">
+          <div class="col-md-3">
                     <div class="form-group">
                         <label for="club_id">Câu lạc bộ</label>
-                        <select name="club_id" id="club_id" class="form-control form-control-sm">
+                        <select name="club_id" id="club_id" class="form-control form-control-sm select2">
                             <option value="">Tất cả CLB</option>
                             @foreach($clubs as $club)
                                 <option value="{{ $club->id }}" {{ request('club_id') == $club->id ? 'selected' : '' }}>
@@ -51,6 +51,7 @@
                         </select>
                     </div>
                 </div>
+
                 <div class="col-md-2">
                     <div class="form-group">
                         <label for="type">Loại giao dịch</label>
@@ -294,6 +295,7 @@
 </div>
 
 <script>
+
 // Load fund summary when page loads
 document.addEventListener('DOMContentLoaded', function() {
     loadFundSummaryFromFilters();
@@ -499,5 +501,65 @@ function loadFundSummaryFromFilters() {
 .btn-action:hover i {
     transform: scale(1.1);
 }
+/* ----- SELECT2 CUSTOM STYLE ----- */
+.select2-container .select2-selection--single {
+    height: 36px !important;
+    border: 1px solid #e6e8f0 !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    padding-left: 10px !important;
+    background-color: #fff !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered {
+    color: #2d3748 !important;
+    font-size: 14px !important;
+    line-height: 34px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 34px !important;
+    right: 8px !important;
+}
+
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #6993ff !important;
+    box-shadow: 0 0 0 0.2rem rgba(105,147,255,.15) !important;
+}
+
+.select2-dropdown {
+    border-radius: 8px !important;
+    border: 1px solid #e6e8f0 !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
+}
+
+.select2-results__option {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    color: #2d3748 !important;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.select2-results__option--highlighted {
+    background-color: #6993ff !important;
+    color: #fff !important;
+}
+
 </style>
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('#club_id').select2({
+        placeholder: '-- Tất cả CLB --',
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
+@endpush
 @endsection
+
+

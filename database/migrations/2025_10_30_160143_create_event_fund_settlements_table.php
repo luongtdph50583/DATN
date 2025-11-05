@@ -9,7 +9,6 @@ return new class extends Migration {
     {
         Schema::create('event_fund_settlements', function (Blueprint $table) {
             $table->id(); // bigint auto increment (nếu bạn vẫn muốn dùng uuid thì mình có bản dưới)
-            $table->unsignedBigInteger('event_id');
             $table->decimal('total_spent', 15, 2);
             $table->json('details')->nullable(); // Chi tiết từng khoản chi
             $table->json('receipts')->nullable(); // File hóa đơn, ảnh chứng từ
@@ -20,7 +19,6 @@ return new class extends Migration {
             $table->timestamps();
 
             // 🔹 Khóa ngoại
-            $table->foreign('event_id')->references('id')->on('events')->onDelete('cascade');
             $table->foreign('reviewed_by')->references('id')->on('users')->onDelete('set null');
         });
     }

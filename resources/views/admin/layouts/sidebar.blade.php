@@ -85,13 +85,6 @@
                     </a>
                 </li>
 
-                <!-- Quản lý sự kiện -->
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ route('admin.events.index') }}">
-                        <i class="ri-calendar-event-line"></i> <span data-key="t-dashboards">Quản lí sự kiện</span>
-                    </a>
-                </li>
-
                 <!-- Quản lý CLB -->
                  <li class="nav-item">
                     <a class="nav-link menu-link" href="#sidebarclb" data-bs-toggle="collapse" role="button" aria-expanded="false"
@@ -125,7 +118,12 @@
                         <i class="ri-group-line"></i> <span data-key="t-dashboards">Quản lí thành viên</span>
                     </a>
                 </li>
-
+                     <!-- Quản lý sự kiện -->
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ route('admin.events.index') }}">
+                        <i class="ri-calendar-event-line"></i> <span data-key="t-dashboards">Quản lí sự kiện</span>
+                    </a>
+                </li>
                 <!-- Quản lý quỹ -->
                 <li class="nav-item">
                     <a class="nav-link menu-link" href="#quanliquy" data-bs-toggle="collapse" role="button" aria-expanded="false"
@@ -153,19 +151,7 @@
                     </div>
                 </li>
 
-                <!-- Thống kê -->
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ route('admin.stats.index') }}">
-                        <i class="ri-bar-chart-line"></i> <span data-key="t-widgets">Thống kê</span>
-                    </a>
-                </li>
-
-                <!-- Kế hoạch -->
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ route('admin.plans.index') }}">
-                        <i class="ri-file-list-3-line"></i> <span data-key="t-forms">Kế hoạch</span>
-                    </a>
-                </li>
+             
 
                 <!-- Quản lý thông báo -->
                 <li class="nav-item">
@@ -250,7 +236,21 @@
                 </li>
 
                 <!-- Quản lý Câu lạc bộ (tiêu đề nhóm) -->
-                <li class="menu-title"><i class="ri-community-line"></i> <span>Quản lý Câu lạc bộ</span></li>
+                <li class="menu-title"><i class="ri-community-line"></i> <span>Chi tiết </span></li>
+
+                   <!-- Thống kê -->
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ route('admin.stats.index') }}">
+                        <i class="ri-bar-chart-line"></i> <span data-key="t-widgets">Thống kê</span>
+                    </a>
+                </li>
+
+                <!-- Kế hoạch -->
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ route('admin.plans.index') }}">
+                        <i class="ri-file-list-3-line"></i> <span data-key="t-forms">Kế hoạch</span>
+                    </a>
+                </li>
             </ul>
 
         </div>

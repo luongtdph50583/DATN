@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreignId('uploaded_by')->constrained('users')->onDelete('cascade');
 
             // Thay enum bằng JSON để lưu nhiều quyền
-            $table->json('access_level')->nullable()->after('uploaded_by')->comment('Quyền truy cập, có thể chọn nhiều');
+        $table->json('access_level')->nullable()->comment('Quyền truy cập, có thể chọn nhiều');
 
             $table->string('tags')->nullable();
 

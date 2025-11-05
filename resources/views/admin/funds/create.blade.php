@@ -123,7 +123,9 @@
             </div>
             <div class="form-group">
     <label for="receipt">Hóa đơn / Chứng từ</label>
-    <input type="file" name="receipt" id="receipt" class="form-control @error('receipt') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf">
+<input type="file" name="receipt[]" id="receipt" class="form-control @error('receipt') is-invalid @enderror" 
+       accept=".jpg,.jpeg,.png,.pdf" multiple>
+
     @error('receipt')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
@@ -155,40 +157,43 @@
         </form>
     </div>
 </div>
+<script> 
+async function loadClubBalance(clubId) {
+    const balanceWrapper = document.getElementById('club-balance-wrapper');
+    const balanceEl = document.getElementById('club-balance');
 
-<script>
+    if (!clubId) {
+        balanceWrapper.style.display = 'none';
+        return;
+    }
+
+    balanceWrapper.style.display = 'block';
+    balanceEl.textContent = 'Đang tải...';
+
+    try {
+        const resp = await fetch(`/admin/club-balance/${clubId}`, { headers: { 'Accept': 'application/json' } });
+        const data = await resp.json();
+        if (data.success) {
+            balanceEl.textContent = data.formatted;
+            balanceEl.dataset.rawBalance = data.balance;
+        } else {
+            balanceEl.textContent = 'Không thể tải số dư';
+            balanceEl.dataset.rawBalance = 0;
+        }
+    } catch (err) {
+        balanceEl.textContent = 'Lỗi khi tải số dư';
+        balanceEl.dataset.rawBalance = 0;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const categoryEl = document.getElementById('category');
     const clubEl = document.getElementById('club_id');
     const eventWrapper = document.getElementById('event-wrapper');
     const eventSelect = document.getElementById('event_id');
-    const balanceWrapper = document.getElementById('club-balance-wrapper');
     const balanceEl = document.getElementById('club-balance');
     const amountEl = document.getElementById('amount');
     const typeEl = document.getElementById('type');
-
-    async function loadClubBalance(clubId) {
-        if (!clubId) {
-            balanceWrapper.style.display = 'none';
-            return;
-        }
-        balanceWrapper.style.display = 'block';
-        balanceEl.textContent = 'Đang tải...';
-        try {
-            const resp = await fetch(`/admin/club-balance/${clubId}`, { headers: { 'Accept': 'application/json' } });
-            const data = await resp.json();
-            if (data.success) {
-                balanceEl.textContent = data.formatted;
-                balanceEl.dataset.rawBalance = data.balance;
-            } else {
-                balanceEl.textContent = 'Không thể tải số dư';
-                balanceEl.dataset.rawBalance = 0;
-            }
-        } catch (err) {
-            balanceEl.textContent = 'Lỗi khi tải số dư';
-            balanceEl.dataset.rawBalance = 0;
-        }
-    }
 
     function shouldShowEventSelect() {
         return categoryEl.value === 'Hoạt động sự kiện' && clubEl.value !== '';
@@ -205,8 +210,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     let html = '<option value="">Chọn sự kiện</option>';
                     json.data.forEach(ev => {
-                        const selected = ev.id == "{{ old('event_id') }}" ? 'selected' : '';
-                        html += `<option value="${ev.id}" ${selected} data-budget-current="${ev.budget_current}">${ev.name ?? ev.title} ${ev.start_time ? ' - ' + ev.start_time.substr(0,10) : ''}</option>`;
+                        html += `<option value="${ev.id}" data-budget-current="${ev.budget_current}">
+                            ${ev.name ?? ev.title} ${ev.start_time ? ' - ' + ev.start_time.substr(0,10) : ''}
+                        </option>`;
                     });
                     eventSelect.innerHTML = html;
                 }
@@ -231,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateAmount() {
         let maxAmount = 0;
-
         if (categoryEl.value === 'Hoạt động sự kiện' && eventSelect.value) {
             maxAmount = parseFloat(eventSelect.selectedOptions[0].dataset.budgetCurrent || 0);
         } else {
@@ -246,16 +251,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    clubEl.addEventListener('change', function() {
-        updateEventVisibility();
-        loadClubBalance(this.value);
-    });
-
+    // Theo dõi thay đổi
     categoryEl.addEventListener('change', updateEventVisibility);
     eventSelect.addEventListener('change', validateAmount);
     amountEl.addEventListener('input', validateAmount);
     typeEl.addEventListener('change', validateAmount);
 
+    // Mô tả giới hạn ký tự
     const descEl = document.getElementById('description');
     descEl.addEventListener('input', function() {
         const maxLength = 1000;
@@ -274,5 +276,35 @@ document.addEventListener('DOMContentLoaded', function() {
     if (clubEl.value) loadClubBalance(clubEl.value);
     updateEventVisibility();
 });
+
+$(document).ready(function () {
+    $('#club_id, #event_id').select2({
+        placeholder: '-- Chọn --',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // ✅ Khi thay đổi CLB (Select2)
+    $('#club_id').on('change', function () {
+        const clubId = $(this).val();
+        $('#category').val('').trigger('change');
+        $('#event_id').empty().append('<option value="">Chọn sự kiện</option>').trigger('change');
+        $('#event-wrapper').hide();
+        loadClubBalance(clubId); // ✅ Hiện lại số dư
+    });
+
+    $('#category').on('change', async function () {
+        const clubId = $('#club_id').val();
+        if ($(this).val() === 'Hoạt động sự kiện' && clubId) {
+            $('#event-wrapper').show();
+            await loadEventsForClub(clubId);
+        } else {
+            $('#event-wrapper').hide();
+            $('#event_id').empty().append('<option value="">Chọn sự kiện</option>');
+        }
+        $('#event_id').val('').trigger('change');
+    });
+});
 </script>
+
 @endsection
