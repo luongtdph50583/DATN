@@ -1,44 +1,52 @@
 @extends('admin.layouts.app')
-
 @section('title', 'Quản lý Sự kiện')
-
-{{-- THÊM CSS SELECT2 --}}
-
 
 @section('card-body')
 <div class="container-fluid py-4">
-    <!-- Header -->
+
+    <!-- Header + Nút hành động -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h4 mb-1">Quản lý Sự kiện</h1>
             <p class="text-muted small mb-0">Theo dõi, duyệt và quản lý toàn bộ sự kiện của các CLB</p>
         </div>
-        <a href="{{ route('admin.events.create') }}" class="btn btn-primary">
-            Thêm sự kiện
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.events.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Thêm sự kiện
+            </a>
+            <a href="{{ route('admin.events.deleted') }}" class="btn btn-outline-danger">
+                Lịch sử xóa
+            </a>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#topClubsModal">
+                TOP CLB THÁNG
+            </button>
+        </div>
     </div>
 
-    <!-- Success Message -->
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
+    <!-- Thông báo -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            {!! session('success') !!}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
     <!-- Filter -->
-    <div class="card mb-4 shadow-sm">
+    <div class="card mb-4">
         <div class="card-body">
             <form action="{{ route('admin.events.index') }}" method="GET" class="row g-3">
                 <div class="col-md-5">
-                    <label class="form-label fw-bold">Tên sự kiện</label>
                     <input type="text" name="search_name" class="form-control" 
-                           placeholder="Nhập tên..." value="{{ request('search_name') }}">
+                           placeholder="Tìm theo tên sự kiện..." value="{{ request('search_name') }}">
                 </div>
-
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">Câu lạc bộ</label>
-                    <select name="club_id" class="select2-club" id="club-select">
+                    <select name="club_id" class="form-select">
                         <option value="">-- Tất cả CLB --</option>
                         @foreach($clubs as $club)
                             <option value="{{ $club->id }}" {{ request('club_id') == $club->id ? 'selected' : '' }}>
@@ -47,14 +55,13 @@
                         @endforeach
                     </select>
                 </div>
-
                 <div class="col-md-3 d-flex gap-2 align-items-end">
                     <button type="submit" class="btn btn-primary flex-fill">
-                        Tìm
+                        Tìm kiếm
                     </button>
                     @if (request()->hasAny(['search_name', 'club_id']))
                         <a href="{{ route('admin.events.index') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times"></i>
+                            Xóa lọc
                         </a>
                     @endif
                 </div>
@@ -62,67 +69,77 @@
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="card shadow-sm">
+    <!-- BẢNG DANH SÁCH -->
+    <div class="card">
         <div class="card-body p-0">
             @if($events->count() > 0)
                 <div class="table-responsive">
                     <table class="table table-hover mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 5%;">ID</th>
-                                <th style="width: 20%;">Tên sự kiện</th>
-                                <th style="width: 18%;">Thời gian</th>
-                                <th style="width: 15%;">Địa điểm</th>
-                                <th style="width: 8%;">Số người</th>
-                                <th style="width: 10%;">Trạng thái</th>
-                                <th style="width: 10%;">Người tạo</th>
-                                <th style="width: 8%;">CLB</th>
-                                <th style="width: 16%; text-align: center;">Hành động</th>
+                                <th>ID</th>
+                                <th>Tên sự kiện</th>
+                                <th>Thời gian</th>
+                                <th>Địa điểm</th>
+                                <th>Số người</th>
+                                <th>Trạng thái</th>
+                                <th>Người tạo</th>
+                                <th>CLB</th>
+                                <th class="text-center">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($events as $event)
                                 <tr>
                                     <td><span class="badge bg-primary">#{{ $event->id }}</span></td>
-                                    <td class="fw-bold">
+                                    <td>
                                         <a href="{{ route('admin.events.show', $event) }}" class="text-decoration-none">
                                             {{ Str::limit($event->name, 40) }}
                                         </a>
                                     </td>
                                     <td class="small">
-                                        <div><strong>Bắt đầu:</strong> {{ $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('d/m H:i') : '—' }}</div>
-                                        <div><strong>Kết thúc:</strong> {{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('d/m H:i') : '—' }}</div>
+                                        {{ $event->start_time?->format('d/m H:i') }} - 
+                                        {{ $event->end_time?->format('d/m H:i') }}
                                     </td>
-                                    <td>{{ Str::limit($event->location, 30) }}</td>
+                                    <td>{{ Str::limit($event->location, 25) }}</td>
                                     <td>
-                                        @if($event->max_participants)
-                                            <span class="text-primary fw-bold">{{ $event->max_participants }}</span>
-                                        @else
-                                            <span class="text-muted">Không giới hạn</span>
-                                        @endif
+                                        <span class="badge bg-info">
+                                            {{ $event->registrations_count ?? 0 }} / {{ $event->max_participants ?? '∞' }}
+                                        </span>
                                     </td>
                                     <td>
-                                        @php
-                                            $statusLabels = [
-                                                'pending' => ['label' => 'Chờ duyệt', 'class' => 'bg-warning text-dark'],
-                                                'approved' => ['label' => 'Đã duyệt', 'class' => 'bg-success'],
-                                                'rejected' => ['label' => 'Từ chối', 'class' => 'bg-danger'],
-                                            ];
-                                            $status = $statusLabels[$event->status] ?? ['label' => $event->status, 'class' => 'bg-secondary'];
-                                        @endphp
-                                        <span class="badge {{ $status['class'] }}">{{ $status['label'] }}</span>
-                                    </td>
-                                    <td class="small">{{ $event->createdBy->name ?? '—' }}</td>
-                                    <td>
-                                        @if($event->club)
-                                            <span class="badge bg-info text-dark">{{ Str::limit($event->club->name, 15) }}</span>
-                                        @else
-                                            <span class="text-muted">—</span>
-                                        @endif
+                                        @switch($event->status)
+                                            @case('pending')
+                                                <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                                @break
+                                            @case('approved')
+                                                <span class="badge bg-success">Đã duyệt</span>
+                                                @break
+                                            @case('rejected')
+                                                <span class="badge bg-danger">Từ chối</span>
+                                                @break
+                                            @default
+                                                <span class="badge bg-secondary">—</span>
+                                        @endswitch
                                     </td>
                                     <td>
+                                        <small class="text-muted">
+                                            {{ $event->createdBy?->name ?? 'Hệ thống' }}
+                                            <br>
+                                            {{ $event->created_at->format('d/m H:i') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info text-dark">
+                                            {{ $event->club?->name ?? '—' }}
+                                        </span>
+                                    </td>
+
+                                    <!-- HÀNH ĐỘNG – ĐÚNG Y CHANG FILE USER BẠN GỬI -->
+                                    <td class="text-center">
                                         <div class="btn-group" role="group">
+
+                                            <!-- Duyệt / Từ chối (chỉ khi pending) -->
                                             @if($event->status === 'pending')
                                                 <form action="{{ route('admin.events.approve', $event) }}" method="POST" class="d-inline">
                                                     @csrf
@@ -137,19 +154,21 @@
                                                     </button>
                                                 </form>
                                             @endif
-                                            <a href="{{ route('admin.events.show', $event) }}" class="btn btn-sm btn-info" title="Xem">
+
+                                            <!-- Xem -->
+                                            <a href="{{ route('admin.events.show', $event) }}" class="btn btn-sm btn-info" title="Xem chi tiết">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('admin.events.edit', $event) }}" class="btn btn-sm btn-warning" title="Sửa">
+
+                                            <!-- Sửa -->
+                                            <a href="{{ route('admin.events.edit', $event) }}" class="btn btn-sm btn-warning" title="Chỉnh sửa">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <form action="{{ route('admin.events.destroy', $event) }}" method="POST" class="d-inline"
-                                                  onsubmit="return confirm('Xóa vĩnh viễn?');">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </form>
+
+                                            <!-- Xóa mềm -->
+                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ $event->id }}" title="Xóa sự kiện">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -157,115 +176,104 @@
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Pagination -->
-                <div class="card-footer bg-white border-top">
+                <div class="card-footer">
                     {{ $events->appends(request()->query())->links() }}
                 </div>
             @else
-                <div class="text-center py-5">
-                    <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">Chưa có sự kiện nào</h5>
-                    <a href="{{ route('admin.events.create') }}" class="btn btn-primary mt-2">
-                        Thêm sự kiện đầu tiên
-                    </a>
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-calendar-alt fa-3x mb-3"></i>
+                    <p>Chưa có sự kiện nào</p>
                 </div>
             @endif
         </div>
     </div>
+
+    <!-- MODAL TOP CLB THÁNG -->
+    <div class="modal fade" id="topClubsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        TOP 10 CLB NHIỀU SỰ KIỆN NHẤT THÁNG {{ now()->format('m/Y') }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    @if($topClubs->count() > 0)
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Hạng</th>
+                                    <th>CLB</th>
+                                    <th>Số sự kiện</th>
+                                    <th>Thưởng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($topClubs as $index => $club)
+                                <tr>
+                                    <td>
+                                        @if($index == 0)
+                                            <span class="badge bg-warning">1st</span>
+                                        @elseif($index == 1)
+                                            <span class="badge bg-secondary">2nd</span>
+                                        @elseif($index == 2)
+                                            <span class="badge bg-danger">3rd</span>
+                                        @else
+                                            <span class="badge bg-dark">#{{ $index + 1 }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="fw-bold">{{ $club->name }}</td>
+                                    <td><span class="badge bg-success">{{ $club->events_count }}</span></td>
+                                    <td>
+                                        @if($index == 0) 5.000.000đ
+                                        @elseif($index == 1) 3.000.000đ
+                                        @elseif($index == 2) 1.000.000đ
+                                        @else Khuyến khích 300.000đ
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <div class="text-center py-5 text-muted">
+                            <p>Chưa có dữ liệu tháng này</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal xóa mềm -->
+    @foreach($events as $event)
+    <div class="modal fade" id="deleteModal-{{ $event->id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <form action="{{ route('admin.events.softdelete', $event) }}" method="POST">
+                @csrf
+                @method('DELETE')
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Xóa sự kiện</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Bạn có chắc chắn muốn xóa sự kiện:</p>
+                        <strong>{{ $event->name }}</strong>
+                        <div class="mt-3">
+                            <label class="form-label">Lý do xóa <span class="text-danger">*</span></label>
+                            <textarea name="delete_reason" class="form-control" rows="3" required placeholder="Nhập lý do..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger">Xóa</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endforeach
 </div>
-  <style>
-        /* ẨN <select> GỐC */
-        .select2-club { display: none !important; }
-
-        /* Select2 container: GIỐNG HỆT form-control */
-        .select2-container--bootstrap-5 .select2-selection--single {
-            height: 38px !important;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            color: #212529;
-            background-color: #fff;
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-            box-shadow: none;
-            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-        }
-
-        /* Text bên trong */
-        .select2-container--bootstrap-5 .select2-selection__rendered {
-            padding-left: 0 !important;
-            padding-right: 2rem !important;
-            line-height: 1.5;
-        }
-
-        /* Mũi tên */
-        .select2-container--bootstrap-5 .select2-selection__arrow {
-            top: 50% !important;
-            right: 0.75rem !important;
-            transform: translateY(-50%);
-        }
-
-        /* Placeholder */
-        .select2-container--bootstrap-5 .select2-selection__placeholder {
-            color: #6c757d !important;
-        }
-
-        /* FOCUS: giống hệt input */
-        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
-        .select2-container--bootstrap-5.select2-container--open .select2-selection {
-            border-color: #86b7fe !important;
-            outline: 0 !important;
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
-        }
-
-        /* Dropdown: đẹp & căn chỉnh */
-        .select2-dropdown {
-            border: 1px solid #86b7fe;
-            border-radius: 0.375rem;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
-            margin-top: 4px;
-        }
-
-        /* Item trong dropdown */
-        .select2-results__option {
-            padding: 0.375rem 0.75rem;
-            font-size: 0.875rem;
-        }
-
-        /* Khi hover */
-        .select2-results__option--highlighted {
-            background-color: #0d6efd !important;
-            color: white !important;
-        }
-
-        /* Nút xóa (clear) */
-        .select2-selection__clear {
-            margin-right: 10px;
-            color: #6c757d;
-            font-weight: bold;
-        }
-    </style>
 @endsection
-
-{{-- JS SELECT2 – CHỈ GỌI 1 LẦN --}}
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            $('#club-select').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                placeholder: '-- Tất cả CLB --',
-                allowClear: true,
-                language: {
-                    noResults: () => 'Không tìm thấy CLB nào'
-                }
-            });
-
-            // Tự động submit khi chọn CLB
-            $('#club-select').on('change', function () {
-                this.form.submit();
-            });
-        });
-    </script>
-@endpush

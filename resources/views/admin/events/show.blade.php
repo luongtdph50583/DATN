@@ -1,136 +1,303 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Chi tiết Sự kiện')
+@section('title', 'Chi tiết Sự kiện #' . $event->id)
 
 @section('card-body')
 <div class="container-fluid py-4">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h4 mb-1">Chi tiết Sự kiện</h1>
-            <p class="text-muted small mb-0">Thông tin chi tiết về sự kiện #{{ $event->id }}</p>
+            <h1 class="h4 mb-1 text-dark">
+                <i class="fas fa-calendar-check text-primary me-2"></i>
+                {{ $event->name }}
+            </h1>
+            <p class="text-muted small mb-0">
+                ID: #{{ $event->id }} • 
+                <span class="badge {{ $event->status == 'approved' ? 'bg-success' : ($event->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }}">
+                    {{ $event->status == 'pending' ? 'Chờ duyệt' : ($event->status == 'approved' ? 'Đã duyệt' : 'Bị từ chối') }}
+                </span>
+            </p>
         </div>
-        <a href="{{ route('admin.events.index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Quay lại
-        </a>
-    </div>
-
-    <!-- Detail Card -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white d-flex align-items-center">
-            <i class="fas fa-calendar-alt fa-2x me-3"></i>
-            <div>
-                <h5 class="mb-0">{{ $event->name }}</h5>
-                <small><i class="fas fa-map-marker-alt"></i> {{ $event->location }}</small>
-            </div>
-            <span class="badge 
-                @if($event->status == 'pending') bg-warning text-dark
-                @elseif($event->status == 'approved') bg-success
-                @else bg-danger @endif ms-auto">
-                {{ $event->status == 'pending' ? 'Chờ duyệt' : ($event->status == 'approved' ? 'Đã duyệt' : 'Từ chối') }}
-            </span>
-        </div>
-
-        <div class="card-body">
-            <div class="row g-4">
-                <!-- Cột 1 -->
-                <div class="col-lg-6">
-                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-info-circle"></i> Thông tin cơ bản</h6>
-                    
-                    <table class="table table-borderless table-sm">
-                        <tr><td class="fw-bold text-muted">ID</td><td>#{{ $event->id }}</td></tr>
-                        <tr><td class="fw-bold text-muted">CLB</td><td>
-                            @if($event->club)
-                                <span class="badge bg-info text-dark">{{ $event->club->name }}</span>
-                            @else —
-                            @endif
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Bắt đầu</td><td>
-                            {{ $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('d/m/Y H:i') : '—' }}
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Kết thúc</td><td>
-                            {{ $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('d/m/Y H:i') : '—' }}
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Giới hạn</td><td>
-                            @if($event->max_participants)
-                                <span class="badge bg-primary">{{ $event->max_participants }} người</span>
-                            @else
-                                <span class="badge bg-success">Không giới hạn</span>
-                            @endif
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Công khai</td><td>
-                            <span class="badge {{ $event->is_public ? 'bg-success' : 'bg-secondary' }}">
-                                {{ $event->is_public ? 'Công khai' : 'Nội bộ' }}
-                            </span>
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Mô tả</td><td>
-                            {!! nl2br(e($event->description ?? '<em class="text-muted">Chưa có mô tả</em>')) !!}
-                        </td></tr>
-                    </table>
-                </div>
-
-                <!-- Cột 2 -->
-                <div class="col-lg-6">
-                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-cog"></i> Quản lý & Ngân sách</h6>
-                    
-                    <table class="table table-borderless table-sm">
-                        <tr><td class="fw-bold text-muted">Người tạo</td><td>
-                            <strong>{{ $event->createdBy->name ?? '—' }}</strong><br>
-                            <small class="text-muted">{{ $event->createdBy->email ?? '' }}</small>
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Người duyệt</td><td>
-                            @if($event->approvalBy)
-                                <strong class="text-success">{{ $event->approvalBy->name }}</strong><br>
-                                <small class="text-muted">{{ $event->approvalBy->email }}</small>
-                            @else
-                                <span class="text-muted">Chưa duyệt</span>
-                            @endif
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Ngân sách dự kiến</td><td>
-                            <strong class="text-primary">{{ number_format($event->budget_estimated ?? 0) }} VNĐ</strong>
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Ngân sách hiện có</td><td>
-                            <strong class="text-info">{{ number_format($event->budget_current ?? 0) }} VNĐ</strong>
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Ngân sách đã dùng</td><td>
-                            <strong class="text-warning">{{ number_format($event->budget_used ?? 0) }} VNĐ</strong>
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Tạo lúc</td><td>
-                            {{ $event->created_at->format('d/m/Y H:i') }}
-                        </td></tr>
-                        <tr><td class="fw-bold text-muted">Cập nhật</td><td>
-                            {{ $event->updated_at->diffForHumans() }}
-                        </td></tr>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Media -->
-            @if($event->media_id)
-                <div class="mt-4">
-                    <h6 class="fw-bold text-primary"><i class="fas fa-images"></i> Media đính kèm</h6>
-                    <img src="{{ Storage::url('media/' . $event->media_id . '.jpg') }}" 
-                         class="img-fluid rounded shadow" style="max-height: 300px;">
-                </div>
-            @endif
-        </div>
-
-        <!-- Footer Actions -->
-        <div class="card-footer bg-light d-flex gap-2 justify-content-end">
+        <div>
+            <a href="{{ route('admin.events.index') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
             <a href="{{ route('admin.events.edit', $event) }}" class="btn btn-warning">
                 <i class="fas fa-edit"></i> Sửa
             </a>
-            <form action="{{ route('admin.events.destroy', $event) }}" method="POST"
-                  onsubmit="return confirm('Xóa vĩnh viễn sự kiện này?');" class="d-inline">
-                @csrf @method('DELETE')
-                <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-trash-alt"></i> Xóa
-                </button>
-            </form>
-            <a href="{{ route('admin.events.index') }}" class="btn btn-secondary">
-                <i class="fas fa-list"></i> Danh sách
-            </a>
         </div>
     </div>
+
+    <div class="row g-4">
+        <!-- THÔNG TIN CHÍNH -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 text-dark fw-bold">
+                        <i class="fas fa-info-circle text-primary"></i> Thông tin sự kiện
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless text-dark">
+                                <tr><td class="fw-bold text-muted">CLB tổ chức</td><td>
+                                    <span class="badge bg-info text-white">{{ $event->club?->name ?? '—' }}</span>
+                                </td></tr>
+                                <tr><td class="fw-bold text-muted">Địa điểm</td><td><i class="fas fa-map-marker-alt text-danger"></i> {{ $event->location }}</td></tr>
+                                <tr><td class="fw-bold text-muted">Thời gian</td><td>
+                                    <i class="fas fa-clock text-primary"></i> 
+                                    {{ $event->start_time?->format('d/m/Y H:i') }} → {{ $event->end_time?->format('d/m/Y H:i') }}
+                                </td></tr>
+                                <tr><td class="fw-bold text-muted">Giới hạn</td><td>
+                                    @if($event->max_participants)
+                                        <span class="badge bg-primary text-white">{{ $event->max_participants }} người</span>
+                                        <small class="text-muted">(đã đăng ký: {{ $event->registrations_count ?? 0 }})</small>
+                                    @else
+                                        <span class="badge bg-success text-white">Không giới hạn</span>
+                                    @endif
+                                </td></tr>
+                                <tr><td class="fw-bold text-muted">Công khai</td><td>
+                                    <span class="badge {{ $event->is_public ? 'bg-success' : 'bg-secondary' }} text-white">
+                                        {{ $event->is_public ? 'Công khai' : 'Nội bộ CLB' }}
+                                    </span>
+                                </td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary"><i class="fas fa-users"></i> Quản lý</h6>
+                            <div class="mb-3">
+                                <small class="text-muted">Người tạo</small><br>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar avatar-sm bg-primary text-white rounded-circle">
+                                        {{ substr($event->createdBy?->name ?? '?', 0, 1) }}
+                                    </div>
+                                    <div>
+                                        <strong class="text-dark">{{ $event->createdBy?->name ?? 'Hệ thống' }}</strong><br>
+                                        <small class="text-muted">{{ $event->createdBy?->email ?? '' }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <small class="text-muted">Người duyệt</small><br>
+                                @if($event->approvalBy)
+                                    <div class="d-flex align-items-center gap-2 text-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <strong class="text-dark">{{ $event->approvalBy->name }}</strong>
+                                    </div>
+                                @else
+                                    <span class="text-warning"><i class="fas fa-hourglass-half"></i> Chưa duyệt</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="fw-bold text-primary"><i class="fas fa-align-left"></i> Mô tả</h6>
+                    <div class="bg-light p-3 rounded">
+                        {!! $event->description ? nl2br(e($event->description)) : '<em class="text-muted">Chưa có mô tả</em>' !!}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NGÂN SÁCH -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 text-dark fw-bold">
+                        <i class="fas fa-money-bill-wave text-success"></i> Ngân sách
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <h4 class="text-success fw-bold">
+                        {{ number_format($event->budget_estimated ?? 0) }} VNĐ
+                    </h4>
+                    <small class="text-muted">Dự kiến</small>
+
+                    <div class="progress mb-3" style="height: 30px;">
+                        @php
+                            $used = $event->budget_used ?? 0;
+                            $percent = $event->budget_estimated > 0 ? ($used / $event->budget_estimated) * 100 : 0;
+                        @endphp
+                        <div class="progress-bar bg-danger" style="width: {{ $percent }}%">
+                            {{ number_format($used) }}đ đã dùng
+                        </div>
+                    </div>
+
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <h5 class="text-info">{{ number_format($event->budget_current ?? 0) }}đ</h5>
+                            <small class="text-muted">Hiện có</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-danger">{{ number_format($used) }}đ</h5>
+                            <small class="text-muted">Đã dùng</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CÁC PHẦN LIÊN QUAN – CŨNG ĐỔI CHỮ ĐEN -->
+    <div class="row g-4 mt-2">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 text-dark fw-bold">
+                        <i class="fas fa-users text-info"></i> Người tham gia ({{ $event->registrations_count ?? 0 }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if($event->registrations->count())
+                        <div class="list-group list-group-flush">
+                            @foreach($event->registrations->take(5) as $reg)
+                                <div class="list-group-item d-flex align-items-center">
+                                    <div class="avatar avatar-sm bg-primary text-white rounded-circle me-3">
+                                        {{ substr($reg->user?->name ?? '?', 0, 1) }}
+                                    </div>
+                                    <div>
+                                        <strong class="text-dark">{{ $reg->user?->name ?? 'Ẩn danh' }}</strong><br>
+                                        <small class="text-muted">Đăng ký: {{ $reg->created_at->format('d/m H:i') }}</small>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if($event->registrations->count() > 5)
+                            <div class="p-3 text-center border-top">
+                                <small class="text-muted">... và {{ $event->registrations->count() - 5 }} người khác</small>
+                            </div>
+                        @endif
+                    @else
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-user-slash fa-3x mb-3"></i>
+                            <p>Chưa có người đăng ký</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 text-dark fw-bold">
+                        <i class="fas fa-exchange-alt text-warning"></i> Giao dịch quỹ ({{ $event->transactions->count() }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if($event->transactions->count())
+                        <div class="list-group list-group-flush">
+                            @foreach($event->transactions->take(4) as $t)
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong class="text-dark">{{ $t->type == 'income' ? '+' : '-' }}{{ number_format($t->amount) }}đ</strong><br>
+                                            <small class="text-muted">{{ $t->description }}</small>
+                                        </div>
+                                        <small class="text-muted">{{ $t->created_at->format('d/m') }}</small>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-money-bill fa-3x mb-3"></i>
+                            <p>Chưa có giao dịch</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h5 class="mb-0 text-dark fw-bold">
+                        <i class="fas fa-images text-secondary"></i> Hình ảnh sự kiện
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if($event->media_id)
+                        <img src="{{ $event->poster_url }}" class="img-fluid rounded shadow" alt="Poster">
+                    @else
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-image fa-4x mb-3"></i>
+                            <p>Chưa có hình ảnh</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NÚT XÓA MỀM (có modal nhập lý do) -->
+    <div class="mt-4 text-end">
+        <button type="button" class="btn btn-outline-danger btn-lg" data-bs-toggle="modal" data-bs-target="#softDeleteModal">
+            <i class="fas fa-trash-alt"></i> Xóa sự kiện
+        </button>
+    </div>
 </div>
+
+<!-- Modal XÓA MỀM -->
+<div class="modal fade" id="softDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('admin.events.softdelete', $event) }}" method="POST">
+            @csrf @method('DELETE')
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa mềm
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Bạn có chắc muốn <strong class="text-danger">xóa mềm</strong> sự kiện:</p>
+                    <h5 class="text-primary text-center">{{ $event->name }}</h5>
+                    <div class="mt-4">
+                        <label class="form-label fw-bold text-danger">
+                            <i class="fas fa-edit"></i> Lý do xóa <span class="text-danger">*</span>
+                        </label>
+                        <textarea name="delete_reason" class="form-control" rows="4" required 
+                                  placeholder="Vui lòng nhập lý do xóa (bắt buộc để khôi phục sau này)" 
+                                  style="resize: none;"></textarea>
+                    </div>
+                    <div class="alert alert-info mt-3 small">
+                        <i class="fas fa-info-circle"></i>
+                        Sự kiện sẽ được chuyển vào thùng rác. Bạn có thể khôi phục bất cứ lúc nào!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Xóa mềm ngay
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@push('styles')
+<style>
+    .avatar {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .card-header {
+        background-color: #f8f9fa !important;
+        border-bottom: 2px solid #dee2e6 !important;
+    }
+    .text-dark { color: #212529 !important; }
+</style>
+@endpush
 @endsection
