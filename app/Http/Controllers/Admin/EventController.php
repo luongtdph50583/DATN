@@ -29,8 +29,18 @@ class EventController extends Controller
 
     $events = $query->paginate(15);
     $clubs = Club::orderBy('name')->get();
+    // TOP 10 CLB NHIỀU SỰ KIỆN NHẤT TRONG THÁNG NÀY
+    $topClubs = Club::select('clubs.id', 'clubs.name')
+    ->leftJoin('events', 'clubs.id', '=', 'events.club_id')
+    ->whereMonth('events.created_at', now()->month)
+    ->whereYear('events.created_at', now()->year)
+    ->groupBy('clubs.id', 'clubs.name')
+    ->orderByRaw('COUNT(events.id) DESC')
+    ->withCount('events')
+    ->limit(10)
+    ->get();
 
-    return view('admin.events.index', compact('events', 'clubs'));
+    return view('admin.events.index', compact('events', 'clubs', 'topClubs'));
 }
 
     public function create()
@@ -214,7 +224,52 @@ public function getClubMembers($clubId)
 
     return response()->json($members);
 }
+public function softDelete(Request $request, Event $event)
+{
+    $request->validate([
+        'delete_reason' => 'required|string|max:1000'
+    ]);
 
+    $event->update([
+        'deleted_by' => auth()->id(),
+        'delete_reason' => $request->delete_reason
+    ]);
 
+    $event->delete(); // Soft delete
+
+    return redirect()->route('admin.events.index')
+        ->with('success', 'Đã xóa mềm sự kiện thành công! Đã lưu lý do.');
+}
+public function deleted()
+{
+    $events = Event::onlyTrashed()
+        ->with(['club', 'createdBy', 'deletedBy']) 
+        ->latest('deleted_at')
+        ->paginate(15);
+
+    return view('admin.events.deleted', compact('events'));
+}
+public function restore($id)
+{
+    // ✅ Lấy bản ghi kể cả đã bị xóa mềm
+    $event = Event::withTrashed()->findOrFail($id);
+
+    if (!$event->trashed()) {
+        return redirect()
+            ->route('admin.events.deleted')
+            ->with('error', 'Sự kiện này chưa bị xóa hoặc đã được khôi phục!');
+    }
+
+    // ✅ Thực hiện khôi phục
+    $event->restore();
+
+    // ✅ Xóa lý do xóa (nếu có)
+    $event->update(['delete_reason' => null]);
+
+    // ✅ Chuyển hướng về trang danh sách chính
+    return redirect()
+        ->route('admin.events.index')
+        ->with('success', "🎉 Đã khôi phục thành công sự kiện: <strong>{$event->name}</strong>");
+}
 
 }

@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Member extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'user_id',
         'gender',
@@ -26,6 +28,8 @@ class Member extends Model
     protected $casts = [
         'status' => 'string',
     ];
+    
+    protected $dates = ['deleted_at'];
 
     public function user()
     {
@@ -36,12 +40,16 @@ class Member extends Model
     {
         return $this->hasMany(ClubMember::class, 'member_id');
     }
-    public function clubs()
-    {
-        return $this->belongsToMany(Club::class, 'club_members', 'member_id', 'club_id')
-                    ->withPivot(['role', 'joined_at'])
-                    ->withTimestamps();
-    }
+    // App/Models/Member.php
+public function clubs()
+{
+    return $this->belongsToMany(
+        Club::class,
+        'club_members',        
+        'member_id',        
+        'club_id'             
+    )->withPivot('created_at', 'updated_at', 'role'); 
+}
   
 
     // Bài viết của member (hasMany)

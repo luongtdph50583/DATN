@@ -14,32 +14,31 @@ use App\Models\User;
 class MemberController extends Controller
 {
     public function index(Request $request)
-    {
-        $query = Member::with('user')->latest();
+{
+    $query = Member::with('user')->latest();
 
-        // Tìm theo tên
-        if ($request->filled('search_name')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search_name . '%');
-            });
-        }
-
-        // Tìm theo email
-        if ($request->filled('search_email')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('email', 'like', '%' . $request->search_email . '%');
-            });
-        }
-
-        // Tìm theo chuyên ngành
-        if ($request->filled('search_major')) {
-            $query->where('major', 'like', '%' . $request->search_major . '%');
-        }
-
-        $members = $query->paginate(15);
-
-        return view('admin.members.index', compact('members'));
+    if ($request->filled('search_name')) {
+        $query->whereHas('user', fn($q) => $q->where('name', 'like', '%' . $request->search_name . '%'));
     }
+    if ($request->filled('search_email')) {
+        $query->whereHas('user', fn($q) => $q->where('email', 'like', '%' . $request->search_email . '%'));
+    }
+    if ($request->filled('search_major')) {
+        $query->where('major', 'like', '%' . $request->search_major . '%');
+    }
+
+    $members = $query->paginate(15);
+    // TOP 10 THÀNH VIÊN HOẠT ĐỘNG NHIỀU CLB NHẤT TRONG THÁNG NÀY
+    $topMembers = Member::with('user') 
+        ->whereHas('clubs', fn($q) => $q->where('club_members.created_at', '>=', now()->subDays(30)))
+        ->withCount(['clubs as clubs_count' => fn($q) => $q->where('club_members.created_at', '>=', now()->subDays(30))])
+        ->orderByDesc('clubs_count')
+        ->limit(10)
+        ->get();
+    
+
+    return view('admin.members.index', compact('members', 'topMembers'));
+}
 
     public function exportExcel(Request $request)
     {
@@ -147,9 +146,40 @@ class MemberController extends Controller
     }
 
     // =================== DELETE =====================
-    public function destroy(Member $member)
-    {
-        $member->delete();
-        return redirect()->route('admin.members.index')->with('success', 'Thành viên đã được xóa thành công.');
-    }
+public function destroy(Member $member, Request $request)
+{
+    $reason = $request->input('delete_reason', 'Không có lý do');
+    $member->delete();
+
+    return redirect()->route('admin.members.index')
+                     ->with('success', "Đã xóa thành viên \"{$member->user->name}\" vào thùng rác. Lý do: {$reason}");
+}
+
+
+// THÊM 3 HÀM MỚI
+public function trashed()
+{
+    $members = Member::onlyTrashed()->with('user')->paginate(15);
+    return view('admin.members.trashed', compact('members'));
+}
+
+public function restore($id)
+{
+    $member = Member::onlyTrashed()->findOrFail($id);
+    $member->restore();
+
+    // Chuyển hướng về index và truyền ID vừa khôi phục qua session
+    return redirect()
+        ->route('admin.members.index')
+        ->with('success', "Đã khôi phục thành viên <strong>{$member->user->name}</strong> thành công!")
+        ->with('restored_id', $member->id);
+}
+
+
+public function forceDelete($id)
+{
+    $member = Member::onlyTrashed()->findOrFail($id);
+    $member->forceDelete();
+    return back()->with('success', 'Xóa vĩnh viễn thành công!');
+}
 }
