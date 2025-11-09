@@ -124,31 +124,12 @@
                         <i class="ri-calendar-event-line"></i> <span data-key="t-dashboards">Quản lí sự kiện</span>
                     </a>
                 </li>
-                <!-- Quản lý quỹ -->
+              
+                          <!-- Quản lý quỹ -->
                 <li class="nav-item">
-                    <a class="nav-link menu-link" href="#quanliquy" data-bs-toggle="collapse" role="button" aria-expanded="false"
-                        aria-controls="quanliquy">
-                        <i class="ri-wallet-line"></i> <span data-key="t-funds">Quản lý quỹ</span>
+                    <a class="nav-link menu-link" href="{{ route('admin.funds.index') }}">
+                                               <i class="ri-wallet-line"></i> <span data-key="t-funds">Quản lý quỹ</span>
                     </a>
-                    <div class="collapse menu-dropdown" id="quanliquy">
-                        <ul class="nav nav-sm flex-column">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.funds.index') }}" class="nav-link" data-key="t-fund-list">
-                                    <i class="ri-history-line"></i> Danh sách giao dịch
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.event_fund_requests.index') }}" class="nav-link" data-key="t-fund-create">
-                                    <i class="ri-add-circle-line"></i> Yêu cầu cấp kinh phí
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.event_fund_settlements.index') }}" class="nav-link" data-key="t-fund-create">
-                                    <i class="ri-add-circle-line"></i> Quyết toán kinh phí 
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
                 </li>
 
              

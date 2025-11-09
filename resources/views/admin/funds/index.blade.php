@@ -5,12 +5,7 @@
 @section('card-header', 'Danh sách giao dịch quỹ')
 
 @section('card-body')
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Quản lý Quỹ</h1>
-    <a href="{{ route('admin.funds.create') }}" class="btn btn-primary btn-sm">
-        <i class="fas fa-plus fa-sm text-white-50"></i> Thêm giao dịch
-    </a>
-</div>
+
 
 @if (session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -52,16 +47,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label for="type">Loại giao dịch</label>
-                        <select name="type" id="type" class="form-control form-control-sm">
-                            <option value="">Tất cả</option>
-                            <option value="income" {{ request('type') == 'income' ? 'selected' : '' }}>Thu</option>
-                            <option value="expense" {{ request('type') == 'expense' ? 'selected' : '' }}>Chi</option>
-                        </select>
-                    </div>
-                </div>
+               
                 <div class="col-md-2">
                     <div class="form-group">
                         <label for="status">Trạng thái</label>
