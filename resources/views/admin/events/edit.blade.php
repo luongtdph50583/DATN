@@ -38,7 +38,7 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Câu lạc bộ <span class="text-danger">*</span></label>
-                            <select name="club_id" class="form-select @error('club_id') is-invalid @enderror" required>
+                            <select name="club_id" class="form-select select2 @error('club_id') is-invalid @enderror" required>
                                 <option value="">-- Chọn CLB --</option>
                                 @foreach($clubs as $club)
                                     <option value="{{ $club->id }}" {{ old('club_id', $event->club_id) == $club->id ? 'selected' : '' }}>
@@ -58,9 +58,7 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Mô tả</label>
-                            <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="4">
-                                {{ old('description', $event->description) }}
-                            </textarea>
+                            <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="4">{{ old('description', $event->description) }}</textarea>
                             @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
@@ -97,7 +95,7 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Hiển thị sự kiện</label>
-                            <select name="is_public" class="form-select @error('is_public') is-invalid @enderror" required>
+                            <select name="is_public" class="form-select select2 @error('is_public') is-invalid @enderror" required>
                                 <option value="1" {{ old('is_public', $event->is_public) == 1 ? 'selected' : '' }}>Công khai toàn trường</option>
                                 <option value="0" {{ old('is_public', $event->is_public) == 0 ? 'selected' : '' }}>Chỉ hiển thị cho CLB</option>
                             </select>
@@ -106,7 +104,7 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Trạng thái <span class="text-danger">*</span></label>
-                            <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                            <select name="status" class="form-select select2 @error('status') is-invalid @enderror" required>
                                 <option value="">-- Chọn trạng thái --</option>
                                 <option value="pending" {{ old('status', $event->status) == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
                                 <option value="approved" {{ old('status', $event->status) == 'approved' ? 'selected' : '' }}>Đã duyệt</option>
@@ -115,18 +113,13 @@
                             @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Người tạo <span class="text-danger">*</span></label>
-                            <select name="created_by" class="form-select @error('created_by') is-invalid @enderror" required>
-                                <option value="">-- Chọn người tạo --</option>
-                                @foreach($users as $user)
-                                    <option value="{{ $user->id }}" {{ old('created_by', $event->created_by) == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }} ({{ $user->email }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('created_by') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+               <div class="mb-3">
+    <label class="form-label fw-bold">Người tạo <span class="text-danger">*</span></label>
+    <select name="created_by" id="created_by" class="form-select @error('created_by') is-invalid @enderror" required>
+        <option value="">-- Đang tải... --</option>
+    </select>
+    @error('created_by') <div class="invalid-feedback">{{ $message }}</div> @enderror
+</div>
 
                         @if($event->approval_by)
                             <div class="mb-3">
@@ -173,3 +166,80 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({
+                width: '100%',
+                theme: 'bootstrap-5',
+                placeholder: '-- Chọn --',
+                allowClear: true
+            });
+        });
+    </script>
+@endpush
+@push('scripts')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Khởi tạo select2
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        placeholder: '-- Chọn --',
+        allowClear: true
+    });
+
+    const clubSelect = document.querySelector('select[name="club_id"]');
+    const createdBySelect = document.getElementById('created_by');
+
+    function loadClubMembers(clubId, selectedUserId = null) {
+        createdBySelect.innerHTML = '<option value="">-- Đang tải... --</option>';
+
+        if (!clubId) {
+            createdBySelect.innerHTML = '<option value="">-- Chọn CLB trước --</option>';
+            return;
+        }
+
+        fetch(`{{ url('admin/events/club-members') }}/${clubId}`)
+            .then(response => response.json())
+            .then(data => {
+                createdBySelect.innerHTML = '<option value="">-- Chọn người tạo --</option>';
+                data.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.name} (${user.email})`;
+                    if (selectedUserId && selectedUserId == user.id) {
+                        option.selected = true;
+                    }
+                    createdBySelect.appendChild(option);
+                });
+            })
+            .catch(() => {
+                createdBySelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+            });
+    }
+
+    // Khi load trang: load danh sách theo club_id hiện tại
+    const currentClubId = '{{ old('club_id', $event->club_id) }}';
+    const currentUserId = '{{ old('created_by', $event->created_by) }}';
+    if (currentClubId) {
+        loadClubMembers(currentClubId, currentUserId);
+    } else {
+        createdBySelect.innerHTML = '<option value="">-- Chọn CLB trước --</option>';
+    }
+
+    // Khi thay đổi CLB
+    clubSelect.addEventListener('change', function() {
+        loadClubMembers(this.value);
+    });
+});
+</script>
+@endpush

@@ -58,40 +58,48 @@
                                     </thead>
                                     <tbody>
                                         @foreach($docs as $doc)
-                                            <tr>
-                                                <td>{{ $doc->title }}</td>
-                                                <td>{{ $doc->uploader->name ?? '-' }}</td>
-                                                <td>{{ ucfirst($doc->status) }}</td>
-                                                <td>{{ strtoupper($doc->file_type) }}</td>
-                                                <td>
-                                                    <a href="{{ route('admin.documentclub.show', $doc->id) }}"
-                                                        class="btn btn-sm btn-outline-primary">Xem</a>
+                                                                                        <tr>
+                                                                                            <td>{{ $doc->title }}</td>
+                                                                                            <td>{{ $doc->uploader->name ?? '-' }}</td>
+                                                                                            @php
+                                                                                                $statusLabels = [
+                                                                                                    'pending' => 'Đang chờ duyệt',
+                                                                                                    'approved' => 'Đã phê duyệt',
+                                                                                                    'rejected' => 'Từ chối',
+                                                                                                ];
+                                                                                            @endphp
 
-                                                    @if($doc->status === 'pending')
-                                                        <form action="{{ route('admin.documentclub.approve', $doc->id) }}" method="POST"
-                                                            class="d-inline"> 
-                                                            @csrf
-                                                            <button class="btn btn-sm btn-outline-success">Duyệt</button>
-                                                        </form>
+                                                                                            <td>{{ $statusLabels[$doc->status] ?? ucfirst($doc->status) }}</td>
+                                                                                            <td>{{ strtoupper($doc->file_type) }}</td>
+                                                                                            <td>
+                                                                                                <a href="{{ route('admin.documentclub.show', $doc->id) }}"
+                                                                                                    class="btn btn-sm btn-outline-primary">Xem</a>
 
-                                                        <button class="btn btn-sm btn-outline-danger"
-                                                            onclick="rejectDocument({{ $doc->id }}, '{{ $doc->title }}')">Từ chối</button>
-                                                    @elseif($doc->status === 'approved')
-                                                        <a href="{{ route('admin.documentclub.edit', $doc->id) }}"
-                                                            class="btn btn-sm btn-outline-warning">Sửa</a>
-                                                    @endif
+                                                                                                @if($doc->status === 'pending')
+                                                                                                    <form action="{{ route('admin.documentclub.approve', $doc->id) }}" method="POST"
+                                                                                                        class="d-inline">
+                                                                                                        @csrf
+                                                                                                        <button class="btn btn-sm btn-outline-success">Duyệt</button>
+                                                                                                    </form>
 
-                                                    <a href="{{ route('admin.documentclub.download', $doc->id) }}"
-                                                        class="btn btn-sm btn-outline-success">Tải xuống</a>
+                                                                                                    <button class="btn btn-sm btn-outline-danger"
+                                                                                                        onclick="rejectDocument({{ $doc->id }}, '{{ $doc->title }}')">Từ chối</button>
+                                                                                                @elseif($doc->status === 'approved')
+                                                                                                    <a href="{{ route('admin.documentclub.edit', $doc->id) }}"
+                                                                                                        class="btn btn-sm btn-outline-warning">Sửa</a>
+                                                                                                @endif
 
-                                                    <form action="{{ route('admin.documentclub.destroy', $doc->id) }}" method="POST"
-                                                        class="d-inline" onsubmit="return confirm('Xóa tài liệu này?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button class="btn btn-sm btn-outline-danger">Xóa</button>
-                                                    </form>
-                                                </td>
-                                            </tr>
+                                                                                                <a href="{{ route('admin.documentclub.download', $doc->id) }}"
+                                                                                                    class="btn btn-sm btn-outline-success">Tải xuống</a>
+
+                                                                                                <form action="{{ route('admin.documentclub.destroy', $doc->id) }}" method="POST"
+                                                                                                    class="d-inline" onsubmit="return confirm('Xóa tài liệu này?')">
+                                                                                                    @csrf
+                                                                                                    @method('DELETE')
+                                                                                                    <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                                                                                                </form>
+                                                                                            </td>
+                                                                                        </tr>
                                         @endforeach
                                     </tbody>
                                 </table>

@@ -196,5 +196,21 @@ protected $fillable = [
 {
     return $this->hasMany(FundTransaction::class, 'event_id');
 }
+  public function clubMembers($clubId)
+    {
+        // Lấy danh sách thành viên của CLB
+        $members = ClubMember::where('club_id', $clubId)
+            ->with('user') // quan hệ với bảng users
+            ->get()
+            ->map(function ($m) {
+                return [
+                    'id' => $m->user->id,
+                    'name' => $m->user->name,
+                    'email' => $m->user->email,
+                ];
+            });
+
+        return response()->json($members);
+    }
 
 }

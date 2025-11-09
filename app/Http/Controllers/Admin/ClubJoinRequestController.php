@@ -8,6 +8,8 @@ use App\Models\ClubJoinRequest;
 use App\Jobs\SendNotificationJob;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Auth\User;
+use App\Models\ClubInterviewSchedule;
 
 class ClubJoinRequestController extends Controller
 {
@@ -17,16 +19,19 @@ class ClubJoinRequestController extends Controller
             ->orderByDesc('requested_at')
             ->get();
 
-        return view('admin.club_join_requests.index', compact('requests'));
+        return view('admin.club_join_requests.show2', compact('requests'));
     }
     public function showRequest($id)
     {
         $request = ClubJoinRequest::with(['user.member', 'club.manager'])->findOrFail($id);
-        return view('admin.club_join_requests.show', compact('request'));
+        $interviewers = User::select('id', 'name')->get(); // hoặc where('role', 'manager')
+
+        return view('admin.club_join_requests.show', compact('request', 'interviewers'));
     }
 
 
-public function destroy($id)
+
+    public function destroy($id)
 {
     $request = ClubJoinRequest::findOrFail($id);
     $request->delete();
@@ -35,103 +40,127 @@ public function destroy($id)
 }
 
 
-    public function handleRequest(Request $req, $id)
+    public function handle(Request $req, $id)
     {
         $request = ClubJoinRequest::with(['user.member', 'club'])->findOrFail($id);
 
-        if ($request->status !== 'pending') {
-           
-            return back()->with('error', 'Yêu cầu đã được xử lý trước đó.');
+        // ✅ Nếu đã xử lý rồi thì không cho xử lý lại
+        if (in_array($request->status, ['approved', 'rejected', 'cancelled'])) {
+            return back()->with('error', 'Yêu cầu này đã được xử lý.');
         }
 
         $action = $req->input('action');
         $note = $req->input('note');
-
         $user = $request->user;
         $club = $request->club;
         $member = $user->member;
 
-        // Kiểm tra trạng thái CLB
+        // 🔒 Kiểm tra CLB và người dùng
         if ($club->status !== 'active') {
-            Log::warning("CLB #{$club->id} không hoạt động. Không thể duyệt.");
-            return back()->with('error', 'Chỉ có thể tham gia CLB đang hoạt động.');
+            return back()->with('error', 'Chỉ có thể xử lý yêu cầu của CLB đang hoạt động.');
         }
-
-        // Kiểm tra nếu người dùng chưa có thông tin thành viên
         if (!$member) {
-            Log::warning("User #{$user->id} chưa có thông tin thành viên.");
             return back()->with('error', 'Người dùng chưa có thông tin thành viên.');
         }
 
-        // Kiểm tra nếu đã là thành viên CLB
-        $alreadyMember = ClubMember::where('club_id', $club->id)
-            ->where('member_id', $member->id)
-            ->exists();
+        switch ($action) {
 
-        if ($alreadyMember) {
-            Log::warning("Member #{$member->id} đã là thành viên CLB #{$club->id}");
-            return back()->with('error', 'Người dùng đã là thành viên của CLB này.');
+            // 🔹 Lên lịch phỏng vấn
+            case 'schedule':
+                $interviewer_id = $req->input('interviewer_id');
+                $scheduled_at = $req->input('scheduled_at');
+                $location = $req->input('location');
+                $status = $req->input('status') ?? 'scheduled';
+                $interview_note = $req->input('interview_note');
+
+                // Validate đơn giản
+                if (!$interviewer_id || !$scheduled_at) {
+                    return back()->with('error', 'Vui lòng chọn người phỏng vấn và thời gian.');
+                }
+
+                // Tạo bản ghi lịch phỏng vấn
+                ClubInterviewSchedule::create([
+                    'request_id' => $request->id,
+                    'interviewer_id' => $interviewer_id,
+                    'scheduled_at' => $scheduled_at,
+                    'location' => $location,
+                    'status' => $status,
+                    'note' => $interview_note,
+                ]);
+
+                // Cập nhật trạng thái yêu cầu
+                $request->update([
+                    'status' => 'scheduling_interview',
+                    'note' => $note,
+                    'handled_by' => auth()->id(),
+                ]);
+
+                return back()->with('success', 'Yêu cầu đã được lên lịch phỏng vấn.');
+
+            // 🔹 Đánh dấu phỏng vấn hoàn tất
+            case 'complete_interview':
+                $request->update([
+                    'status' => 'interview_completed',
+                    'note' => $note,
+                    'handled_by' => auth()->id(),
+                ]);
+                return back()->with('success', 'Đã đánh dấu phỏng vấn hoàn tất, chờ duyệt.');
+
+            // 🔹 Duyệt đơn
+            case 'approve':
+                $alreadyMember = ClubMember::where('club_id', $club->id)
+                    ->where('member_id', $member->id)
+                    ->exists();
+                if ($alreadyMember) {
+                    return back()->with('error', 'Người này đã là thành viên của CLB.');
+                }
+
+                ClubMember::create([
+                    'club_id' => $club->id,
+                    'member_id' => $member->id,
+                    'status' => 'active',
+                    'joined_at' => now(),
+                    'role' => 'member',
+                    'note' => $note,
+                ]);
+
+                $request->update([
+                    'status' => 'approved',
+                    'note' => $note,
+                    'handled_by' => auth()->id(),
+                    'handled_at' => now(),
+                ]);
+
+                return redirect()->route('admin.club_join_requests.index')
+                    ->with('success', 'Yêu cầu đã được duyệt.');
+
+            // 🔹 Từ chối đơn
+            case 'reject':
+                $request->update([
+                    'status' => 'rejected',
+                    'note' => $note,
+                    'handled_by' => auth()->id(),
+                    'handled_at' => now(),
+                ]);
+
+                return redirect()->route('admin.club_join_requests.index')
+                    ->with('success', 'Yêu cầu đã bị từ chối.');
+
+            // 🔹 Hủy đơn
+            case 'cancel':
+                $request->update([
+                    'status' => 'cancelled',
+                    'note' => $note,
+                    'handled_by' => auth()->id(),
+                    'handled_at' => now(),
+                ]);
+                return back()->with('success', 'Yêu cầu đã được hủy.');
+
+            default:
+                return back()->with('error', 'Hành động không hợp lệ.');
         }
-
-        // Kiểm tra số lượng thành viên hiện tại
-        $memberCount = ClubMember::where('club_id', $club->id)->count();
-        $maxMembers = $club->member_limit ?? 50;
-
-        if ($memberCount >= $maxMembers) {
-            Log::warning("CLB #{$club->id} đã đạt giới hạn thành viên ({$memberCount}/{$maxMembers})");
-            return back()->with('error', 'CLB đã đạt giới hạn số lượng thành viên.');
-        }
-
-        // Kiểm tra xác thực thông tin cá nhân
-        $isVerified = $member->citizen_id && $member->issued_date && $member->issued_place;
-
-        if (!$isVerified) {
-            return back()->with('error', 'Người dùng chưa xác thực đầy đủ thông tin cá nhân.');
-        }
-
-        if ($action === 'approve') {
-            ClubMember::create([
-                'club_id' => $club->id,
-                'member_id' => $member->id,
-                'status' => 'active',
-                'joined_at' => now(),
-                'role' => 'member',
-                'note' => $note,
-            ]);
-
-            $request->status = 'approved';
-            $request->note = $note;
-            $request->handled_by = auth()->id();
-            $request->save();
-
-
-            // Gửi thông báo
-            $batchId = uniqid();
-
-            SendNotificationJob::dispatch(
-                $user->id,
-                "Yêu cầu của bạn tham gia CLB '{$club->name}' đã được duyệt.",
-                $note,
-                'both',
-                $batchId,
-                false
-            );
-
-            return redirect()->route('admin.club_join_requests.index')->with('success', 'Yêu cầu đã được duyệt.');
-        }
-
-        if ($action === 'reject') {
-            $request->status = 'rejected';
-            $request->note = $note;
-            $request->handled_by = auth()->id();
-            $request->save();
-
-
-            return redirect()->route('admin.club_join_requests.index')->with('success', 'Yêu cầu đã bị từ chối.');
-        }
-
-        return back()->with('error', 'Hành động không hợp lệ.');
     }
+
 
     public function show2($id)
     {

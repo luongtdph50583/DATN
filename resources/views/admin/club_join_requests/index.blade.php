@@ -49,15 +49,34 @@ Danh sách
                     <td>{{ $request->user->name ?? '—' }}</td>
                     <td>{{ $request->club->name ?? '—' }}</td>
                     <td>{{ $request->requested_at ? $request->requested_at->format('d/m/Y') : '—' }}</td>
-                    <td>
-                        @if($request->status === 'pending')
-                            <span class="badge bg-warning text-dark">Chờ duyệt</span>
-                        @elseif($request->status === 'approved')
-                            <span class="badge bg-success">Đã duyệt</span>
-                        @elseif($request->status === 'rejected')
-                            <span class="badge bg-danger">Từ chối</span>
-                        @endif
-                    </td>
+                  <td>
+    @switch($request->status)
+        @case('pending')
+            <span class="badge bg-warning text-dark">Chờ duyệt</span>
+            @break
+        @case('scheduling_interview')
+            <span class="badge bg-info text-dark">Đang lên lịch phỏng vấn</span>
+            @break
+        @case('interview')
+            <span class="badge bg-primary">Đã có lịch phỏng vấn</span>
+            @break
+        @case('interview_completed')
+            <span class="badge bg-secondary">Phỏng vấn xong, chờ duyệt</span>
+            @break
+        @case('approved')
+            <span class="badge bg-success">Đã duyệt</span>
+            @break
+        @case('rejected')
+            <span class="badge bg-danger">Từ chối</span>
+            @break
+        @case('cancelled')
+            <span class="badge bg-dark">Đã hủy</span>
+            @break
+        @default
+            <span class="badge bg-light text-dark">Không xác định</span>
+    @endswitch
+</td>
+
                     <td class="text-center">
 
                     @if($request->status === 'pending')
@@ -104,9 +123,12 @@ Danh sách
             @endforelse
         </tbody>
     </table>
+    @endsection
+
 
     {{-- 🔧 Script xử lý AJAX --}}
     <script>
+        
         document.addEventListener('DOMContentLoaded', function () {
 
             // 🧩 Bắt sự kiện mở Offcanvas
@@ -278,4 +300,3 @@ Danh sách
         });
     </script>
 
-@endsection

@@ -25,76 +25,94 @@
 
     <!-- Filter -->
 
-            <div class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold text-secondary">Chọn CLB</label>
-                    <select name="club_id" class="form-select select2-club">
-                        <option value="">Tất cả CLB</option>
-                        @foreach($clubs as $club)
-                            <option value="{{ $club->id }}" {{ request('club_id') == $club->id ? 'selected' : '' }}>
-                                {{ $club->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold text-secondary">Trạng thái</label>
-                    <select name="status" class="form-select">
-                        <option value="">Tất cả trạng thái</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
-                        <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Đã duyệt</option>
-                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Từ chối</option>
-                    </select>
-                </div>
-
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Lọc</button>
-                </div>
-
-                @if(request()->hasAny(['club_id', 'status']))
-                    <div class="col-md-3">
-                        <a href="{{ route('admin.plans.index') }}" class="btn btn-outline-secondary w-100">Xóa lọc</a>
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.plans.index') }}">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold">CLB</label>
-                        <select name="club_id" class="form-select">
-                            <option value="">Tất cả CLB</option>
-                            @foreach($clubs as $club)
-                                <option value="{{ $club->id }}" {{ request('club_id') == $club->id ? 'selected' : '' }}>
-                                    {{ $club->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold">Trạng thái</label>
-                        <select name="status" class="form-select">
-                            <option value="">Tất cả</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
-                            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Đã duyệt</option>
-                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Từ chối</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-flex gap-2 align-items-end">
-                        <button type="submit" class="btn btn-primary flex-fill">
-                            <i class="fas fa-search"></i> Lọc
-                        </button>
-                        @if(request()->hasAny(['club_id', 'status']))
-                            <a href="{{ route('admin.plans.index') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-times"></i>
-                            </a>
+    <div class="table-wrapper">
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>CLB</th>
+                    <th>Tiêu đề</th>
+                    <th>Thời gian</th>
+                    <th>Ngân sách</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($plans as $plan)
+                <tr>
+                    <td><span class="id-badge">#{{ $plan->id }}</span></td>
+                    <td class="fw-bold">{{ $plan->club->name }}</td>
+                    <td>{{ Str::limit($plan->title, 40) }}</td>
+                    <td>
+                        <small>{{ $plan->start_date->format('d/m') }} → {{ $plan->end_date->format('d/m/Y') }}</small>
+                    </td>
+                    <td>
+                        @if($plan->budget)
+                            <strong class="text-success">{{ number_format($plan->budget) }}đ</strong>
+                        @else
+                            <em class="text-muted">—</em>
                         @endif
-                    </div>
-                </div>
-            </form>
-        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge status-{{ $plan->status }}">
+                            {{ $plan->status_label }}
+                        </span>
+                    </td>
+                    <td class="action-buttons">
+                        <a href="{{ route('admin.plans.show', $plan) }}" class="btn btn-sm btn-info">Xem</a>
+                        <a href="{{ route('admin.plans.edit', $plan) }}" class="btn btn-sm btn-warning">Sửa</a>
+
+                        @if($plan->status === 'pending')
+                            <form action="{{ route('admin.plans.approve', $plan) }}" method="POST" class="d-inline">@csrf
+                                <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+                            </form>
+                            <form action="{{ route('admin.plans.reject', $plan) }}" method="POST" class="d-inline">@csrf
+                                <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
+                            </form>
+                        @endif
+
+                        <form action="{{ route('admin.plans.destroy', $plan) }}" method="POST" class="d-inline"
+                              onsubmit="return confirm('Xóa kế hoạch này? Không thể khôi phục!')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Chưa có kế hoạch nào.</p>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 
-    <!-- Table -->
+    <!-- Pagination -->
+    <div class="pagination-wrapper">
+        {{ $plans->links('pagination::bootstrap-5') }}
+    </div>
+</div>
+
+{{-- ✅ Thêm Select2 JS + CSS --}}
+@push('scripts')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('.select2-club').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Chọn CLB...',
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
+@endpush
 
     <div class="card shadow-sm">
         <div class="card-body p-0">

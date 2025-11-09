@@ -1,18 +1,22 @@
-<!DOCTYPE html>
-<html lang="vi">
+{{-- resources/views/admin/layouts/blank-app.blade.php --}}
+@extends('admin.layouts.app')
 
-<head>
-    <meta charset="UTF-8">
-    <title>@yield('title')</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
-    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
-</head>
 
-<body>
-    <div class="container my-3">
-        @yield('card-body')
-    </div>
-</body>
+@php
+// Disable các phần không cần
+$noSidebar = true;
+$noHeader = true;
+$noFooter = true;
+@endphp
 
-</html>
+@section('title', 'Trang trắng (Blank)')
+
+{{-- Nội dung chính --}}
+@section('card-body')
+    @yield('card-body')
+@endsection
+
+{{-- Chèn JS riêng của trang --}}
+@push('scripts')
+    <script src="{{ asset('js/club-request.js') }}"></script>
+@endpush

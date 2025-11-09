@@ -66,18 +66,39 @@
                     </tr>
                 @endif
 
-                @if($document->access_level)
-                    <tr>
-                        <th>Cấp độ truy cập</th>
-                        <td>
-                            @if(is_array($document->access_level))
-                                {{ implode(', ', $document->access_level) }}
-                            @else
-                                {{ $document->access_level }}
-                            @endif
-                        </td>
-                    </tr>
-                @endif
+            @php
+                $levels = [
+                    'public' => 'Công khai',
+                    'member' => 'Thành viên',
+                    'communication' => 'Truyền thông',
+                    'event_manager' => 'Quản lý sự kiện',
+                    'secretary' => 'Thư ký',
+                    'treasurer' => 'Thủ quỹ',
+                    'deputy_manager' => 'Phó chủ nhiệm',
+                    'club_manager' => 'Chủ nhiệm CLB',
+                ];
+
+                $accessLevels = $document->access_level;
+
+                // Nếu dữ liệu là chuỗi JSON, decode sang mảng
+                if (is_string($accessLevels)) {
+                    $decoded = json_decode($accessLevels, true);
+                    $accessLevels = is_array($decoded) ? $decoded : [$accessLevels];
+                }
+
+                // Map sang tiếng Việt
+                $translated = collect($accessLevels ?? [])
+                    ->map(fn($v) => $levels[$v] ?? ucfirst($v))
+                    ->implode(', ');
+            @endphp
+
+            @if(!empty($translated))
+                <tr>
+                    <th>Cấp độ truy cập</th>
+                    <td>{{ $translated }}</td>
+                </tr>
+            @endif
+
 
                 @if($document->status)
                     <tr>

@@ -7,7 +7,7 @@
 @endsection
 
 @section('card-body')
-    @if(session('success'))
+        @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
@@ -23,8 +23,8 @@
 
     <!-- Tìm kiếm và lọc -->
     <div class="row g-3 mb-3">
-        <div class="col-md-9">
-            <input type="text" id="searchKeyword" class="form-control" placeholder="Tìm theo tên CLB hoặc người đề xuất">
+        <div class="col-md-6">
+            <input type="text" id="searchKeyword" class="form-control" placeholder="Tìm theo tên CLB, người đề xuất hoặc lĩnh vực">
         </div>
         <div class="col-md-3">
             <select id="filterStatus" class="form-select">
@@ -40,11 +40,15 @@
     <table class="table table-striped table-bordered">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Tên CLB đề xuất</th>
+                <th>#</th>
+                <th>Tên CLB</th>
+                <th>Lĩnh vực</th>
+                <th>Slogan</th>
                 <th>Người đề xuất</th>
                 <th>Ngày yêu cầu</th>
                 <th>Trạng thái</th>
+                <th>Kế hoạch</th>
+                <th>Logo</th>
                 <th>Hành động</th>
             </tr>
         </thead>
@@ -53,6 +57,8 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $request->name }}</td>
+                    <td>{{ $request->field ?? '—' }}</td>
+                    <td>{{ $request->slogan ?? '—' }}</td>
                     <td>{{ $request->user->name ?? '—' }}</td>
                     <td>{{ $request->created_at->format('d/m/Y') }}</td>
                     <td>
@@ -65,17 +71,26 @@
                         @endif
                     </td>
                     <td>
-                        <form action="{{ route('admin.club_requests.destroy', $request->id) }}" method="POST" style="display:inline;"
-                            onsubmit="return confirm('Bạn có chắc muốn xóa yêu cầu này?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-                        </form>
+                        @if($request->plan_file)
+                            <a href="{{ asset('storage/' . $request->plan_file) }}" target="_blank" class="btn btn-sm btn-primary">Xem kế hoạch</a>
+                        @else
+                            —
+                        @endif
+                    </td>
+                    <td>
+                        @if($request->logo)
+                            <img src="{{ asset('storage/' . $request->logo) }}" alt="Logo CLB" style="height: 40px;">
+                        @else
+                            —
+                        @endif
+                    </td>
+                    <td>
+
                         @if($request->status === 'pending')
                             <button class="btn btn-success btn-sm" type="button" data-bs-toggle="offcanvas"
                                 data-bs-target="#clubRequestDetail{{ $request->id }}"
                                 aria-controls="clubRequestDetail{{ $request->id }}">
-                                Duyệt
+                                Xử lý
                             </button>
 
                             <div class="offcanvas offcanvas-end" tabindex="-1" id="clubRequestDetail{{ $request->id }}"
@@ -104,77 +119,78 @@
         </tbody>
     </table>
 
-    <!-- JS -->
-    <script>
-        // Load chi tiết yêu cầu vào offcanvas
-        document.querySelectorAll('[data-bs-toggle="offcanvas"]').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const targetId = btn.getAttribute('data-bs-target').substring(1);
-                const contentDiv = document.querySelector(`#${targetId} .offcanvas-body`);
-                const requestId = targetId.replace('clubRequestDetail', '');
-                const url = "{{ url('admin/club-requests') }}/" + requestId;
 
-                fetch(url)
-                    .then(res => res.text())
-                    .then(html => {
-                        contentDiv.innerHTML = html;
+        <!-- JS -->
+        <script>
+            // Load chi tiết yêu cầu vào offcanvas
+            document.querySelectorAll('[data-bs-toggle="offcanvas"]').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const targetId = btn.getAttribute('data-bs-target').substring(1);
+                    const contentDiv = document.querySelector(`#${targetId} .offcanvas-body`);
+                    const requestId = targetId.replace('clubRequestDetail', '');
+                    const url = "{{ url('admin/club-requests') }}/" + requestId;
+
+                    fetch(url)
+                        .then(res => res.text())
+                        .then(html => {
+                            contentDiv.innerHTML = html;
+                        })
+                        .catch(err => {
+                            contentDiv.innerHTML = `<div class="alert alert-danger">Không tải được chi tiết: ${err}</div>`;
+                        });
+                });
+            });
+
+            // Lọc realtime bằng JS
+            const keywordInput = document.getElementById('searchKeyword');
+            const statusSelect = document.getElementById('filterStatus');
+
+            keywordInput.addEventListener('input', filterRequests);
+            statusSelect.addEventListener('change', filterRequests);
+
+            function filterRequests() {
+                const keyword = keywordInput.value;
+                const status = statusSelect.value;
+
+                fetch(`{{ route('admin.club_requests.filter') }}?keyword=${encodeURIComponent(keyword)}&status=${status}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const tbody = document.getElementById('clubRequestTableBody');
+                        tbody.innerHTML = '';
+
+                        if (data.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Không tìm thấy kết quả phù hợp.</td></tr>';
+                            return;
+                        }
+
+                        data.forEach(request => {
+                            const statusLabel = {
+                                pending: '<span class="badge bg-warning">Chờ duyệt</span>',
+                                approved: '<span class="badge bg-success">Đã duyệt</span>',
+                                rejected: '<span class="badge bg-danger">Từ chối</span>'
+                            }[request.status] || '';
+
+                            const action = request.status === 'pending'
+                                ? `<button class="btn btn-success btn-sm" type="button" data-bs-toggle="offcanvas"
+                                            data-bs-target="#clubRequestDetail${request.id}"
+                                            aria-controls="clubRequestDetail${request.id}">Duyệt</button>`
+                                : `<a href="/admin/club-requests/${request.id}/show2" class="btn btn-info btn-sm">Xem</a>`;
+
+                            tbody.innerHTML += `
+                                    <tr>
+                                        <td>${request.id}</td>
+                                        <td>${request.name}</td>
+                                        <td>${request.user?.name ?? '—'}</td>
+                                        <td>${new Date(request.created_at).toLocaleDateString('vi-VN')}</td>
+                                        <td>${statusLabel}</td>
+                                        <td>${action}</td>
+                                    </tr>
+                                `;
+                        });
                     })
                     .catch(err => {
-                        contentDiv.innerHTML = `<div class="alert alert-danger">Không tải được chi tiết: ${err}</div>`;
+                        console.error('Lỗi khi lọc:', err);
                     });
-            });
-        });
-
-        // Lọc realtime bằng JS
-        const keywordInput = document.getElementById('searchKeyword');
-        const statusSelect = document.getElementById('filterStatus');
-
-        keywordInput.addEventListener('input', filterRequests);
-        statusSelect.addEventListener('change', filterRequests);
-
-        function filterRequests() {
-            const keyword = keywordInput.value;
-            const status = statusSelect.value;
-
-            fetch(`{{ route('admin.club_requests.filter') }}?keyword=${encodeURIComponent(keyword)}&status=${status}`)
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.getElementById('clubRequestTableBody');
-                    tbody.innerHTML = '';
-
-                    if (data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Không tìm thấy kết quả phù hợp.</td></tr>';
-                        return;
-                    }
-
-                    data.forEach(request => {
-                        const statusLabel = {
-                            pending: '<span class="badge bg-warning">Chờ duyệt</span>',
-                            approved: '<span class="badge bg-success">Đã duyệt</span>',
-                            rejected: '<span class="badge bg-danger">Từ chối</span>'
-                        }[request.status] || '';
-
-                        const action = request.status === 'pending'
-                            ? `<button class="btn btn-success btn-sm" type="button" data-bs-toggle="offcanvas"
-                                        data-bs-target="#clubRequestDetail${request.id}"
-                                        aria-controls="clubRequestDetail${request.id}">Duyệt</button>`
-                            : `<a href="/admin/club-requests/${request.id}/show2" class="btn btn-info btn-sm">Xem</a>`;
-
-                        tbody.innerHTML += `
-                                <tr>
-                                    <td>${request.id}</td>
-                                    <td>${request.name}</td>
-                                    <td>${request.user?.name ?? '—'}</td>
-                                    <td>${new Date(request.created_at).toLocaleDateString('vi-VN')}</td>
-                                    <td>${statusLabel}</td>
-                                    <td>${action}</td>
-                                </tr>
-                            `;
-                    });
-                })
-                .catch(err => {
-                    console.error('Lỗi khi lọc:', err);
-                });
-        }
-    </script>
+            }
+        </script>
 @endsection

@@ -24,9 +24,9 @@ class ClubMember extends Model
 
     public $timestamps = true;
 
-    public function club()
+      public function club()
     {
-        return $this->belongsTo(Club::class);
+        return $this->belongsTo(Club::class, 'club_id');
     }
 
     public function user()

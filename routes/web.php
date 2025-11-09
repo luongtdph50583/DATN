@@ -25,7 +25,8 @@ use App\Http\Controllers\Admin\{
     PlanController,
     DocumentPostController,
     DocumentClubController,
-    ClubLeaveRequestController
+    ClubLeaveRequestController,
+    ClubUpdateLogController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -75,6 +76,9 @@ Route::prefix('admin')
         Route::get('events-by-club/{clubId}', [EventController::class, 'getEventsByClub'])
             ->name('events.byClub');
         Route::get('/events/get-managers/{clubId}', [EventController::class, 'getManagersByClub'])->name('events.getManagers');
+
+Route::get('events/club-members/{club}', [EventController::class, 'getClubMembers'])
+    ->name('events.club-members');
 
 
         Route::get('/club-balance/{clubId}', [FundController::class, 'getClubBalance'])
@@ -146,10 +150,14 @@ Route::prefix('admin')
                 Route::get('/', 'index')->name('index');
                 Route::get('/{id}', 'showRequest')->name('show');
                 Route::get('/{id}/full', 'show2')->name('show2');
-                Route::post('/{id}/handle', 'handleRequest')->name('handle');
-                Route::delete('/{id}', 'destroy')->name('destroy'); // ✅ Xóa
 
+                // ✅ Xử lý từng trạng thái trong quy trình duyệt
+                Route::post('/{id}/handle', 'handle')->name('handle');
+
+                // ✅ Xóa yêu cầu
+                Route::delete('/{id}', 'destroy')->name('destroy');
             });
+
         Route::controller(ClubLeaveRequestController::class)
             ->prefix('club-leave-requests')
             ->as('club_leave_requests.')
@@ -192,6 +200,14 @@ Route::prefix('admin')
             ->group(function () {
             Route::get('/', 'index')->name('index');
         });
+
+        Route::controller(ClubUpdateLogController::class)
+            ->prefix('club-update-logs')
+            ->as('club_update_logs.')
+            ->group(function () {
+                Route::get('/', 'index')->name('index');
+            });
+
         Route::controller(DocumentClubController::class)
             ->prefix('documentclub')
             ->as('documentclub.')
