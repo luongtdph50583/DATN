@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\ClubMember;
 use Illuminate\Http\Request;
@@ -101,7 +102,8 @@ public function destroy($id)
 
             $request->status = 'approved';
             $request->note = $note;
-            $request->handled_by = auth()->id();
+            $request->handled_by = Auth::id();
+
             $request->save();
 
 
@@ -123,7 +125,8 @@ public function destroy($id)
         if ($action === 'reject') {
             $request->status = 'rejected';
             $request->note = $note;
-            $request->handled_by = auth()->id();
+           $request->handled_by = Auth::id();
+
             $request->save();
 
 

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\CustomNotification;
+use Illuminate\Support\Facades\Auth;
 
 class ClubRequestController extends Controller
 {
@@ -108,7 +109,7 @@ class ClubRequestController extends Controller
 
             // Lưu trạng thái xử lý và người xử lý
             $clubRequest->status = 'approved';
-            $clubRequest->handled_by = auth()->id();
+            $clubRequest->handled_by = Auth::id();
             $clubRequest->note = $note;
             $clubRequest->save();
 
@@ -127,7 +128,8 @@ class ClubRequestController extends Controller
 
             // Lưu trạng thái xử lý và người xử lý
             $clubRequest->status = 'rejected';
-            $clubRequest->handled_by = auth()->id();
+            $clubRequest->handled_by = Auth::id();
+
             $clubRequest->note = $note;
             $clubRequest->save();
 
