@@ -26,7 +26,9 @@ use App\Http\Controllers\Admin\{
     DocumentPostController,
     DocumentClubController,
     ClubLeaveRequestController,
-    ClubUpdateLogController
+    ClubUpdateLogController,
+    ClubRequestUpdateController
+
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -102,6 +104,9 @@ Route::get('events/club-members/{club}', [EventController::class, 'getClubMember
 
         // Routes cho CLB
 
+
+
+
         Route::controller(ClubController::class)
             ->prefix('clubs')
             ->as('clubs.')
@@ -139,6 +144,17 @@ Route::get('events/club-members/{club}', [EventController::class, 'getClubMember
                 Route::get('/{id}', 'showRequest')->name('show');
                 Route::get('/{id}/show2', 'show2')->name('show2');
                 Route::post('/{id}/handle', 'handleRequest')->name('handle');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+            });
+        Route::controller(ClubRequestUpdateController::class)
+            ->prefix('club-requests-update')
+            ->as('club_requests_update.')
+            ->group(function () {
+                Route::get('/filter', 'filterRequests')->name('filter');
+                Route::get('/', 'indexRequests')->name('index');
+                Route::get('/{id}', 'showRequest')->name('show');
+                Route::get('/{id}/show2', 'show2')->name('show2');
+                Route::post('/{id}/handle', 'handleUpdateRequest')->name('handleUpdateRequest');
                 Route::delete('/{id}', 'destroy')->name('destroy');
             });
 
@@ -201,12 +217,7 @@ Route::get('events/club-members/{club}', [EventController::class, 'getClubMember
             Route::get('/', 'index')->name('index');
         });
 
-        Route::controller(ClubUpdateLogController::class)
-            ->prefix('club-update-logs')
-            ->as('club_update_logs.')
-            ->group(function () {
-                Route::get('/', 'index')->name('index');
-            });
+
 
         Route::controller(DocumentClubController::class)
             ->prefix('documentclub')

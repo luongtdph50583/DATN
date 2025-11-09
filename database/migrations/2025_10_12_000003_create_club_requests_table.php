@@ -54,10 +54,13 @@ return new class extends Migration {
 
             $table->text('note')->nullable()->comment('Ghi chú của người duyệt');
 
+
             // 🔹 Thêm rule và member_limit
             $table->text('rule')->nullable()->comment('Quy tắc của CLB');
             $table->integer('member_limit')->nullable()->comment('Số lượng thành viên tối đa');
 
+            // 🔹 Thêm type để phân biệt loại yêu cầu
+           
             $table->timestamps();
         });
 

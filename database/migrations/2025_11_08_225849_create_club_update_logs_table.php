@@ -19,7 +19,7 @@ return new class extends Migration
                 ->onDelete('cascade')
                 ->comment('CLB được thay đổi');
 
-            $table->foreignId('admin_id') // thêm cột admin_id
+            $table->foreignId('admin_id')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete()
@@ -35,8 +35,21 @@ return new class extends Migration
                 ->nullable()
                 ->comment('Các trường được thay đổi, lưu giá trị cũ và mới');
 
+            $table->enum('type', ['admin', 'proposer'])
+                ->default('proposer')
+                ->comment('Loại thay đổi: admin hay đề xuất');
+
+            $table->enum('status', ['pending', 'approved', 'rejected'])
+                ->default('pending')
+                ->comment('Trạng thái đề xuất');
+
+            $table->text('rejected_reason')
+                ->nullable()
+                ->comment('Lý do từ chối nếu admin từ chối đề xuất');
+
             $table->timestamps();
         });
+
     }
 
 

@@ -74,5 +74,10 @@ class ClubRequest extends Model
         // advisor_id = faculty_members.id
         return $this->belongsTo(FacultyMember::class, 'advisor_id')->with('user');
     }
+    public function club()
+    {
+        return $this->belongsTo(Club::class, 'club_id');
+    }
+
 
 }

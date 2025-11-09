@@ -78,6 +78,11 @@ class Club extends Model
             ]);
         });
     }
+    public function clubMembers()
+    {
+        return $this->hasMany(ClubMember::class, 'club_id');
+    }
+
 
     /** Yêu cầu tham gia CLB */
     public function joinRequests()

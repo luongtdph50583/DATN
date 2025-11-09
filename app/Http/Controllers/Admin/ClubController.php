@@ -12,6 +12,7 @@ use App\Models\ClubPlan;
 use App\Models\Document;
 use App\Models\ClubMember;
 use Illuminate\Http\Request;
+use App\Models\ClubUpdateLog;
 use App\Models\FundTransaction;
 use Illuminate\Validation\Rule;
 use App\Jobs\SendNotificationJob;
@@ -377,11 +378,19 @@ class ClubController extends Controller
 
         // ✅ Lưu log nếu có thay đổi
         if (!empty($changes)) {
-            $logService->logAdminUpdate($club, $changes, auth()->id());
+            ClubUpdateLog::create([
+                'club_id' => $club->id,
+                'admin_id' => auth()->id(),
+                'proposer_id' => null,
+                'changed_fields' => json_encode($changes, JSON_UNESCAPED_UNICODE),
+                'type' => 'admin',
+                'status' => 'approved',
+            ]);
         }
 
         return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật ban quản lý và trạng thái CLB thành công!');
     }
+
 
 
 

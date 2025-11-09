@@ -15,11 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('club_request_id')->constrained('club_requests')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->string('name');
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
             $table->enum('role', [
-                'club_manager',
                 'deputy_manager',
                 'secretary',
                 'treasurer',
@@ -27,8 +23,12 @@ return new class extends Migration
                 'communication',
                 'member'
             ])->default('member')->comment('Vai trò trong CLB');
+
+            // Thêm cột type để phân biệt loại đề xuất
+
             $table->timestamps();
         });
+
 
     }
 

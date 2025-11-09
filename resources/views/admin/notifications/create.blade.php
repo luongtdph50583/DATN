@@ -207,8 +207,6 @@
             const renderSelectButtons = ($select, type = '', extra = {}) => {
                 if (!$select.length || $select.prev('.select-actions').length) return;
 
-                let isLoading = true;
-
                 const $wrapper = $(`
                 <div class="mb-2 d-flex gap-2 align-items-center select-actions">
                     <span class="text-muted loading-indicator">Đang tải dữ liệu...</span>
@@ -220,33 +218,10 @@
                 const $loading = $wrapper.find('.loading-indicator');
                 const $selectAllBtn = $wrapper.find('.select-all-btn');
                 const $deselectAllBtn = $wrapper.find('.deselect-all-btn');
-
                 $select.before($wrapper);
 
-                const checkReady = () => {
-                    if ($select.data('select2')) {
-                        isLoading = false;
-                        $loading.hide();
-                        $selectAllBtn.prop('disabled', false);
-                    } else {
-                        $loading.show();
-                        $selectAllBtn.prop('disabled', true);
-                    }
-                };
-
-                const interval = setInterval(() => {
-                    checkReady();
-                    if (!isLoading) clearInterval(interval);
-                }, 300);
-
-                $selectAllBtn.on('click', function () {
-                    if (isLoading) {
-                        alert('Dữ liệu chưa tải xong. Vui lòng chờ một chút rồi thử lại.');
-                        return;
-                    }
-
+                const loadData = () => {
                     $loading.show();
-
                     let url = '';
                     let params = {};
 
@@ -273,15 +248,18 @@
                     }
 
                     $.get(url, params, function (data) {
-                        const allOptions = data.results.map(u => new Option(u.text, u.id, true, true));
-                        const allIds = data.results.map(u => u.id);
-
-                        $select.empty().append(allOptions);
-                        $select.val(allIds).trigger('change');
-
-                        $loading.hide();
+                        const options = data.results.map(u => new Option(u.text, u.id, false, false));
+                        $select.empty().append(options).trigger('change');
                         $selectAllBtn.prop('disabled', false);
+                        $loading.hide();
                     });
+                };
+
+                loadData(); // load khi khởi tạo
+
+                $selectAllBtn.on('click', function () {
+                    const ids = $select.find('option').map((i, o) => $(o).val()).get();
+                    $select.val(ids).trigger('change');
                 });
 
                 $deselectAllBtn.on('click', function () {
@@ -289,47 +267,22 @@
                 });
             };
 
+            const initSelect = (id, type, extra = {}) => {
+                const $select = $(id);
+                $select.select2({ placeholder: 'Chọn...', minimumInputLength: 0 });
+                renderSelectButtons($select, type, extra);
+                return $select;
+            };
+
             $('#target_type').on('change', function () {
-                let type = $(this).val();
-                let $targetDiv = $('#target_select');
+                const type = $(this).val();
+                const $targetDiv = $('#target_select');
                 $targetDiv.empty();
 
                 if (type === 'user') {
-                    $targetDiv.html(`
-                    <label class="form-label">Chọn người nhận</label>
-                    <select id="users_select" name="users[]" class="form-select" multiple></select>
-                `);
-
-                    const $select = $('#users_select');
-                    $select.select2({
-                        placeholder: 'Chọn người dùng...',
-                        minimumInputLength: 0, // ✅ hiển thị danh sách luôn
-                        ajax: {
-                            url: '{{ route("admin.notifications.fetchUsers") }}',
-                            dataType: 'json',
-                            delay: 300,
-                            data: params => ({ q: params.term || '', page: params.page || 1 }),
-                            processResults: data => ({
-                                results: data.results,
-                                pagination: { more: data.pagination?.more || false }
-                            }),
-                            cache: true
-                        }
-                    });
-
-                    // Khi mở Select2, load danh sách luôn
-                    $select.on('select2:opening', function () {
-                        if (!$select.data('select2').isOpen()) {
-                            $.get('{{ route("admin.notifications.fetchUsers") }}', { q: '' }, function (data) {
-                                const allOptions = data.results.map(u => new Option(u.text, u.id, false, false));
-                                $select.empty().append(allOptions);
-                            });
-                        }
-                    });
-
-                    renderSelectButtons($select, 'user-ajax');
+                    $targetDiv.html(`<label class="form-label">Chọn người nhận</label><select id="users_select" name="users[]" class="form-select" multiple></select>`);
+                    initSelect('#users_select', 'user-ajax');
                 }
-
                 else if (type === 'club') {
                     $targetDiv.html(`
                     <label class="form-label">Chọn CLB</label>
@@ -337,27 +290,15 @@
                     <label class="form-label mt-2">Chọn thành viên</label>
                     <select id="club_members" name="users[]" class="form-select" multiple></select>
                 `);
-
                     $.get('{{ route("admin.notifications.fetchClubs") }}', function (clubs) {
-                        let options = clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                        const options = clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
                         $('#club_select').append(options);
                     });
-
                     $('#club_select').on('change', function () {
-                        let clubId = $(this).val();
-                        const $members = $('#club_members');
-                        $members.empty();
-                        if (clubId) {
-                            $.get('{{ route("admin.notifications.fetchClubMembers") }}', { club_id: clubId }, function (data) {
-                                let options = data.results.map(u => `<option value="${u.id}">${u.text}</option>`).join('');
-                                $members.append(options);
-                                $members.select2({ placeholder: 'Chọn thành viên...' });
-                                renderSelectButtons($members, 'club', { club_id: clubId });
-                            });
-                        }
+                        const clubId = $(this).val();
+                        if (clubId) initSelect('#club_members', 'club', { club_id: clubId });
                     });
                 }
-
                 else if (type === 'role') {
                     $targetDiv.html(`
                     <label class="form-label">Chọn vai trò</label>
@@ -370,22 +311,11 @@
                     <label class="form-label mt-2">Chọn người</label>
                     <select id="role_users" name="users[]" class="form-select" multiple></select>
                 `);
-
                     $('#role_select').on('change', function () {
-                        let role = $(this).val();
-                        const $users = $('#role_users');
-                        $users.empty();
-                        if (role) {
-                            $.get('{{ route("admin.notifications.fetchUsers") }}', { role: role }, function (data) {
-                                let options = data.results.map(u => `<option value="${u.id}">${u.text}</option>`).join('');
-                                $users.append(options);
-                                $users.select2({ placeholder: 'Chọn người...' });
-                                renderSelectButtons($users, 'role', { role: role });
-                            });
-                        }
+                        const role = $(this).val();
+                        if (role) initSelect('#role_users', 'role', { role });
                     });
                 }
-
                 else if (type === 'event') {
                     $targetDiv.html(`
                     <label class="form-label">Chọn sự kiện</label>
@@ -393,37 +323,27 @@
                     <label class="form-label mt-2">Chọn người tham gia</label>
                     <select id="event_members" name="users[]" class="form-select" multiple></select>
                 `);
-
                     $.get('{{ route("admin.notifications.fetchEvents") }}', function (events) {
-                        let options = events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+                        const options = events.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
                         $('#event_select').append(options);
                     });
-
                     $('#event_select').on('change', function () {
-                        let eventId = $(this).val();
-                        const $members = $('#event_members');
-                        $members.empty();
-                        if (eventId) {
-                            $.get('{{ route("admin.notifications.fetchEventMembers") }}', { event_id: eventId }, function (data) {
-                                let options = data.results.map(u => `<option value="${u.id}">${u.text}</option>`).join('');
-                                $members.append(options);
-                                $members.select2({ placeholder: 'Chọn người tham gia...' });
-                                renderSelectButtons($members, 'event', { event_id: eventId });
-                            });
-                        }
+                        const eventId = $(this).val();
+                        if (eventId) initSelect('#event_members', 'event', { event_id: eventId });
                     });
                 }
             });
 
             $('form').on('submit', function (e) {
                 const $userSelect = $('select[name="users[]"]');
-                if ($userSelect.length && (!$userSelect.val() || $userSelect.val().length === 0)) {
+                if ($userSelect.length && (!$userSelect.val() || !$userSelect.val().length)) {
                     alert('Vui lòng chọn ít nhất một người nhận.');
                     e.preventDefault();
                 }
             });
         });
     </script>
+
 @endpush
 
 

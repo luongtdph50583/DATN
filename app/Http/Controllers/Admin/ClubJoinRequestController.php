@@ -42,123 +42,123 @@ class ClubJoinRequestController extends Controller
 
     public function handle(Request $req, $id)
     {
-        $request = ClubJoinRequest::with(['user.member', 'club'])->findOrFail($id);
+        // $request = ClubJoinRequest::with(['user.member', 'club'])->findOrFail($id);
 
-        // ✅ Nếu đã xử lý rồi thì không cho xử lý lại
-        if (in_array($request->status, ['approved', 'rejected', 'cancelled'])) {
-            return back()->with('error', 'Yêu cầu này đã được xử lý.');
-        }
+        // // ✅ Nếu đã xử lý rồi thì không cho xử lý lại
+        // if (in_array($request->status, ['approved', 'rejected', 'cancelled'])) {
+        //     return back()->with('error', 'Yêu cầu này đã được xử lý.');
+        // }
 
-        $action = $req->input('action');
-        $note = $req->input('note');
-        $user = $request->user;
-        $club = $request->club;
-        $member = $user->member;
+        // $action = $req->input('action');
+        // $note = $req->input('note');
+        // $user = $request->user;
+        // $club = $request->club;
+        // $member = $user->member;
 
-        // 🔒 Kiểm tra CLB và người dùng
-        if ($club->status !== 'active') {
-            return back()->with('error', 'Chỉ có thể xử lý yêu cầu của CLB đang hoạt động.');
-        }
-        if (!$member) {
-            return back()->with('error', 'Người dùng chưa có thông tin thành viên.');
-        }
+        // // 🔒 Kiểm tra CLB và người dùng
+        // if ($club->status !== 'active') {
+        //     return back()->with('error', 'Chỉ có thể xử lý yêu cầu của CLB đang hoạt động.');
+        // }
+        // if (!$member) {
+        //     return back()->with('error', 'Người dùng chưa có thông tin thành viên.');
+        // }
 
-        switch ($action) {
+        // switch ($action) {
 
-            // 🔹 Lên lịch phỏng vấn
-            case 'schedule':
-                $interviewer_id = $req->input('interviewer_id');
-                $scheduled_at = $req->input('scheduled_at');
-                $location = $req->input('location');
-                $status = $req->input('status') ?? 'scheduled';
-                $interview_note = $req->input('interview_note');
+        //     // 🔹 Lên lịch phỏng vấn
+        //     case 'schedule':
+        //         $interviewer_id = $req->input('interviewer_id');
+        //         $scheduled_at = $req->input('scheduled_at');
+        //         $location = $req->input('location');
+        //         $status = $req->input('status') ?? 'scheduled';
+        //         $interview_note = $req->input('interview_note');
 
-                // Validate đơn giản
-                if (!$interviewer_id || !$scheduled_at) {
-                    return back()->with('error', 'Vui lòng chọn người phỏng vấn và thời gian.');
-                }
+        //         // Validate đơn giản
+        //         if (!$interviewer_id || !$scheduled_at) {
+        //             return back()->with('error', 'Vui lòng chọn người phỏng vấn và thời gian.');
+        //         }
 
-                // Tạo bản ghi lịch phỏng vấn
-                ClubInterviewSchedule::create([
-                    'request_id' => $request->id,
-                    'interviewer_id' => $interviewer_id,
-                    'scheduled_at' => $scheduled_at,
-                    'location' => $location,
-                    'status' => $status,
-                    'note' => $interview_note,
-                ]);
+        //         // Tạo bản ghi lịch phỏng vấn
+        //         ClubInterviewSchedule::create([
+        //             'request_id' => $request->id,
+        //             'interviewer_id' => $interviewer_id,
+        //             'scheduled_at' => $scheduled_at,
+        //             'location' => $location,
+        //             'status' => $status,
+        //             'note' => $interview_note,
+        //         ]);
 
-                // Cập nhật trạng thái yêu cầu
-                $request->update([
-                    'status' => 'scheduling_interview',
-                    'note' => $note,
-                    'handled_by' => auth()->id(),
-                ]);
+        //         // Cập nhật trạng thái yêu cầu
+        //         $request->update([
+        //             'status' => 'scheduling_interview',
+        //             'note' => $note,
+        //             'handled_by' => auth()->id(),
+        //         ]);
 
-                return back()->with('success', 'Yêu cầu đã được lên lịch phỏng vấn.');
+        //         return back()->with('success', 'Yêu cầu đã được lên lịch phỏng vấn.');
 
-            // 🔹 Đánh dấu phỏng vấn hoàn tất
-            case 'complete_interview':
-                $request->update([
-                    'status' => 'interview_completed',
-                    'note' => $note,
-                    'handled_by' => auth()->id(),
-                ]);
-                return back()->with('success', 'Đã đánh dấu phỏng vấn hoàn tất, chờ duyệt.');
+        //     // 🔹 Đánh dấu phỏng vấn hoàn tất
+        //     case 'complete_interview':
+        //         $request->update([
+        //             'status' => 'interview_completed',
+        //             'note' => $note,
+        //             'handled_by' => auth()->id(),
+        //         ]);
+        //         return back()->with('success', 'Đã đánh dấu phỏng vấn hoàn tất, chờ duyệt.');
 
-            // 🔹 Duyệt đơn
-            case 'approve':
-                $alreadyMember = ClubMember::where('club_id', $club->id)
-                    ->where('member_id', $member->id)
-                    ->exists();
-                if ($alreadyMember) {
-                    return back()->with('error', 'Người này đã là thành viên của CLB.');
-                }
+        //     // 🔹 Duyệt đơn
+        //     case 'approve':
+        //         $alreadyMember = ClubMember::where('club_id', $club->id)
+        //             ->where('member_id', $member->id)
+        //             ->exists();
+        //         if ($alreadyMember) {
+        //             return back()->with('error', 'Người này đã là thành viên của CLB.');
+        //         }
 
-                ClubMember::create([
-                    'club_id' => $club->id,
-                    'member_id' => $member->id,
-                    'status' => 'active',
-                    'joined_at' => now(),
-                    'role' => 'member',
-                    'note' => $note,
-                ]);
+        //         ClubMember::create([
+        //             'club_id' => $club->id,
+        //             'member_id' => $member->id,
+        //             'status' => 'active',
+        //             'joined_at' => now(),
+        //             'role' => 'member',
+        //             'note' => $note,
+        //         ]);
 
-                $request->update([
-                    'status' => 'approved',
-                    'note' => $note,
-                    'handled_by' => auth()->id(),
-                    'handled_at' => now(),
-                ]);
+        //         $request->update([
+        //             'status' => 'approved',
+        //             'note' => $note,
+        //             'handled_by' => auth()->id(),
+        //             'handled_at' => now(),
+        //         ]);
 
-                return redirect()->route('admin.club_join_requests.index')
-                    ->with('success', 'Yêu cầu đã được duyệt.');
+        //         return redirect()->route('admin.club_join_requests.index')
+        //             ->with('success', 'Yêu cầu đã được duyệt.');
 
-            // 🔹 Từ chối đơn
-            case 'reject':
-                $request->update([
-                    'status' => 'rejected',
-                    'note' => $note,
-                    'handled_by' => auth()->id(),
-                    'handled_at' => now(),
-                ]);
+        //     // 🔹 Từ chối đơn
+        //     case 'reject':
+        //         $request->update([
+        //             'status' => 'rejected',
+        //             'note' => $note,
+        //             'handled_by' => auth()->id(),
+        //             'handled_at' => now(),
+        //         ]);
 
-                return redirect()->route('admin.club_join_requests.index')
-                    ->with('success', 'Yêu cầu đã bị từ chối.');
+        //         return redirect()->route('admin.club_join_requests.index')
+        //             ->with('success', 'Yêu cầu đã bị từ chối.');
 
-            // 🔹 Hủy đơn
-            case 'cancel':
-                $request->update([
-                    'status' => 'cancelled',
-                    'note' => $note,
-                    'handled_by' => auth()->id(),
-                    'handled_at' => now(),
-                ]);
-                return back()->with('success', 'Yêu cầu đã được hủy.');
+        //     // 🔹 Hủy đơn
+        //     case 'cancel':
+        //         $request->update([
+        //             'status' => 'cancelled',
+        //             'note' => $note,
+        //             'handled_by' => auth()->id(),
+        //             'handled_at' => now(),
+        //         ]);
+        //         return back()->with('success', 'Yêu cầu đã được hủy.');
 
-            default:
-                return back()->with('error', 'Hành động không hợp lệ.');
-        }
+        //     default:
+        //         return back()->with('error', 'Hành động không hợp lệ.');
+        // }
     }
 
 

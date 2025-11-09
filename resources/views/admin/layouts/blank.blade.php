@@ -18,5 +18,4 @@ $noFooter = true;
 
 {{-- Chèn JS riêng của trang --}}
 @push('scripts')
-    <script src="{{ asset('js/club-request.js') }}"></script>
 @endpush
