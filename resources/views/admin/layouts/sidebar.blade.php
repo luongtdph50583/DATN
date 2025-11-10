@@ -107,7 +107,7 @@
                                 <a href="{{ route('admin.club_join_requests.index') }}" class="nav-link">
                                     <i class="ri-user-add-line"></i> Yêu cầu tham gia CLB
                                 </a>
-                            </li>
+                            
                         </ul>
                     </div>
                 </li> 

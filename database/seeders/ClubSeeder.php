@@ -44,7 +44,7 @@ class ClubSeeder extends Seeder
                 'description' => $faker->paragraphs(3, true),
                 'logo' => $faker->optional(0.9)->imageUrl(300, 300, 'sports', true, 'club'),
                 'field' => $field,
-                'status' => $faker->randomElement(['active', 'pending', 'inactive']),
+                'status' => $faker->randomElement(['active', 'inactive']),
                 'manager_id' => $faker->optional(0.9)->randomElement($clubManagers), // 90% có manager
                 'email' => $faker->unique()->safeEmail(),
                 'phone' => '0' . $faker->numberBetween(3, 9) . $faker->numberBetween(10000000, 99999999),

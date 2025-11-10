@@ -125,6 +125,14 @@ Route::get('events/club-members/{club}', [EventController::class, 'getClubMember
                 Route::delete('/{club}', 'destroy')->name('destroy');
                 Route::delete('clubs/{club}/members/{member}', [ClubController::class, 'removeMember'])
      ->name('members.remove');
+      // ♻️ Trang thùng rác
+        Route::get('/trash', 'trash')->name('trash');
+
+        // 🔄 Khôi phục CLB
+        Route::patch('/{id}/restore', 'restore')->name('restore');
+
+        // ❌ Xóa vĩnh viễn CLB
+        Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
 
             });
 

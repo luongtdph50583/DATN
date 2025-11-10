@@ -16,8 +16,8 @@ class CreateClubsTable extends Migration
             $table->string('logo')->nullable()->comment('Logo CLB');
             $table->string('field')->comment('Lĩnh vực hoạt động');
 
-            $table->enum('status', ['active', 'pending', 'inactive'])
-                ->default('pending')
+            $table->enum('status', ['active', 'inactive'])
+                ->default('active')
                 ->comment('Trạng thái hoạt động của CLB');
 
             // Người quản lý (giám sát)

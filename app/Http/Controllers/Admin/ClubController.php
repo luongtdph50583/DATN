@@ -175,94 +175,112 @@ class ClubController extends Controller
             return response()->json(['error' => 'Đã xảy ra lỗi server'], 500);
         }
     }
-    public function destroy(Request $request, $id)
-    {
-        $club = Club::with(['posts', 'documents'])->findOrFail($id);
-        $reason = $request->input('delete_reason', 'Vi phạm nội quy');
+ public function destroy(Request $request, $id)
+{
+    $club = Club::with(['posts', 'documents'])->findOrFail($id);
+    $reason = $request->input('delete_reason', 'Vi phạm nội quy');
 
-        if ($club->status === 'active') {
-            return redirect()->back()->withErrors(['error' => 'Chỉ có thể xóa CLB không hoạt động.']);
-        }
-
-        DB::beginTransaction();
-
-        try {
-            // ✅ Xóa bài viết và media liên quan
-            foreach ($club->posts as $post) {
-                $mediaList = Media::withTrashed()
-                    ->where('related_type', 'post')
-                    ->where('related_id', $post->id)
-                    ->get();
-
-                foreach ($mediaList as $media) {
-                    $filePath = storage_path('app/public/' . $media->file_path);
-                    if (file_exists($filePath)) {
-                        unlink($filePath);
-                    }
-                    $media->forceDelete();
-                }
-
-                if ($post->thumbnail && file_exists(storage_path('app/public/' . $post->thumbnail))) {
-                    unlink(storage_path('app/public/' . $post->thumbnail));
-                }
-
-                $post->forceDelete();
-            }
-
-            // ✅ Xóa tài liệu liên quan
-            foreach ($club->documents as $doc) {
-                $filePath = storage_path('app/public/' . $doc->file_path);
-                if (file_exists($filePath)) {
-                    unlink($filePath);
-                }
-                $doc->forceDelete();
-            }
-
-            // ✅ Lấy thông tin chủ nhiệm
-            $manager = DB::table('club_members as cm')
-                ->join('members as m', 'cm.member_id', '=', 'm.id')
-                ->join('users as u', 'm.user_id', '=', 'u.id')
-                ->where('cm.club_id', $club->id)
-                ->where('cm.role', 'club_manager')
-                ->select('u.id as user_id', 'u.name', 'u.email')
-                ->first();
-
-            if ($manager) {
-                Log::info("Debug manager before delete: ID={$manager->user_id}, Name={$manager->name}, Email={$manager->email}");
-
-                $batchId = uniqid('club_deleted_');
-
-                SendNotificationJob::dispatch(
-                    $manager->user_id,
-                    "CLB bị xóa",
-                    "Câu lạc bộ '{$club->name}' đã bị xóa. Lý do: {$reason}",
-                    "both",
-                    $batchId,
-                    true
-                );
-            } else {
-                Log::warning("Club ID {$club->id} không có chủ nhiệm khi xóa!");
-            }
-
-            // ✅ Xóa thành viên CLB
-            DB::table('club_members')->where('club_id', $club->id)->delete();
-
-            // ✅ Xóa chính CLB
-            $club->delete();
-
-            DB::commit();
-
-            return redirect()->route('admin.clubs.index')->with('success', 'CLB đã được xóa thành công!');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error("Lỗi khi xóa CLB", [
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile()
-            ]);
-            return redirect()->back()->withErrors(['error' => 'Đã xảy ra lỗi khi xóa CLB: ' . $e->getMessage()]);
-        }
+    // Chỉ xóa CLB không hoạt động
+    if ($club->status === 'active') {
+        return redirect()->back()->withErrors(['error' => 'Chỉ có thể xóa CLB không hoạt động.']);
     }
+
+    DB::beginTransaction();
+
+    try {
+        // 1️⃣ Lưu lý do xóa
+        $club->deleted_reason = $reason;
+        $club->save();
+
+        // 2️⃣ Xóa mềm posts và media liên quan
+        foreach ($club->posts as $post) {
+            $post->delete(); // soft delete post
+
+            // Xóa file thumbnail vật lý nếu tồn tại
+            if ($post->thumbnail && file_exists(storage_path('app/public/' . $post->thumbnail))) {
+                unlink(storage_path('app/public/' . $post->thumbnail));
+            }
+
+            // Xóa media liên quan post
+            $mediaList = Media::where('related_type', 'post')
+                ->where('related_id', $post->id)
+                ->get();
+
+            foreach ($mediaList as $media) {
+                if ($media->file_path && file_exists(storage_path('app/public/' . $media->file_path))) {
+                    unlink(storage_path('app/public/' . $media->file_path));
+                }
+                $media->delete(); // soft delete media
+            }
+        }
+
+        // 3️⃣ Xóa mềm documents liên quan
+        foreach ($club->documents as $doc) {
+            $doc->delete();
+        }
+
+        // 4️⃣ Gửi notification cho chủ nhiệm
+        $manager = DB::table('club_members as cm')
+            ->join('members as m', 'cm.member_id', '=', 'm.id')
+            ->join('users as u', 'm.user_id', '=', 'u.id')
+            ->where('cm.club_id', $club->id)
+            ->where('cm.role', 'club_manager')
+            ->select('u.id as user_id', 'u.name', 'u.email')
+            ->first();
+
+        if ($manager) {
+            $batchId = uniqid('club_deleted_');
+            SendNotificationJob::dispatch(
+                $manager->user_id,
+                "CLB bị xóa",
+                "Câu lạc bộ '{$club->name}' đã bị xóa. Lý do: {$reason}",
+                "both",
+                $batchId,
+                true
+            );
+        }
+
+        // 5️⃣ Xóa mềm chính CLB
+        $club->delete();
+
+        DB::commit();
+
+        return redirect()->route('admin.clubs.index')->with('success', 'CLB đã được chuyển vào thùng rác!');
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        Log::error("Lỗi khi xóa CLB", [
+            'message' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile()
+        ]);
+
+        return redirect()->back()->withErrors(['error' => 'Đã xảy ra lỗi khi xóa CLB: ' . $e->getMessage()]);
+    }
+}
+
+// Trang thùng rác
+public function trash()
+{
+    $clubs = Club::onlyTrashed()->paginate(10);
+    return view('admin.clubs.trash', compact('clubs'));
+}
+
+// Khôi phục CLB
+public function restore($id)
+{
+    $club = Club::onlyTrashed()->findOrFail($id);
+    $club->restore();
+    return redirect()->route('admin.clubs.trash')->with('success', 'Đã khôi phục CLB thành công!');
+}
+
+// Xóa vĩnh viễn CLB
+public function forceDelete($id)
+{
+    $club = Club::onlyTrashed()->findOrFail($id);
+    $club->forceDelete();
+    return redirect()->route('admin.clubs.trash')->with('success', 'Đã xóa vĩnh viễn CLB!');
+}
+
 
     public function update(Request $request, Club $club)
     {

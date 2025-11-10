@@ -9,6 +9,9 @@
         <a href="{{ route('admin.clubs.create') }}" class="btn btn-primary btn-sm">
             <i class="fas fa-plus"></i> Thêm CLB mới
         </a>
+        <a href="{{ route('admin.clubs.trash') }}" class="btn btn-outline-danger">
+        🗑️ Thùng rác
+    </a>
     </div>
 
     <form id="search-form" class="d-flex gap-2">
@@ -17,7 +20,6 @@
         <select name="status" class="form-select form-select-sm">
             <option value="">-- Trạng thái --</option>
             <option value="active">Hoạt động</option>
-            <option value="pending">Chờ duyệt</option>
             <option value="inactive">Ngưng hoạt động</option>
         </select>
     </form>
@@ -59,8 +61,7 @@
                         <td>
                             @if ($club->status === 'active')
                                 <span class="badge bg-success">Hoạt động</span>
-                            @elseif($club->status === 'pending')
-                                <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                        
                             @else
                                 <span class="badge bg-secondary">Ngưng hoạt động</span>
                             @endif
