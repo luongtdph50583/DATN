@@ -105,9 +105,9 @@
 </div>
 
         <div class="card-footer bg-light d-flex justify-content-end gap-2">
-            <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-warning">
+            {{-- <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-warning">
                 <i class="fas fa-edit me-2"></i>Sửa thông tin
-            </a>
+            </a> --}}
             <form action="{{ route('admin.members.destroy', $member) }}" method="POST"
                   onsubmit="return confirm('Xóa vĩnh viễn thành viên này?');">
                 @csrf @method('DELETE')

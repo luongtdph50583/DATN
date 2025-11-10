@@ -70,15 +70,7 @@ class Club extends Model
     }
 
     /** Tự động tạo quỹ khi tạo CLB mới */
-    protected static function booted()
-    {
-        static::created(function ($club) {
-            $club->fund()->create([
-                'initial_balance' => 0,
-                'balance' => 0,
-            ]);
-        });
-    }
+
     public function clubMembers()
     {
         return $this->hasMany(ClubMember::class, 'club_id');

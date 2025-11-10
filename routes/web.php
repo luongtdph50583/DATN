@@ -54,6 +54,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', 'edit')->name('edit');
             Route::patch('/', 'update')->name('update');
             Route::delete('/', 'destroy')->name('destroy');
+            
         });
 });
 
@@ -66,10 +67,24 @@ Route::prefix('admin')
         // =========================================================
         // 1. USER MANAGEMENT
         // =========================================================
-        Route::resource('users', UserController::class);
-        Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
-            ->name('users.toggleStatus');
+        // USER MANAGEMENT – ĐÃ FIX 100%
 
+    Route::get('users/deleted', [UserController::class, 'deleted'])
+        ->name('users.deleted');
+    Route::delete('users/{user}/force-delete', [UserController::class, 'forceDelete'])
+        ->name('users.forceDelete');
+    Route::post('users/{id}/restore', [UserController::class, 'restore'])
+        ->name('users.restore');
+    Route::delete('users/{user}/softdelete', [UserController::class, 'softDelete'])
+        ->name('users.softdelete');
+
+    Route::resource('users', UserController::class);
+
+    // Toggle status
+    Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
+        ->name('users.toggleStatus');
+
+    
         // =========================================================
         // 2. EVENT MANAGEMENT – ĐÃ HOÀN CHỈNH 100%
         // =========================================================
