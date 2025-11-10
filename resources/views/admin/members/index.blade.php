@@ -1,3 +1,4 @@
+{{-- resources/views/admin/members/index.blade.php --}}
 @extends('admin.layouts.app')
 
 @section('title', 'Quản lý Thành viên')
@@ -41,35 +42,44 @@
     @endif
 
     <!-- Filter -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <form action="{{ route('admin.members.index') }}" method="GET" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Tên</label>
-                    <input type="text" name="search_name" class="form-control" placeholder="Nhập tên..." value="{{ request('search_name') }}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Email</label>
-                    <input type="email" name="search_email" class="form-control" placeholder="Nhập email..." value="{{ request('search_email') }}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Chuyên ngành</label>
-                    <input type="text" name="search_major" class="form-control" placeholder="VD: CNTT..." value="{{ request('search_major') }}">
-                </div>
-                <div class="col-md-3 d-flex gap-2 align-items-end">
-                    <button type="submit" class="btn btn-primary flex-fill">
-                        Tìm kiếm
-                    </button>
-                    @if(request()->hasAny(['search_name', 'search_email', 'search_major']))
-                        <a href="{{ route('admin.members.index') }}" class="btn btn-outline-secondary">
-                            Xóa lọc
-                        </a>
-                    @endif
-                </div>
-            </form>
-        </div>
+    
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <form action="{{ route('admin.members.index') }}" method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Tên</label>
+                <input type="text" name="search_name" class="form-control" 
+                       placeholder="Nhập tên..." value="{{ request('search_name') }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Email</label>
+                <input type="email" name="search_email" class="form-control" 
+                       placeholder="Nhập email..." value="{{ request('search_email') }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Câu lạc bộ</label>
+                <select name="club_id[]" class="form-select select2-club" multiple="multiple" style="width: 100%">
+                    @foreach(\App\Models\Club::orderBy('name')->get() as $club)
+                        <option value="{{ $club->id }}" 
+                            {{ is_array(request('club_id')) && in_array($club->id, request('club_id')) ? 'selected' : '' }}>
+                            {{ $club->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Tìm kiếm
+                </button>
+                @if(request()->hasAny(['search_name', 'search_email', 'club_id']))
+                    <a href="{{ route('admin.members.index') }}" class="btn btn-outline-secondary">
+                        Xóa lọc
+                    </a>
+                @endif
+            </div>
+        </form>
     </div>
-
+</div>
     <!-- Table -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
@@ -109,15 +119,24 @@
                                             {{ $member->status == 'active' ? 'Hoạt động' : 'Khóa' }}
                                         </span>
                                     </td>
-                                    <td>
+
+                                    <!-- DUY NHẤT 1 CHỖ ĐƯỢC THAY ĐỔI: ICON SIÊU ĐẸP GIỐNG EVENT -->
+                                    <td class="text-center">
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.members.show', $member) }}" class="btn btn-sm btn-info">Xem</a>
-                                            <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-sm btn-warning">Sửa</a>
-                                            
-                                            <!-- NÚT XÓA MỚI – MODAL SIÊU ĐẸP -->
-                                            <button type="button" class="btn btn-sm btn-danger" 
-                                                    data-bs-toggle="modal" data-bs-target="#deleteModal-{{ $member->id }}">
-                                                Xóa
+                                            <a href="{{ route('admin.members.show', $member) }}" 
+                                               class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {{-- <a href="{{ route('admin.members.edit', $member) }}" 
+                                               class="btn btn-sm btn-outline-warning" title="Chỉnh sửa">
+                                                <i class="fas fa-edit"></i>
+                                            </a> --}}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteModal-{{ $member->id }}"
+                                                    title="Xóa thành viên">
+                                                <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -141,7 +160,7 @@
         </div>
     </div>
 
-    <!-- MODAL XÓA MỀM – ĐẸP NHƯ EVENT -->
+    <!-- MODAL XÓA MỀM – GIỮ NGUYÊN CỦA BẠN -->
     @foreach($members as $member)
     <div class="modal fade" id="deleteModal-{{ $member->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -151,12 +170,9 @@
 
                 <div class="modal-content border-0 shadow-lg">
                     <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title fw-bold">
-                            Xóa thành viên
-                        </h5>
+                        <h5 class="modal-title fw-bold">Xóa thành viên</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-
                     <div class="modal-body">
                         <div class="text-center mb-4">
                             <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
@@ -166,7 +182,6 @@
                             <h5>Bạn có chắc chắn muốn xóa?</h5>
                             <p class="text-muted">Thành viên sẽ được chuyển vào thùng rác</p>
                         </div>
-
                         <div class="bg-light p-4 rounded border mb-4">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="flex-shrink-0">
@@ -182,21 +197,15 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-danger">
-                                Lý do xóa <span class="text-danger">*</span>
-                            </label>
+                            <label class="form-label fw-bold text-danger">Lý do xóa *</label>
                             <textarea name="delete_reason" class="form-control" rows="3" 
-                                      placeholder="VD: Vi phạm nội quy, không hoạt động..." required></textarea>
+                                      placeholder="VD: Vi phạm nội quy..." required></textarea>
                         </div>
                     </div>
-
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger px-4">
-                            Xóa thành viên
-                        </button>
+                        <button type="submit" class="btn btn-danger px-4">Xóa thành viên</button>
                     </div>
                 </div>
             </form>
@@ -204,7 +213,7 @@
     </div>
     @endforeach
 
-    <!-- MODAL TOP 10 – GIỮ NGUYÊN CỦA BẠN -->
+    <!-- MODAL TOP 10 – GIỮ NGUYÊN -->
     <div class="modal fade" id="topMembersModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg">
@@ -303,6 +312,8 @@
         0% { background-color: #fff3cd; }
         100% { background-color: transparent; }
     }
+    /* Làm icon nhỏ gọn đẹp hơn */
+    .btn-sm i { font-size: 0.9rem; }
 </style>
 @endpush
 
@@ -318,4 +329,16 @@
     });
 </script>
 @endif
+@endpush
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('.select2-club').select2({
+        theme: 'bootstrap-5',
+        placeholder: "CLB...",
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
 @endpush

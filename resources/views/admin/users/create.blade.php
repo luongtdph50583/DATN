@@ -66,22 +66,18 @@
                     <!-- Cột 2 -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Vai trò <span class="text-danger">*</span></label>
-                            <select name="role" class="form-select @error('role') is-invalid @enderror" required>
-                                <option value="">-- Chọn vai trò --</option>
-                                <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Quản trị viên</option>
-                                <option value="club_manager" {{ old('role') == 'club_manager' ? 'selected' : '' }}>Quản lý CLB</option>
-                                <option value="member" {{ old('role') == 'member' ? 'selected' : '' }}>Thành viên</option>
-                            </select>
-                            @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            <label class="form-label fw-bold">Vai trò</label>
+                            <input type="text" class="form-control" value="Admin" disabled>
+                            <input type="hidden" name="role" value="admin">
                         </div>
+
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Trạng thái <span class="text-danger">*</span></label>
                             <select name="status" class="form-select @error('status') is-invalid @enderror" required>
                                 <option value="">-- Chọn trạng thái --</option>
                                 <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Hoạt động</option>
-                                <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Bị khóa</option>
+                                <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Khóa</option>
                             </select>
                             @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>

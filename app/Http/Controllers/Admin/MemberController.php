@@ -23,9 +23,12 @@ class MemberController extends Controller
     if ($request->filled('search_email')) {
         $query->whereHas('user', fn($q) => $q->where('email', 'like', '%' . $request->search_email . '%'));
     }
-    if ($request->filled('search_major')) {
-        $query->where('major', 'like', '%' . $request->search_major . '%');
-    }
+    
+    if ($request->has('club_id') && is_array($request->club_id)) {
+        $query->whereHas('clubs', function ($q) use ($request) {
+            $q->whereIn('clubs.id', $request->club_id);
+        });
+}
 
     $members = $query->paginate(15);
     // TOP 10 THÀNH VIÊN HOẠT ĐỘNG NHIỀU CLB NHẤT TRONG THÁNG NÀY

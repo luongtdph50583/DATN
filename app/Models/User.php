@@ -4,9 +4,16 @@
     use Illuminate\Foundation\Auth\User as Authenticatable;
     use Illuminate\Notifications\Notifiable;
     use App\Models\Member;
+    use App\Models\Club;
+    use App\Models\ClubJoinRequest;
+    use App\Models\ClubRequest;
+    use App\Models\Event;
+    use App\Models\Post;
+    use Illuminate\Database\Eloquent\SoftDeletes;
     class User extends Authenticatable
     {
         use Notifiable;
+        use SoftDeletes;
 
 
     protected $fillable = [
