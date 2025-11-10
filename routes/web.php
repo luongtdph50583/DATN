@@ -141,34 +141,43 @@ Route::prefix('admin')
 
 
 
-        Route::controller(ClubController::class)
-            ->prefix('clubs')
-            ->as('clubs.')
-            ->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('/create', 'create')->name('create');
-                Route::post('/', 'store')->name('store');
-                Route::get('/{id}', 'show')->name('show');
-                Route::get('/{id}/edit', 'edit')->name('edit');
-                Route::put('/{club}', 'update')->name('update');
+       Route::controller(ClubController::class)
+    ->prefix('clubs')
+    ->as('clubs.')
+    ->group(function () {
 
-                // lọc viên trong CLB cụ thể
-                Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
+        // ♻️ Trang thùng rác (phải để trên /{id})
+        Route::get('/trash', 'trash')->name('trash');
 
-                // lọc tất cả thành viên hệ thống
-                Route::get('/members/search', 'searchMembers')->name('members.search');
+        // 🔄 Khôi phục CLB
+        Route::patch('/{id}/restore', 'restore')->name('restore');
 
-                // tìm kiếm câu lạc bộ real-time
-                Route::post('/search', 'searchJson')->name('search');
+        // ❌ Xóa vĩnh viễn CLB
+        Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
 
-                Route::delete('/{club}', 'destroy')->name('destroy');
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
 
-                Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
-                Route::get('/members/search', 'searchMembers')->name('members.search');
-                Route::post('/search', 'searchJson')->name('search');
-                Route::delete('clubs/{club}/members/{member}', [ClubController::class, 'removeMember'])
-                    ->name('members.remove');
-            });
+        // Các route dựa trên {id} phải để sau route cố định
+        Route::get('/{id}', 'show')->name('show');
+        Route::get('/{id}/edit', 'edit')->name('edit');
+        Route::put('/{id}', 'update')->name('update');
+        Route::delete('/{id}', 'destroy')->name('destroy');
+
+        // Lọc thành viên CLB
+        Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
+
+        // Tìm kiếm thành viên
+        Route::get('/members/search', 'searchMembers')->name('members.search');
+
+        // Tìm kiếm CLB real-time
+        Route::post('/search', 'searchJson')->name('search');
+
+        // Xóa thành viên
+        Route::delete('/{club}/members/{member}', 'removeMember')->name('members.remove');
+    });
+
 
         Route::get('/club-balance/{clubId}', [FundController::class, 'getClubBalance'])
             ->name('clubs.balance');

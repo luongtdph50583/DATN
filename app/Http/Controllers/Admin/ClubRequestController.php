@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\CustomNotification;
+use Illuminate\Support\Facades\Auth;
 
 class ClubRequestController extends Controller
 {
@@ -45,150 +46,110 @@ class ClubRequestController extends Controller
 
 
 
-    public function handleRequest(Request $request, $id)
-    {
-        $clubRequest = ClubRequest::with('clubRequestMembers.user.member')->findOrFail($id);
-        $creatorUser = $clubRequest->user;
+public function handleRequest(Request $request, $id)
+{
+    $clubRequest = ClubRequest::findOrFail($id);
 
-        if (!$creatorUser) {
-            return redirect()->back()->withErrors(['error' => 'Người gửi không tồn tại'])->withInput();
-        }
+    // Validate dữ liệu
+    $request->validate([
+        'status' => 'required|in:approved,rejected',
+        'note' => 'nullable|string|max:500',
+    ]);
 
-        $creatorMember = $creatorUser->member ?? null;
-        if (!$creatorMember) {
-            return redirect()->back()->withErrors(['error' => 'Người gửi chưa có hồ sơ thành viên'])->withInput();
-        }
+    $status = $request->input('status');
+    $note = $request->input('note');
 
-        // Validate dữ liệu
-        $request->validate([
-            'status' => 'required|in:approved,rejected',
-            'plan' => $clubRequest->type === 'create' ? 'required|string|max:2000' : 'nullable|string|max:2000',
-            'note' => 'nullable|string|max:500',
-        ]);
-
-        $status = $request->input('status');
-        $note = $request->input('note');
-
-        if ($status === 'approved') {
-
-            // --- TẠO CLB MỚI ---
-            if ($clubRequest->advisor_status !== 'approved') {
-                return redirect()->back()->withErrors(['error' => 'Giảng viên đỡ đầu chưa chấp thuận'])->withInput();
-            }
-
-            if (Club::where('name', $clubRequest->name)->exists()) {
-                return redirect()->back()->withErrors(['error' => 'Tên CLB đã tồn tại'])->withInput();
-            }
-
-            if (ClubMember::where('member_id', $creatorMember->id)->where('role', 'club_manager')->exists()) {
-                return redirect()->back()->withErrors(['error' => 'Người tạo đang giữ vai trò chủ nhiệm ở CLB khác'])->withInput();
-            }
-
-            // Check trùng vai trò trong CLB khác
-            foreach ($clubRequest->clubRequestMembers as $memberReq) {
-                $user = $memberReq->user;
-                $member = $user->member ?? null;
-                if (!$member || $memberReq->role === 'member')
-                    continue;
-
-                if (ClubMember::where('member_id', $member->id)->where('role', $memberReq->role)->exists()) {
-                    return redirect()->back()->withErrors([
-                        'error' => "Thành viên {$user->name} đã có vai trò {$memberReq->role} trong CLB khác"
-                    ])->withInput();
-                }
-            }
-
-            $club = Club::create([
-                'name' => $clubRequest->name,
-                'slogan' => $clubRequest->slogan,
-                'description' => $clubRequest->description,
-                'purpose' => $clubRequest->purpose,
-                'field' => $clubRequest->field,
-                'plan' => $clubRequest->plan,
-                'email' => $clubRequest->email,
-                'phone' => $clubRequest->phone,
-                'logo' => $clubRequest->logo,
-                'status' => 'active',
-                'founded_at' => now(),
-                'manager_id' => $creatorUser->id,
-                'advisor_id' => $clubRequest->advisor_id,
-                'rule' => $clubRequest->rule,
-                'member_limit' => $clubRequest->member_limit,
-            ]);
-
-            // Chủ nhiệm
-            ClubMember::create([
-                'club_id' => $club->id,
-                'member_id' => $creatorMember->id,
-                'role' => 'club_manager',
-                'status' => 'active',
-                'joined_at' => now(),
-                'appointed_at' => now(),
-            ]);
-
-            // Các thành viên khác
-            foreach ($clubRequest->clubRequestMembers as $memberReq) {
-                $user = $memberReq->user;
-                $member = $user->member ?? null;
-                if (!$member)
-                    continue;
-
-                ClubMember::create([
-                    'club_id' => $club->id,
-                    'member_id' => $member->id,
-                    'role' => $memberReq->role,
-                    'status' => 'active',
-                    'joined_at' => now(),
-                    'appointed_at' => now(),
-                ]);
-            }
-
-            // Cập nhật trạng thái request
-            $clubRequest->status = 'approved';
-            $clubRequest->handled_by = auth()->id();
-            $clubRequest->note = $note;
-            $clubRequest->save();
-
-            // Gửi thông báo duyệt
-            SendNotificationJob::dispatch(
-                $creatorUser->id,
-                "Yêu cầu thành lập CLB được duyệt",
-                "Yêu cầu của bạn về CLB '{$club->name}' đã được duyệt.",
-                'both',
-                uniqid(),
-                false
-            );
-
-        } else {
-            // Từ chối
-            $clubRequest->status = 'rejected';
-            $clubRequest->handled_by = auth()->id();
-            $clubRequest->note = $note;
-            $clubRequest->save();
-
-            SendNotificationJob::dispatch(
-                $creatorUser->id,
-                "Yêu cầu thành lập CLB bị từ chối",
-                "Yêu cầu của bạn về CLB '{$clubRequest->name}' đã bị từ chối. Lý do: {$note}",
-                'both',
-                uniqid(),
-                false
-            );
-        }
-
-        return redirect()->route('admin.club_requests.index')
-            ->with('success', 'Đã xử lý yêu cầu thành lập CLB thành công.');
+    // Lấy user tạo CLB
+    $creatorUser = $clubRequest->user;
+    if (!$creatorUser) {
+        return redirect()->back()->withErrors(['error' => 'Người tạo không tồn tại'])->withInput();
     }
 
+    // Lấy member tương ứng với user
+    $creatorMember = Member::where('user_id', $creatorUser->id)->first();
+    if (!$creatorMember) {
+        return redirect()->back()->withErrors(['error' => 'Người tạo chưa có hồ sơ thành viên'])->withInput();
+    }
 
+    if ($status === 'approved') {
 
+        // Kiểm tra tên CLB trùng
+        $nameConflict = Club::where('name', $clubRequest->name)->exists();
+        if ($nameConflict) {
+            return redirect()->back()->withErrors(['error' => 'Tên CLB đã tồn tại'])->withInput();
+        }
 
+        // Kiểm tra người tạo chưa là quản lý CLB khác
+        $conflict = ClubMember::where('member_id', $creatorMember->id)
+            ->where('role', 'club_manager')
+            ->exists();
+        if ($conflict) {
+            return redirect()->back()->withErrors(['error' => 'Người tạo đang giữ vai trò quản lý ở CLB khác'])->withInput();
+        }
 
+        // Tạo CLB
+        $club = Club::create([
+            'name' => $clubRequest->name,
+            'field' => $clubRequest->field,
+            'description' => $clubRequest->description,
+            'email' => $clubRequest->email,
+            'phone' => $clubRequest->phone,
+            'logo' => $clubRequest->logo,
+            'status' => 'active',
+            'founded_at' => now(),
+            'manager_id' => $creatorUser->id,
+        ]);
 
+        // Tạo ClubMember
+        ClubMember::create([
+            'club_id' => $club->id,
+            'member_id' => $creatorMember->id,
+            'role' => 'club_manager',
+            'status' => 'active',
+            'joined_at' => now(),
+            'appointed_at' => now(),
+        ]);
 
+        // Gửi thông báo/email
+        $batchId = uniqid();
+        SendNotificationJob::dispatch(
+            $creatorUser->id,
+            "Yêu cầu thành lập CLB được duyệt",
+            "Yêu cầu của bạn về CLB '{$club->name}' đã được duyệt.",
+            'both',
+            $batchId,
+            false
+        );
 
+        // Xóa mềm yêu cầu sau khi duyệt
+        $clubRequest->delete();
 
+        return redirect()->route('admin.club_requests.index')
+            ->with('success', 'Yêu cầu đã được duyệt và chuyển thành CLB.');
 
+    } else { // rejected
+
+        // Lưu trạng thái xử lý và người xử lý
+        $clubRequest->status = 'rejected';
+        $clubRequest->handled_by = Auth::id();
+        $clubRequest->note = $note;
+        $clubRequest->save();
+
+        // Gửi thông báo/email
+        $batchId = uniqid();
+        SendNotificationJob::dispatch(
+            $creatorUser->id,
+            "Yêu cầu thành lập CLB bị từ chối",
+            "Yêu cầu của bạn về CLB '{$clubRequest->name}' đã bị từ chối. Lý do: {$note}",
+            'both',
+            $batchId,
+            false
+        );
+
+        return redirect()->route('admin.club_requests.index')
+            ->with('success', 'Yêu cầu đã bị từ chối và lưu lại.');
+    }
+}
 
     public function filterRequests(Request $request)
     {

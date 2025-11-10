@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Event;
 use App\Models\Club;
+use App\Models\ClubMember;
 use App\Models\User;
 use App\Models\EventFundRequest;
 use Faker\Factory as Faker;
@@ -17,14 +18,10 @@ class EventSeeder extends Seeder
         $faker = Faker::create('vi_VN');
 
         $clubIds = Club::pluck('id')->toArray();
-        $adminIds = User::whereIn('role', ['admin', 'club_manager'])->pluck('id')->toArray();
-        $creatorIds = User::where('role', 'club_manager')->pluck('id')->toArray();
+        $adminIds = User::where('role', 'admin')->pluck('id')->toArray();
 
         if (empty($clubIds)) {
             throw new \Exception('Không tìm thấy CLB nào. Hãy chạy ClubSeeder trước.');
-        }
-        if (empty($creatorIds)) {
-            throw new \Exception('Không có club_manager để tạo sự kiện. Hãy chạy UserSeeder trước.');
         }
 
         $eventNames = [
@@ -37,6 +34,16 @@ class EventSeeder extends Seeder
         for ($i = 0; $i < 15; $i++) {
             $clubId = $faker->randomElement($clubIds);
             $club = Club::find($clubId);
+
+            // Lấy danh sách member của CLB này
+            $creatorIds = ClubMember::where('club_id', $clubId)->pluck('member_id')->toArray();
+
+            // Nếu CLB chưa có member, fallback admin
+            if (empty($creatorIds)) {
+                $creatorIds = $adminIds;
+            }
+
+            $createdBy = $faker->randomElement($creatorIds);
 
             $start = $faker->dateTimeBetween('+1 week', '+2 months');
             $end = (clone $start)->modify('+3 hours');
@@ -56,7 +63,7 @@ class EventSeeder extends Seeder
                 $end,
                 $status,
                 $approvalBy,
-                $creatorIds
+                $createdBy
             ) {
                 $budgetEstimated = $faker->numberBetween(500000, 15000000);
                 $budgetRequested = $faker->boolean(70)
@@ -81,23 +88,22 @@ class EventSeeder extends Seeder
                     'max_participants' => $faker->numberBetween(20, 300),
                     'is_public' => $faker->boolean(80),
                     'status' => $status,
-                    'created_by' => $faker->randomElement($creatorIds),
+                    'created_by' => $createdBy,
                     'approval_by' => $approvalBy,
                     'media_id' => null,
 
-                    // 🔹 Các cột ngân sách mới
                     'budget_estimated' => $budgetEstimated,
                     'budget_requested' => $budgetRequested,
                     'budget_club' => $budgetClub,
                 ]);
 
-                // 🔹 Nếu có xin cấp ngân sách thì tạo yêu cầu cấp kinh phí
+                // Nếu có ngân sách xin cấp, tạo EventFundRequest
                 if ($budgetRequested > 0) {
                     EventFundRequest::create([
                         'event_id' => $event->id,
                         'requested_by' => $event->created_by,
                         'amount_requested' => $budgetRequested,
-                        'status' => 'pending',
+                        'status' => 'pending_disbursement',
                         'note' => 'Tự động tạo từ Seeder khi có ngân sách xin cấp.',
                     ]);
                 }

@@ -138,17 +138,36 @@ $pendingCount = $transactions->where('status', 'pending_disbursement')->count();
                     <td>{{ $req->requestedBy->name ?? '-' }}</td>
                     <td>{{ $req->approvedBy->name ?? '-' }}</td>
                     <td>{{ $req->created_at->format('d/m/Y H:i') }}</td>
-                    <td>
-                        <a href="{{ route('admin.event_fund_requests.show', $req) }}" class="btn btn-info btn-sm">Xem</a>
-                        @if(Auth::user()->role === 'admin')
-                            @if($req->status === 'pending_disbursement')
-                                <a href="{{ route('admin.event_fund_requests.approve', $req->id) }}" class="btn btn-success btn-sm"><i class="fas fa-check"></i></a>
-                                <a href="{{ route('admin.event_fund_requests.reject', $req->id) }}" class="btn btn-danger btn-sm">Từ chối</a>
-                            @elseif($req->status === 'disbursing')
-                                <a href="{{ route('admin.event_fund_requests.update_disbursement', $req->id) }}" class="btn btn-info btn-sm"><i class="fas fa-file-upload"></i></a>
-                            @endif
-                        @endif
-                    </td>
+                   <td>
+    <!-- Xem -->
+    <a href="{{ route('admin.event_fund_requests.show', $req) }}" 
+       class="btn btn-info btn-sm" title="Xem">
+        <i class="fas fa-eye"></i>
+    </a>
+
+    @if(Auth::user()->role === 'admin')
+        @if($req->status === 'pending_disbursement')
+            <!-- Duyệt -->
+            <a href="{{ route('admin.event_fund_requests.approve', $req->id) }}" 
+               class="btn btn-success btn-sm" title="Duyệt">
+                <i class="fas fa-check"></i>
+            </a>
+
+            <!-- Từ chối -->
+            <a href="{{ route('admin.event_fund_requests.reject', $req->id) }}" 
+               class="btn btn-danger btn-sm" title="Từ chối">
+                <i class="fas fa-times"></i>
+            </a>
+        @elseif($req->status === 'disbursing')
+            <!-- Cập nhật giải ngân -->
+            <a href="{{ route('admin.event_fund_requests.update_disbursement', $req->id) }}" 
+               class="btn btn-info btn-sm" title="Cập nhật giải ngân">
+                <i class="fas fa-file-upload"></i>
+            </a>
+        @endif
+    @endif
+</td>
+
                 </tr>
                 @endforeach
             </tbody>

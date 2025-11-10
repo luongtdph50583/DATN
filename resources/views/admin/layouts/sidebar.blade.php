@@ -11,14 +11,7 @@
             </span>
         </a>
         <!-- Light Logo-->
-        <a href="index.html" class="logo logo-light">
-            <span class="logo-sm">
-                <img src="{{ asset('assets/images/logo-sm.png') }}" alt="" height="22">
-            </span>
-            <span class="logo-lg">
-                <img src="{{ asset('assets/images/logo-light.png')}}" alt="" height="17">
-            </span>
-        </a>
+      
         <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
             id="vertical-hover">
             <i class="ri-record-circle-line"></i>
@@ -89,9 +82,8 @@
                             <li class="nav-item">
                                 <a href="{{ route('admin.club_requests.index') }}" class="nav-link">Yêu cầu tạo CLB</a>
                             </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.club_join_requests.index') }}" class="nav-link">Yêu cầu tham gia CLB</a>
-                            </li>
+                          
+                            
                         </ul>
                     </div>
                 </li>

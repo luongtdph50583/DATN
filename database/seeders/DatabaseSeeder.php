@@ -11,6 +11,11 @@ use Illuminate\Database\Seeder;
        public function run()
        {
            $this->call([
+                UserSeeder::class,
+                MemberSeeder::class,
+                ClubSeeder::class,
+                ClubMemberSeeder::class,
+                EventSeeder::class,
           PostAndCommentSeeder::class,
            ]);
        }

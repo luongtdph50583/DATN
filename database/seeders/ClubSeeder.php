@@ -14,7 +14,7 @@ class ClubSeeder extends Seeder
         $faker = Faker::create('vi_VN');
 
         // Lấy danh sách club_manager
-        $clubManagers = User::where('role', 'club_manager')->pluck('id')->toArray();
+        $clubManagers = User::where('role', 'member')->pluck('id')->toArray();
 
         if (empty($clubManagers)) {
             $tempManager = User::create([
@@ -50,8 +50,8 @@ class ClubSeeder extends Seeder
                 'description' => $faker->paragraphs(3, true),
                 'logo' => $faker->optional(0.9)->imageUrl(300, 300, 'sports', true, 'club'),
                 'field' => $field,
-                'status' => $faker->randomElement(['active', 'pending', 'inactive']),
-                'manager_id' => $faker->optional(0.9)->randomElement($clubManagers),
+                'status' => $faker->randomElement(['active', 'inactive']),
+                'manager_id' => $faker->optional(0.9)->randomElement($clubManagers), // 90% có manager
                 'email' => $faker->unique()->safeEmail(),
                 'phone' => '0' . $faker->numberBetween(3, 9) . $faker->numberBetween(10000000, 99999999),
                 'member_limit' => $faker->numberBetween(15, 150),

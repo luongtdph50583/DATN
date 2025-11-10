@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\ClubMember;
 use Illuminate\Http\Request;
@@ -42,15 +43,15 @@ class ClubJoinRequestController extends Controller
 
     public function handle(Request $req, $id)
     {
-        // $request = ClubJoinRequest::with(['user.member', 'club'])->findOrFail($id);
+        $request = ClubJoinRequest::with(['user.member', 'club'])->findOrFail($id);
 
         // // ✅ Nếu đã xử lý rồi thì không cho xử lý lại
         // if (in_array($request->status, ['approved', 'rejected', 'cancelled'])) {
         //     return back()->with('error', 'Yêu cầu này đã được xử lý.');
         // }
 
-        // $action = $req->input('action');
-        // $note = $req->input('note');
+        $action = $req->input('action');
+        $note = $req->input('note');
         // $user = $request->user;
         // $club = $request->club;
         // $member = $user->member;
@@ -130,6 +131,11 @@ class ClubJoinRequestController extends Controller
         //             'handled_by' => auth()->id(),
         //             'handled_at' => now(),
         //         ]);
+            $request->status = 'approved';
+            $request->note = $note;
+            $request->handled_by = Auth::id();
+
+            $request->save();
 
         //         return redirect()->route('admin.club_join_requests.index')
         //             ->with('success', 'Yêu cầu đã được duyệt.');
@@ -159,6 +165,18 @@ class ClubJoinRequestController extends Controller
         //     default:
         //         return back()->with('error', 'Hành động không hợp lệ.');
         // }
+        if ($action === 'reject') {
+            $request->status = 'rejected';
+            $request->note = $note;
+           $request->handled_by = Auth::id();
+
+            $request->save();
+
+
+            return redirect()->route('admin.club_join_requests.index')->with('success', 'Yêu cầu đã bị từ chối.');
+        }
+
+        return back()->with('error', 'Hành động không hợp lệ.');
     }
 
 

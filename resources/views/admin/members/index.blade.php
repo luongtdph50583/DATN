@@ -107,18 +107,29 @@
                                             {{ $member->status == 'active' ? 'Hoạt động' : 'Khóa' }}
                                         </span>
                                     </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.members.show', $member) }}" class="btn btn-sm btn-info">Xem</a>
-                                            <a href="{{ route('admin.members.edit', $member) }}" class="btn btn-sm btn-warning">Sửa</a>
-                                            
-                                            <!-- NÚT XÓA MỚI – MODAL SIÊU ĐẸP -->
-                                            <button type="button" class="btn btn-sm btn-danger" 
-                                                    data-bs-toggle="modal" data-bs-target="#deleteModal-{{ $member->id }}">
-                                                Xóa
-                                            </button>
-                                        </div>
-                                    </td>
+                                   <td class="text-center">
+    <div class="btn-group" role="group">
+        <!-- Xem -->
+        <a href="{{ route('admin.members.show', $member) }}" 
+           class="btn btn-sm btn-info" title="Xem">
+            <i class="fas fa-eye"></i>
+        </a>
+
+        <!-- Sửa -->
+        <a href="{{ route('admin.members.edit', $member) }}" 
+           class="btn btn-sm btn-warning" title="Sửa">
+            <i class="fas fa-edit"></i>
+        </a>
+
+        <!-- Xóa -->
+        <button type="button" class="btn btn-sm btn-danger" 
+                data-bs-toggle="modal" data-bs-target="#deleteModal-{{ $member->id }}" 
+                title="Xóa">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</td>
+
                                 </tr>
                             @endforeach
                         </tbody>

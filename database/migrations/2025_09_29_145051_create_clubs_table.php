@@ -19,7 +19,7 @@ class CreateClubsTable extends Migration
 
             $table->enum('status', ['active', 'inactive'])
                 ->default('active')
-                ->comment('Trạng thái hoạt động của CLB: pending = chờ duyệt, trial = thử nghiệm, active = chính thức, inactive = ngừng hoạt động');
+                ->comment('Trạng thái hoạt động của CLB');
 
             // Người quản lý hành chính CLB
             $table->foreignId('manager_id')

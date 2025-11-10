@@ -71,34 +71,45 @@
 
                                                                                             <td>{{ $statusLabels[$doc->status] ?? ucfirst($doc->status) }}</td>
                                                                                             <td>{{ strtoupper($doc->file_type) }}</td>
-                                                                                            <td>
-                                                                                                <a href="{{ route('admin.documentclub.show', $doc->id) }}"
-                                                                                                    class="btn btn-sm btn-outline-primary">Xem</a>
+                                                                                           <td>
+    <!-- Xem -->
+    <a href="{{ route('admin.documentclub.show', $doc->id) }}" class="btn btn-sm btn-outline-primary" title="Xem">
+        <i class="fas fa-eye"></i>
+    </a>
 
-                                                                                                @if($doc->status === 'pending')
-                                                                                                    <form action="{{ route('admin.documentclub.approve', $doc->id) }}" method="POST"
-                                                                                                        class="d-inline">
-                                                                                                        @csrf
-                                                                                                        <button class="btn btn-sm btn-outline-success">Duyệt</button>
-                                                                                                    </form>
+    @if($doc->status === 'pending')
+        <!-- Duyệt -->
+        <form action="{{ route('admin.documentclub.approve', $doc->id) }}" method="POST" class="d-inline">
+            @csrf
+            <button class="btn btn-sm btn-outline-success" title="Duyệt"><i class="fas fa-check"></i></button>
+        </form>
 
-                                                                                                    <button class="btn btn-sm btn-outline-danger"
-                                                                                                        onclick="rejectDocument({{ $doc->id }}, '{{ $doc->title }}')">Từ chối</button>
-                                                                                                @elseif($doc->status === 'approved')
-                                                                                                    <a href="{{ route('admin.documentclub.edit', $doc->id) }}"
-                                                                                                        class="btn btn-sm btn-outline-warning">Sửa</a>
-                                                                                                @endif
+        <!-- Từ chối -->
+        <button class="btn btn-sm btn-outline-danger" title="Từ chối" onclick="rejectDocument({{ $doc->id }}, '{{ $doc->title }}')">
+            <i class="fas fa-times"></i>
+        </button>
+    @elseif($doc->status === 'approved')
+        <!-- Sửa -->
+        <a href="{{ route('admin.documentclub.edit', $doc->id) }}" class="btn btn-sm btn-outline-warning" title="Sửa">
+            <i class="fas fa-edit"></i>
+        </a>
+    @endif
 
-                                                                                                <a href="{{ route('admin.documentclub.download', $doc->id) }}"
-                                                                                                    class="btn btn-sm btn-outline-success">Tải xuống</a>
+    <!-- Tải xuống -->
+    <a href="{{ route('admin.documentclub.download', $doc->id) }}" class="btn btn-sm btn-outline-success" title="Tải xuống">
+        <i class="fas fa-download"></i>
+    </a>
 
-                                                                                                <form action="{{ route('admin.documentclub.destroy', $doc->id) }}" method="POST"
-                                                                                                    class="d-inline" onsubmit="return confirm('Xóa tài liệu này?')">
-                                                                                                    @csrf
-                                                                                                    @method('DELETE')
-                                                                                                    <button class="btn btn-sm btn-outline-danger">Xóa</button>
-                                                                                                </form>
-                                                                                            </td>
+    <!-- Xóa -->
+    <form action="{{ route('admin.documentclub.destroy', $doc->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Xóa tài liệu này?')">
+        @csrf
+        @method('DELETE')
+        <button class="btn btn-sm btn-outline-danger" title="Xóa">
+            <i class="fas fa-trash"></i>
+        </button>
+    </form>
+</td>
+
                                                                                         </tr>
                                         @endforeach
                                     </tbody>
