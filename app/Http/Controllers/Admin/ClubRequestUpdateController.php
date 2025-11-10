@@ -24,7 +24,12 @@ class ClubRequestUpdateController extends Controller
      */
     public function indexRequests()
     {
-        $requests = ClubRequestUpdate::with(['club', 'club.clubMembers.user', 'memberUpdates.user'])
+        $requests = ClubRequestUpdate::with([
+            'club',
+            'club.clubMembers.user',
+            'memberUpdates.user'
+        ])
+            ->where('status', 'pending') // ✅ chỉ lấy những đề xuất đang chờ duyệt
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -37,29 +42,32 @@ class ClubRequestUpdateController extends Controller
      */
     public function showRequest($id)
     {
-        // Lấy đề xuất và club
+        // Lấy đề xuất và CLB
         $update = ClubRequestUpdate::with([
-            'proposer',                    // người đề xuất
-            'memberUpdates.user',           // thành viên đề xuất
-            'club.clubMembers.user'         // thành viên hiện tại
+            'proposer',                        // Người đề xuất
+            'memberUpdates.user',              // Thành viên đề xuất
+            'memberUpdates.memberInfo',        // ✅ Thông tin thêm (msv, sđt,...)
+            'club.clubMembers.user',           // Thành viên hiện tại
+            'club.clubMembers.memberInfo',     // ✅ Thông tin thêm (msv, sđt,...)
         ])->findOrFail($id);
 
         $club = $update->club;
 
-        // Dữ liệu cũ
+        // Dữ liệu cũ (hiện tại)
         $currentData = [
             'club' => $club,
-            'members' => $club->clubMembers // collection, giữ tất cả member hiện tại
+            'members' => $club->clubMembers
         ];
 
-        // Dữ liệu đề xuất
+        // Dữ liệu đề xuất (cập nhật)
         $proposedData = [
             'club' => $update,
-            'members' => $update->memberUpdates // collection, giữ tất cả member đề xuất
+            'members' => $update->memberUpdates
         ];
 
         return view('admin.club_update_requests.show', compact('currentData', 'proposedData', 'update', 'club'));
     }
+
 
 
     public function handleUpdateRequest(Request $request, $id)

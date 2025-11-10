@@ -21,4 +21,10 @@ class ClubRequestMemberUpdate extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // ✅ Thêm hàm này để tránh lỗi
+    public function memberInfo()
+    {
+        return $this->hasOne(Member::class, 'user_id', 'user_id');
+    }
 }

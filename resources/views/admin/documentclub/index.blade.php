@@ -218,7 +218,8 @@
                                         htmlClub += `<p class="text-muted p-2">Không có tài liệu</p>`;
                                     } else {
                                         htmlClub += `<table class="table table-bordered mb-0"><thead><tr>
-                                            <th>Tiêu đề</th><th>Người tải lên</th><th>Trạng thái</th><th>Loại</th><th>Hiển thị</th><th>Hành động</th>
+
+                                            <th>Tiêu đề</th><th>Người tải lên</th><th>Trạng thái</th><th>Loại</th><th>Hành động</th>
                                         </tr></thead><tbody>`;
                                         docs.forEach(doc => {
                                             htmlClub += `<tr>

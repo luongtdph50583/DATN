@@ -21,7 +21,7 @@
             'email_verified_at' => 'datetime',
             'status' => 'string',
         ];
-      
+
 // public function managedClubs()
 // {
 //     return $this->hasMany(Club::class, 'manager_id');
@@ -63,9 +63,9 @@ public function clubRequests()
 }
 
 
-/**
- * Quan hệ với Events (nếu có bảng registrations)
- */
+    /**
+     * Quan hệ với Events (nếu có bảng registrations)
+     */
 public function events()
 {
     return $this->hasMany(Event::class, 'organizer_id')
@@ -82,12 +82,12 @@ public function posts()
     return $this->hasMany(Post::class);
 }
     // User.php
-   
+
 
     public function facultyMember()
     {
         return $this->hasOne(FacultyMember::class);
     }
 
-    
+
 }
