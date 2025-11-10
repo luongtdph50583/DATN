@@ -41,7 +41,10 @@ class ClubController extends Controller
     public function show($id)
     {
         // Lấy thông tin CLB, bao gồm manager và advisor
-        $club = Club::with(['manager', 'advisor', 'advisorFaculty'])->findOrFail($id);
+        $club = Club::with([
+            'manager',
+            'advisorFaculty.user' // advisor_id join với faculty_members rồi join với user
+        ])->findOrFail($id);
 
         // Lấy danh sách thành viên CLB, kèm thông tin từ bảng members và users
         $clubMembers = ClubMember::with(['member.user'])
@@ -51,6 +54,7 @@ class ClubController extends Controller
         // Trả về view chi tiết CLB
         return view('admin.clubs.show', compact('club', 'clubMembers'));
     }
+
 
     // public function filterMembers(Request $request, $id)
     // {

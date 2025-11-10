@@ -105,6 +105,8 @@ class Club extends Model
         // advisor_id = faculty_members.id
         return $this->belongsTo(FacultyMember::class, 'advisor_id')->with('user');
     }
+    
+
 
 
 }
