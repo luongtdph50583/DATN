@@ -21,7 +21,7 @@
             'email_verified_at' => 'datetime',
             'status' => 'string',
         ];
-      
+
 // public function managedClubs()
 // {
 //     return $this->hasMany(Club::class, 'manager_id');
@@ -63,9 +63,9 @@ public function clubRequests()
 }
 
 
-/**
- * Quan hệ với Events (nếu có bảng registrations)
- */
+    /**
+     * Quan hệ với Events (nếu có bảng registrations)
+     */
 public function events()
 {
     return $this->hasMany(Event::class, 'organizer_id')
@@ -81,40 +81,13 @@ public function posts()
 {
     return $this->hasMany(Post::class);
 }
-    // // ✅ CLB do người dùng quản lý
-    // public function managedClubs(): HasMany
-    // {
-    //     return $this->hasMany(Club::class, 'manager_id');
-    // }
+    // User.php
 
-    // // ✅ Thành viên của các CLB (nếu có bảng trung gian ClubMember)
-    // public function memberships(): HasMany
-    // {
-    //     return $this->hasMany(ClubMember::class, 'user_id');
-    // }
 
-    // // ✅ Bài viết do người dùng đăng
-    // public function posts(): HasMany
-    // {
-    //     return $this->hasMany(Post::class, 'user_id');
-    // }
+    public function facultyMember()
+    {
+        return $this->hasOne(FacultyMember::class);
+    }
 
-    // // ✅ Thông báo do người dùng tạo
-    // public function notifications()
-    // {
-    //     return $this->hasMany(Notification::class, 'created_by');
-    // }
 
-    // // ✅ Tài liệu do người dùng tải lên
-    // public function uploadedMedia()
-    // {
-    //     return $this->hasMany(Media::class, 'uploaded_by');
-    // }
-
-    // // ✅ Sự kiện do người dùng tạo
-    // public function events()
-    // {
-    //     return $this->hasMany(Event::class, 'created_by');
-
-    // }
 }

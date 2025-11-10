@@ -24,7 +24,10 @@ use App\Http\Controllers\Admin\{
     PlanController,
     DocumentPostController,
     DocumentClubController,
-    ClubLeaveRequestController
+    ClubLeaveRequestController,
+    ClubUpdateLogController,
+    ClubRequestUpdateController
+
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -133,6 +136,11 @@ Route::prefix('admin')
         // =========================================================
         // 4. CLUB MANAGEMENT
         // =========================================================
+        // Routes cho CLB
+
+
+
+
         Route::controller(ClubController::class)
             ->prefix('clubs')
             ->as('clubs.')
@@ -143,6 +151,16 @@ Route::prefix('admin')
                 Route::get('/{id}', 'show')->name('show');
                 Route::get('/{id}/edit', 'edit')->name('edit');
                 Route::put('/{club}', 'update')->name('update');
+
+                // lọc viên trong CLB cụ thể
+                Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
+
+                // lọc tất cả thành viên hệ thống
+                Route::get('/members/search', 'searchMembers')->name('members.search');
+
+                // tìm kiếm câu lạc bộ real-time
+                Route::post('/search', 'searchJson')->name('search');
+
                 Route::delete('/{club}', 'destroy')->name('destroy');
 
                 Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
@@ -158,6 +176,8 @@ Route::prefix('admin')
         // =========================================================
         // 5. CLUB REQUESTS
         // =========================================================
+        // Routes cho yêu cầu thành lập CLB
+
         Route::controller(ClubRequestController::class)
             ->prefix('club-requests')
             ->as('club_requests.')
@@ -169,6 +189,17 @@ Route::prefix('admin')
                 Route::post('/{id}/handle', 'handleRequest')->name('handle');
                 Route::delete('/{id}', 'destroy')->name('destroy');
             });
+        Route::controller(ClubRequestUpdateController::class)
+            ->prefix('club-requests-update')
+            ->as('club_requests_update.')
+            ->group(function () {
+                Route::get('/filter', 'filterRequests')->name('filter');
+                Route::get('/', 'indexRequests')->name('index');
+                Route::get('/{id}', 'showRequest')->name('show');
+                Route::get('/{id}/show2', 'show2')->name('show2');
+                Route::post('/{id}/handle', 'handleUpdateRequest')->name('handleUpdateRequest');
+                Route::delete('/{id}', 'destroy')->name('destroy');
+            });
 
         Route::controller(ClubJoinRequestController::class)
             ->prefix('club-join-requests')
@@ -178,7 +209,11 @@ Route::prefix('admin')
                 Route::get('/', 'index')->name('index');
                 Route::get('/{id}', 'showRequest')->name('show');
                 Route::get('/{id}/full', 'show2')->name('show2');
-                Route::post('/{id}/handle', 'handleRequest')->name('handle');
+
+                // ✅ Xử lý từng trạng thái trong quy trình duyệt
+                Route::post('/{id}/handle', 'handle')->name('handle');
+
+                // ✅ Xóa yêu cầu
                 Route::delete('/{id}', 'destroy')->name('destroy');
             });
 
@@ -201,23 +236,24 @@ Route::prefix('admin')
             ->prefix('posts')
             ->as('posts.')
             ->group(function () {
-                Route::get('/trash', 'trash')->name('trash');
-                Route::get('/', 'index')->name('index');
-                Route::get('/create', 'create')->name('create');
-                Route::post('/', 'store')->name('store');
-                Route::post('/filter', 'filter')->name('filter');
-                Route::post('/upload-image', 'uploadImage')->name('uploadImage');
-                Route::post('/upload-file', 'uploadFile')->name('uploadFile');
-                Route::get('/{id}', 'show')->name('show');
-                Route::get('/{id}/edit', 'edit')->name('edit');
-                Route::put('/{id}', 'update')->name('update');
-                Route::delete('/{id}', 'destroy')->name('destroy');
-                Route::patch('/{id}/toggle', 'toggle')->name('toggle');
-                Route::put('/{id}/approve', 'approve')->name('approve');
-                Route::put('/{id}/reject', 'reject')->name('reject');
-                Route::patch('/{id}/restore', 'restore')->name('restore');
-                Route::delete('/{id}/force', 'forceDelete')->name('forceDelete');
-            });
+            Route::get('/trash', 'trash')->name('trash');                 // Danh sách bài viết đã xóa
+            Route::get('/', 'index')->name('index');                      // Danh sách bài viết
+            Route::get('/create', 'create')->name('create');              // Form tạo bài viết
+            Route::post('/', 'store')->name('store');                     // Lưu bài viết mới
+            Route::post('/filter', 'filter')->name('filter');             // Lọc bài viết
+            Route::post('/upload-image', 'uploadImage')->name('uploadImage'); // Upload ảnh từ editor
+            Route::post('/upload-file', 'uploadFile')->name('uploadFile');    // Upload file từ editor
+
+            Route::get('/{id}', 'show')->name('show');                    // Xem chi tiết
+            Route::get('/{id}/edit', 'edit')->name('edit');               // Form sửa
+            Route::put('/{id}', 'update')->name('update');                // Cập nhật bài viết
+            Route::delete('/{id}', 'destroy')->name('destroy');           // Xóa mềm bài viết
+            Route::patch('/{id}/toggle', 'toggle')->name('toggle');       // Ẩn/hiện bài viết
+            Route::put('/{id}/approve', 'approve')->name('approve');      // Duyệt bài viết
+            Route::put('/{id}/reject', 'reject')->name('reject');         // Từ chối bài viết
+            Route::patch('/{id}/restore', 'restore')->name('restore');    // Khôi phục bài viết
+            Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // Xóa vĩnh viễn
+        });
 
         // =========================================================
         // 7. DOCUMENT & HISTORY
@@ -225,26 +261,35 @@ Route::prefix('admin')
         Route::controller(HistoryController::class)
             ->prefix('history')
             ->as('history.')
-            ->group(fn() => Route::get('/', 'index')->name('index'));
+            ->group(function () {
+            Route::get('/', 'index')->name('index');
+        });
+
+
 
         Route::controller(DocumentClubController::class)
             ->prefix('documentclub')
             ->as('documentclub.')
             ->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('/create', 'create')->name('create');
-                Route::post('/', 'store')->name('store');
-                Route::get('/search', 'search')->name('search');
-                Route::get('/trash', 'trash')->name('trash');
-                Route::post('/{document}/approve', 'approve')->name('approve');
-                Route::post('/{document}/reject', 'reject')->name('reject');
-                Route::get('/{document}/edit', 'edit')->name('edit');
-                Route::put('/{document}', 'update')->name('update');
-                Route::delete('/{document}', 'destroy')->name('destroy');
-                Route::get('/{document}/download', 'download')->name('download');
-                Route::get('/{document}', 'show')->name('show');
-                Route::put('/{id}/restore', 'restore')->name('restore');
-                Route::delete('/{id}/force', 'forceDelete')->name('forceDelete');
+
+                Route::get('/', 'index')->name('index');                 // danh sách
+                Route::get('/create', 'create')->name('create');         // form thêm mới
+                Route::post('/', 'store')->name('store');                // lưu mới
+                Route::get('/search', 'search')->name('search');         // realtime search
+                Route::get('/trash', 'trash')->name('trash');            // thùng rác
+
+
+                Route::post('/{document}/approve', 'approve')->name('approve');   // duyệt
+                Route::post('/{document}/reject', 'reject')->name('reject');      // từ chối
+
+                Route::get('/{document}/edit', 'edit')->name('edit');             // form chỉnh sửa
+                Route::put('/{document}', 'update')->name('update');              // cập nhật
+                Route::delete('/{document}', 'destroy')->name('destroy');         // xóa mềm
+                Route::get('/{document}/download', 'download')->name('download'); // tải xuống
+                Route::get('/{document}', 'show')->name('show');                  // xem chi tiết
+
+                Route::put('/{id}/restore', 'restore')->name('restore');          // khôi phục
+                Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
             });
 
         // =========================================================
@@ -268,9 +313,10 @@ Route::controller(CommentController::class)
             ->prefix('notifications')
             ->as('notifications.')
             ->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('/create', 'create')->name('create');
-                Route::post('/', 'store')->name('store');
+                Route::get('/', 'index')->name('index');                   // ✅ danh sách thông báo
+                Route::get('/create', 'create')->name('create');           // form tạo thông báo
+                Route::post('/', 'store')->name('store');                  // lưu thông báo
+
                 Route::get('/fetch-users', 'fetchUsers')->name('fetchUsers');
                 Route::get('/fetch-clubs', 'fetchClubs')->name('fetchClubs');
                 Route::get('/fetch-club-members', 'fetchClubMembers')->name('fetchClubMembers');

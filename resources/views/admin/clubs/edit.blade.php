@@ -4,159 +4,166 @@
 @section('card-title', 'Sửa câu lạc bộ: ' . $club->name)
 
 @section('card-body')
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
-
-@if($errors->any())
-    <div class="alert alert-danger">
-        <ul class="mb-0">
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-<form action="{{ route('admin.clubs.update', $club->id) }}" method="POST" enctype="multipart/form-data">
-    @csrf
-    @method('PUT')
-
-    <div class="row mb-4">
-        {{-- Cột trái --}}
-        <div class="col-md-4">
-            {{-- Thông tin cơ bản --}}
-            <div class="card mb-4 shadow-sm border-primary">
-                <div class="card-header bg-primary text-white fw-bold">Thông tin cơ bản</div>
-                <div class="card-body text-center">
-                    <img id="logoPreview" src="{{ $club->logo ? asset('storage/' . $club->logo) : asset('images/default-club.png') }}"
-                        alt="Logo CLB" class="img-fluid rounded mb-3" style="max-height: 150px;">
-
-                    <div class="mb-3 text-start">
-                        <label for="logo" class="form-label">Cập nhật logo</label>
-                        <input type="file" name="logo" id="logo" class="form-control" accept="image/*">
-                        @error('logo') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    <div class="mb-3 text-start">
-                        <label for="status" class="form-label">Trạng thái</label>
-                        <select name="status" id="status" class="form-select form-select-lg">
-                            <option value="active" {{ old('status', $club->status) === 'active' ? 'selected' : '' }}>Hoạt động</option>
-                            <option value="inactive" {{ old('status', $club->status) === 'inactive' ? 'selected' : '' }}>Ngưng hoạt động</option>
-                        </select>
-                        @error('status') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    <div class="mb-3 text-start">
-                        <label for="member_limit" class="form-label">Giới hạn thành viên</label>
-                        <input type="number" name="member_limit" id="member_limit" class="form-control" value="{{ old('member_limit', $club->member_limit) }}">
-                        @error('member_limit') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    <p class="text-start"><strong>Ngày thành lập:</strong> {{ $club->founded_at?->format('d/m/Y') ?? '—' }}</p>
-                </div>
-            </div>
-
-            {{-- Ban quản lý --}}
-            <div class="card mb-4 shadow-sm border-success">
-                <div class="card-header bg-success text-white fw-bold">Ban quản lý CLB</div>
-                <div class="card-body">
-                    @php
-                        $roles = [
-                            'club_manager' => 'Chủ nhiệm',
-                            'deputy_manager' => 'Phó chủ nhiệm',
-                            'secretary' => 'Thư ký',
-                            'treasurer' => 'Thủ quỹ',
-                            'event_manager' => 'Quản lý sự kiện',
-                            'communication' => 'Truyền thông'
-                        ];
-                    @endphp
-
-                    @foreach($roles as $roleKey => $roleLabel)
-                        <div class="mb-3">
-                            <label class="form-label">{{ $roleLabel }}</label>
-                            <select name="managers[{{ $roleKey }}]" class="form-select select2-single">
-                                <option value="">-- Chọn thành viên --</option>
-                                @foreach($clubMembers as $member)
-                                    @if($member['role'] === 'member' || $member['role'] === $roleKey)
-                                        <option value="{{ $member['member']['id'] }}"
-                                            {{ old('managers.'.$roleKey, $member['role'] === $roleKey ? $member['member']['id'] : null) == $member['member']['id'] ? 'selected' : '' }}>
-                                            {{ $member['member']['user']['name'] ?? '—' }}
-                                            @if(!empty($member['member']['student_code']) || !empty($member['member']['user']['email']))
-                                                ({{ $member['member']['student_code'] ?? '' }} - {{ $member['member']['user']['email'] ?? '' }})
-                                            @endif
-                                        </option>
+                                    @if(session('success'))
+                                        <div class="alert alert-success">{{ session('success') }}</div>
                                     @endif
-                                @endforeach
+
+                                    @if($errors->any())
+                                        <div class="alert alert-danger">
+                                            <ul class="mb-0">
+                                                @foreach($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+
+                                    <form action="{{ route('admin.clubs.update', $club->id) }}" method="POST" enctype="multipart/form-data">
+                                        @csrf
+                                        @method('PUT')
+
+                                        <div class="row mb-4">
+                                            {{-- Cột trái --}}
+                                            <div class="col-md-4">
+                                                {{-- Thông tin cơ bản --}}
+                                <div class="card mb-4 shadow-sm border-primary">
+                                    <div class="card-header bg-primary text-white fw-bold">Thông tin cơ bản</div>
+                                    <div class="card-body">
+                                        <!-- Logo CLB -->
+                                        <div class="text-center mb-3">
+                                            <img id="logoPreview"
+                                                src="{{ $club->logo ? asset('storage/' . $club->logo) : asset('images/default-club.png') }}"
+                                                alt="Logo CLB" class="img-fluid rounded" style="max-height: 150px;">
+                                        </div>
+
+                                        <!-- Cập nhật logo (readonly) -->
+                                        <div class="mb-3">
+                                            <label for="logo" class="form-label">Logo</label>
+                                            <input type="file" name="logo" id="logo" class="form-control" accept="image/*" disabled>
+                                        </div>
+
+                                        <!-- Giới hạn thành viên (readonly) -->
+                                        <div class="mb-3">
+                                            <label for="member_limit" class="form-label">Giới hạn thành viên</label>
+                                            <input type="number" name="member_limit" id="member_limit" class="form-control"
+                                                value="{{ $club->member_limit }}" placeholder="Nhập số lượng tối đa..." readonly>
+                                        </div>
+
+                                        <!-- Ngày thành lập -->
+                                        <p><strong>Ngày thành lập:</strong> {{ $club->founded_at?->format('d/m/Y') ?? '—' }}</p>
+                                    </div>
+                                </div>
+
+
+                <!-- Card Trạng thái CLB -->
+                <div class="card mb-4 shadow-sm border-warning">
+                    <div class="card-header bg-warning text-dark fw-bold">Trạng thái CLB</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Trạng thái</label>
+                            <select name="status" id="status" class="form-select select2-single">
+                                <option value="active" {{ $club->status === 'active' ? 'selected' : '' }}>Hoạt động</option>
+                                <option value="inactive" {{ $club->status === 'inactive' ? 'selected' : '' }}>Ngưng hoạt động</option>
                             </select>
-                            @error('managers.'.$roleKey) <small class="text-danger">{{ $message }}</small> @enderror
+                            @error('status') <small class="text-danger">{{ $message }}</small> @enderror
                         </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
-        {{-- Cột phải --}}
-        <div class="col-md-8">
-            <div class="card mb-4 shadow-sm border-info">
-                <div class="card-header bg-info text-white fw-bold">Thông tin chi tiết</div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Tên CLB</label>
-                        <input type="text" name="name" id="name" class="form-control" value="{{ old('name', $club->name) }}">
-                        @error('name') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="field" class="form-label">Lĩnh vực</label>
-                        <input type="text" name="field" id="field" class="form-control" value="{{ old('field', $club->field) }}">
-                        @error('field') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Địa điểm</label>
-                        <input type="text" name="location" id="location" class="form-control" value="{{ old('location', $club->location) }}">
-                        @error('location') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" name="email" id="email" class="form-control" value="{{ old('email', $club->email) }}">
-                        @error('email') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Điện thoại</label>
-                        <input type="text" name="phone" id="phone" class="form-control" value="{{ old('phone', $club->phone) }}">
-                        @error('phone') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    {{-- Mô tả --}}
-                    <div class="mb-3">
-                        <label class="form-label">Mô tả</label>
-                        <div id="descriptionEditor" style="min-height:200px; border:1px solid #ced4da; border-radius:6px; padding:10px; background:#fff;">
-                            {!! old('description', $club->description) !!}
-                        </div>
-                        <input type="hidden" name="description" id="descriptionInput">
-                        @error('description') <small class="text-danger">{{ $message }}</small> @enderror
-                    </div>
-
-                    {{-- Nội quy --}}
-                    <div class="mb-3">
-                        <label class="form-label">Nội quy CLB</label>
-                        <div id="rulesEditor" style="min-height:200px; border:1px solid #ced4da; border-radius:6px; padding:10px; background:#fff;">
-                            {!! old('rules', $club->rules) !!}
-                        </div>
-                        <input type="hidden" name="rules" id="rulesInput">
-                        @error('rules') <small class="text-danger">{{ $message }}</small> @enderror
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <button type="submit" class="btn btn-primary">Cập nhật CLB</button>
-</form>
+
+
+                                                {{-- Ban quản lý --}}
+                                                <div class="card mb-4 shadow-sm border-success">
+                                                    <div class="card-header bg-success text-white fw-bold">Ban quản lý CLB</div>
+                                                    <div class="card-body">
+                                                        @php
+    $roles = [
+        'club_manager' => 'Chủ nhiệm',
+        'deputy_manager' => 'Phó chủ nhiệm',
+        'secretary' => 'Thư ký',
+        'treasurer' => 'Thủ quỹ',
+        'event_manager' => 'Quản lý sự kiện',
+        'communication' => 'Truyền thông'
+    ];
+                                                        @endphp
+
+                                                        @foreach($roles as $roleKey => $roleLabel)
+                                                            <div class="mb-3">
+                                                                <label class="form-label">{{ $roleLabel }}</label>
+                                                                <select name="managers[{{ $roleKey }}]" class="form-select select2-single">
+                                                                    <option value="">-- Chọn thành viên --</option>
+                                                                    @foreach($clubMembers as $member)
+                                                                        @if($member['role'] === 'member' || $member['role'] === $roleKey)
+                                                                            <option value="{{ $member['member']['id'] }}"
+                                                                                {{ old('managers.' . $roleKey, $member['role'] === $roleKey ? $member['member']['id'] : null) == $member['member']['id'] ? 'selected' : '' }}>
+                                                                                {{ $member['member']['user']['name'] ?? '—' }}
+                                                                                @if(!empty($member['member']['student_code']) || !empty($member['member']['user']['email']))
+                                                                                    ({{ $member['member']['student_code'] ?? '' }} - {{ $member['member']['user']['email'] ?? '' }})
+                                                                                @endif
+                                                                            </option>
+                                                                        @endif
+                                                                    @endforeach
+                                                                </select>
+                                                                @error('managers.' . $roleKey) <small class="text-danger">{{ $message }}</small> @enderror
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Cột phải --}}
+                                        <div class="col-md-8">
+                                            <div class="card mb-4 shadow-sm border-info">
+                                                <div class="card-header bg-info text-white fw-bold">Thông tin chi tiết</div>
+                                                <div class="card-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Tên CLB</label>
+                                                        <input type="text" class="form-control" value="{{ $club->name }}" readonly>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Lĩnh vực</label>
+                                                        <input type="text" class="form-control" value="{{ $club->field }}" readonly>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Địa điểm</label>
+                                                        <input type="text" class="form-control" value="{{ $club->location }}" readonly>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Email</label>
+                                                        <input type="email" class="form-control" value="{{ $club->email }}" readonly>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Điện thoại</label>
+                                                        <input type="text" class="form-control" value="{{ $club->phone }}" readonly>
+                                                    </div>
+
+                                                    {{-- Mô tả --}}
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Mô tả</label>
+                                                        <div class="p-2 border rounded bg-white" style="min-height:200px;">
+                                                            {!! $club->description !!}
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- Nội quy --}}
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Nội quy CLB</label>
+                                                        <div class="p-2 border rounded bg-white" style="min-height:200px;">
+                                                            {!! $club->rules !!}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary">Cập nhật CLB</button>
+                                    </form>
 @endsection
 
 @push('scripts')

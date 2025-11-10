@@ -119,63 +119,77 @@
 
                 <!-- Quản lý thông báo -->
                 <li class="nav-item">
-                    <a class="nav-link menu-link" href="#sidebarNotification" data-bs-toggle="collapse"
-                        role="button" aria-expanded="false" aria-controls="sidebarNotification">
-                        <i class="ri-notification-3-line"></i> Quản lý thông báo
-                    </a>
-                    <div class="collapse menu-dropdown" id="sidebarNotification">
-                        <ul class="nav nav-sm flex-column">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.notifications.create') }}" class="nav-link">Gửi thông báo</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.notifications.index') }}" class="nav-link">Thông báo đã gửi</a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                <a class="nav-link menu-link collapsed" data-bs-toggle="collapse" href="#notificationMenu" role="button"
+                    aria-expanded="false" aria-controls="notificationMenu">
+                    <i class="ri-notification-3-line"></i> <span>Quản lý thông báo</span>
+                </a>
+                <div class="collapse" id="notificationMenu">
+                    <ul class="nav nav-sm flex-column">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.notifications.create') }}" class="nav-link">
+                                <i class="ri-send-plane-line"></i> Gửi thông báo
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.notifications.index') }}" class="nav-link">
+                                <i class="ri-list-check-2"></i> Thông báo đã gửi
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
 
                 <!-- Quản lý tài liệu CLB -->
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="#sidebarDocuments" data-bs-toggle="collapse"
-                        role="button" aria-expanded="false" aria-controls="sidebarDocuments">
-                        <i class="ri-folder-3-line"></i> Quản lý tài liệu CLB
-                    </a>
-                    <div class="collapse menu-dropdown" id="sidebarDocuments">
-                        <ul class="nav nav-sm flex-column">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.documentclub.index') }}" class="nav-link">Danh sách</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.documentclub.create') }}" class="nav-link">Thêm mới</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.documentclub.trash') }}" class="nav-link">Tài liệu đã xóa</a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+            <li class="nav-item">
+                <a class="nav-link menu-link collapsed" data-bs-toggle="collapse" href="#tailieu" role="button"
+                    aria-expanded="false" aria-controls="tailieu">
+                    <i class="ri-folder-3-line"></i> <span>Quản lý tài liệu CLB</span>
+                </a>
+                <div class="collapse" id="tailieu">
+                    <ul class="nav nav-sm flex-column">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.documentclub.index') }}" class="nav-link">
+                                <i class="ri-file-text-line"></i> Danh sách
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.documentclub.create') }}" class="nav-link">
+                                <i class="ri-add-box-line"></i> Thêm mới
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.documentclub.trash') }}" class="nav-link">
+                                <i class="ri-add-box-line"></i> Tài liệu đã xóa
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
 
-                <!-- Nội dung -->
-                <li class="menu-title"><i class="ri-article-line"></i> Nội dung</li>
+            <!-- Nội dung -->
+            <li class="menu-title"><i class="ri-article-line"></i> <span data-key="t-components">Nội dung</span></li>
 
-                <!-- Bài viết -->
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="#sidebarPosts" data-bs-toggle="collapse" role="button"
-                        aria-expanded="false" aria-controls="sidebarPosts">
-                        <i class="ri-newspaper-line"></i> Bài viết
-                    </a>
-                    <div class="collapse menu-dropdown" id="sidebarPosts">
-                        <ul class="nav nav-sm flex-column">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.posts.index') }}" class="nav-link">Danh sách</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.posts.trash') }}" class="nav-link">Bài viết đã xóa</a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+            <!-- Bài viết -->
+            <li class="nav-item">
+                <a class="nav-link menu-link collapsed" data-bs-toggle="collapse" href="#sidebartintuc" role="button"
+                    aria-expanded="false" aria-controls="sidebartintuc">
+                    <i class="ri-newspaper-line"></i> <span data-key="t-advance-ui">Bài viết</span>
+                </a>
+                <div class="collapse" id="sidebartintuc">
+                    <ul class="nav nav-sm flex-column">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.posts.index') }}" class="nav-link" data-key="t-nestable-list">
+                                <i class="ri-file-edit-line"></i> Danh sách
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.posts.trash') }}" class="nav-link" data-key="t-sweet-alerts">
+                                <i class="ri-file-copy-2-line"></i> Bài viết đã xóa
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
 
                 <!-- Bình luận -->
                 <li class="nav-item">
@@ -204,6 +218,6 @@
                 </li>
             </ul>
         </div>
-        <div class="sidebar-background"></div>
     </div>
+    <div class="sidebar-background"></div>
 </div>

@@ -1,119 +1,82 @@
-@extends('admin.layouts.app')
+@extends('admin.layouts.blank')
 
-@section('title', 'Chi tiết yêu cầu tham gia CLB')
-@section('card-title', 'Chi tiết yêu cầu tham gia CLB')
-@section('card-header')
-    Thông tin chi tiết yêu cầu
-@endsection
+@section('title', 'Duyệt đơn CLB')
 
 @section('card-body')
-    {{-- Card CLB + Người gửi yêu cầu --}}
-    <div class="card mb-3 shadow-sm">
+    <div class="card">
         <div class="card-body">
-            <div class="row">
-                {{-- Thông tin CLB (bên trái) --}}
-                <div class="col-md-6">
-                    @if($request->club->logo)
-                        <div class="text-center mb-3">
-                            <img src="{{ asset('storage/' . $request->club->logo) }}" class="img-fluid rounded"
-                                style="max-height:150px;">
-                        </div>
-                    @endif
-                    <h5 class="fw-bold">Thông tin CLB</h5>
-                    @if($request->club)
-                        <p><strong>Tên CLB:</strong> {{ $request->club->name }}</p>
-                        <p><strong>Lĩnh vực:</strong> {{ $request->club->field }}</p>
-                        <p><strong>Trạng thái:</strong>
-                            @if($request->club->status === 'active')
-                                <span class="badge bg-success">Hoạt động</span>
-                            @else
-                                <span class="badge bg-secondary">Ngừng hoạt động</span>
-                            @endif
-                        </p>
-                        <p><strong>Ngày thành lập:</strong>
-                            {{ \Carbon\Carbon::parse($request->club->founded_at)->format('d/m/Y') }}</p>
-                        <p><strong>Địa điểm hoạt động:</strong> {{ $request->club->location }}</p>
-                        <p><strong>Giới hạn thành viên:</strong> {{ $request->club->member_limit }}</p>
-                        <p><strong>Số lượng thành viên hiện tại:</strong> {{ $request->club->members->count() }}</p>
-                        <p><strong>Người quản lý:</strong> {{ $request->club->manager->name ?? '—' }}</p>
-                    @endif
+            <h5 class="card-title mb-4">Duyệt yêu cầu CLB</h5>
+
+            <!-- Hiển thị PDF đơn xin tham gia CLB người dùng đã ký -->
+            @if($request->membership_file)
+                <div class="mb-3">
+                    <iframe id="pdfViewer" src="{{ asset('storage/' . $request->membership_file) }}" width="100%"
+                        height="600px"></iframe>
                 </div>
-
-                {{-- Thông tin người gửi yêu cầu (bên phải) --}}
-                <div class="col-md-6">
-                    <h5 class="fw-bold">Thông tin người gửi yêu cầu</h5>
-                    <p><strong>Họ tên:</strong> {{ $request->user->name }}</p>
-                    <p><strong>Email:</strong> {{ $request->user->email }}</p>
-                    <p><strong>Vai trò:</strong> {{ ucfirst($request->user->role) }}</p>
-                    <p><strong>Trạng thái tài khoản:</strong>
-                        @if($request->user->status === 'active')
-                            <span class="badge bg-success">Hoạt động</span>
-                        @else
-                            <span class="badge bg-secondary">Không hoạt động</span>
-                        @endif
-                    </p>
-                    <p><strong>Ngày gửi yêu cầu:</strong> {{ $request->requested_at->format('d/m/Y') }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Card thông tin cá nhân thành viên --}}
-    @if($request->user->member)
-        <div class="card mb-3 shadow-sm">
-            <div class="card-header bg-light fw-bold">Thông tin cá nhân thành viên</div>
-            <div class="card-body row g-3">
-                <div class="col-md-6"><strong>Mã sinh viên:</strong> {{ $request->user->member->student_code }}</div>
-                <div class="col-md-6"><strong>Giới tính:</strong> {{ $request->user->member->gender }}</div>
-                <div class="col-md-6"><strong>Ngày sinh:</strong>
-                    {{ \Carbon\Carbon::parse($request->user->member->date_of_birth)->format('d/m/Y') }}</div>
-                <div class="col-md-6"><strong>Số điện thoại:</strong> {{ $request->user->member->phone }}</div>
-                <div class="col-md-6"><strong>Địa chỉ:</strong> {{ $request->user->member->address }}</div>
-                <div class="col-md-6"><strong>Dân tộc:</strong> {{ $request->user->member->ethnicity }}</div>
-                <div class="col-md-6"><strong>Khóa học:</strong> {{ $request->user->member->course }}</div>
-                <div class="col-md-6"><strong>Ngành học:</strong> {{ $request->user->member->major }}</div>
-                <div class="col-md-6"><strong>Số CCCD:</strong> {{ $request->user->member->citizen_id }}</div>
-                <div class="col-md-6"><strong>Ngày cấp:</strong>
-                    {{ \Carbon\Carbon::parse($request->user->member->issued_date)->format('d/m/Y') }}</div>
-                <div class="col-md-6"><strong>Nơi cấp:</strong> {{ $request->user->member->issued_place }}</div>
-            </div>
-        </div>
-    @endif
-
-    {{-- Card Kết quả xử lý yêu cầu --}}
-    <div class="card shadow-sm">
-        <div class="card-header bg-light fw-bold">Kết quả xử lý yêu cầu</div>
-        <div class="card-body">
-            @if($request->status === 'pending')
-                <form method="POST" action="{{ route('admin.club_join_requests.handle', $request->id) }}">
-                    @csrf
-                    <div class="mb-3">
-                        <label class="form-label">Ghi chú của người xử lý (nếu có)</label>
-                        <textarea name="note" class="form-control" rows="2">{{ old('note', $request->note) }}</textarea>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="submit" name="action" value="approve" class="btn btn-success">Duyệt</button>
-                        <button type="submit" name="action" value="reject" class="btn btn-danger">Từ chối</button>
-                    </div>
-                </form>
             @else
-                <div class="alert alert-info">
-                    Yêu cầu đã được xử lý: <strong>{{ ucfirst($request->status) }}</strong>
+                <div class="alert alert-warning">Người dùng chưa tải lên đơn xin tham gia CLB.</div>
+            @endif
+
+            <!-- Canvas ký admin -->
+            <label class="form-label">Ký tên (Admin)</label>
+            <canvas id="adminSignaturePad" style="border:1px solid #ccc; width:100%; height:150px;"></canvas>
+            <input type="hidden" name="admin_signature" id="adminSignatureInput">
+            <button type="button" id="clearSignature" class="btn btn-sm btn-warning mt-2">Xóa chữ ký</button>
+
+            <!-- Form duyệt/từ chối -->
+            <form id="handleForm" method="POST" action="{{ route('admin.club_requests.handle', $request->id) }}"
+                class="mt-3">
+                @csrf
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú (nếu có)</label>
+                    <textarea name="note" class="form-control" rows="2">{{ old('note', $request->note) }}</textarea>
                 </div>
 
-                @if($request->note)
-                    <p><strong>Ghi chú xử lý:</strong> {{ $request->note }}</p>
-                @endif
-
-                <p><strong>Thời điểm xử lý:</strong> {{ $request->updated_at->format('d/m/Y H:i') }}</p>
-
-                <p><strong>Người xử lý:</strong>
-                    {{ $request->handler->name ?? 'Không xác định' }}
-                    @if($request->handler && $request->handler->email)
-                        <span class="text-muted">({{ $request->handler->email }})</span>
-                    @endif
-                </p>
-            @endif
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="submit" name="status" value="approved" class="btn btn-success">Duyệt</button>
+                    <button type="submit" name="status" value="rejected" class="btn btn-danger">Từ chối</button>
+                </div>
+            </form>
         </div>
     </div>
+
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                console.log('DOM loaded - chuẩn bị ký admin');
+
+                const canvas = document.getElementById('adminSignaturePad');
+                const signatureInput = document.getElementById('adminSignatureInput');
+                const clearBtn = document.getElementById('clearSignature');
+                const form = document.getElementById('handleForm');
+
+                if (!canvas || !signatureInput || !form) {
+                    console.error('Canvas, input hoặc form không tồn tại!');
+                    return;
+                }
+
+                const signaturePad = new SignaturePad(canvas);
+                console.log('SignaturePad đã khởi tạo');
+
+                // Xóa chữ ký
+                clearBtn.addEventListener('click', function () {
+                    signaturePad.clear();
+                    console.log('Canvas đã xóa chữ ký');
+                });
+
+                // Khi submit form, lưu chữ ký Base64 vào input
+                form.addEventListener('submit', function (e) {
+                    if (signaturePad.isEmpty()) {
+                        e.preventDefault();
+                        alert('Vui lòng ký tên trước khi duyệt hoặc từ chối!');
+                        console.log('Chưa có chữ ký, ngăn submit');
+                    } else {
+                        signatureInput.value = signaturePad.toDataURL();
+                        console.log('Chữ ký admin đã lưu vào input:', signatureInput.value);
+                    }
+                });
+            });
+        </script>
+    @endpush
 @endsection

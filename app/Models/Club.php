@@ -16,6 +16,7 @@ class Club extends Model
         'field',
         'status',
         'manager_id',
+        'advisor_id', // thêm nếu muốn cho phép mass assign
         'email',
         'phone',
         'member_limit',
@@ -25,7 +26,6 @@ class Club extends Model
     ];
 
     protected $casts = [
-        'social_links' => 'array',
         'founded_at' => 'date',
         'description' => 'string',
     ];
@@ -78,6 +78,11 @@ class Club extends Model
             ]);
         });
     }
+    public function clubMembers()
+    {
+        return $this->hasMany(ClubMember::class, 'club_id');
+    }
+
 
     /** Yêu cầu tham gia CLB */
     public function joinRequests()
@@ -87,6 +92,18 @@ class Club extends Model
     public function documents()
     {
         return $this->hasMany(Document::class, 'clb_id');
+    }
+    // app/Models/Club.php
+
+    // app/Models/Club.php
+    public function advisor()
+    {
+        return $this->belongsTo(User::class, 'advisor_id');
+    }
+    public function advisorFaculty()
+    {
+        // advisor_id = faculty_members.id
+        return $this->belongsTo(FacultyMember::class, 'advisor_id')->with('user');
     }
 
 

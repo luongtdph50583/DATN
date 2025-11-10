@@ -200,38 +200,39 @@ class NotificationController extends Controller
 
 
 
-    public function fetchUsers(Request $request)
-    {
-        $q = $request->get('q', '');
-        $role = $request->get('role');
-        $all = $request->boolean('all');
+    // public function fetchUsers(Request $request)
+    // {
+    //     $q = $request->get('q', '');
+    //     $role = $request->get('role');
+    //     $all = $request->boolean('all');
 
+    //     $query = User::query()
+    //         ->join('members', 'users.id', '=', 'members.user_id') // đảm bảo có member
+    //         ->where('users.status', 'active');
 
-        $query = User::query()->where('status', 'active');
+    //     if (!$all) {
+    //         $query->when($q, function ($query, $q) {
+    //             $query->where(function ($subQuery) use ($q) {
+    //                 $subQuery->where('users.name', 'like', "%{$q}%")
+    //                     ->orWhere('users.email', 'like', "%{$q}%");
+    //             });
+    //         });
+    //     }
 
-        if (!$all) {
-            $query->when($q, function ($query, $q) {
-                $query->where(function ($subQuery) use ($q) {
-                    $subQuery->where('name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%");
-                });
-            });
-        }
+    //     if ($role) {
+    //         $query->where('users.role', $role);
+    //     }
 
-        if ($role) {
-            $query->where('role', $role);
-        }
+    //     $users = $query->select('users.id', 'users.name', 'users.email')->get();
 
-        // ❌ Không còn phân trang, lấy tất cả
-        $users = $query->get(['id', 'name', 'email']);
+    //     $results = $users->map(fn($u) => [
+    //         'id' => $u->id,
+    //         'text' => "{$u->name} ({$u->email})"
+    //     ]);
 
-        $results = $users->map(fn($u) => [
-            'id' => $u->id,
-            'text' => "{$u->name} ({$u->email})",
-        ]);
+    //     return response()->json(['results' => $results]);
+    // }
 
-        return response()->json(['results' => $results]);
-    }
 
 
 
@@ -244,24 +245,140 @@ class NotificationController extends Controller
     }
 
     // AJAX: lấy thành viên của CLB từ bảng members
+ protected function getActiveUsers($query = null)
+    {
+        $query = $query ?? User::query();
+
+        return $query->join('members', 'users.id', '=', 'members.user_id')
+                     ->where('users.status', 'active')
+                     ->select('users.id', 'users.name', 'users.email');
+    }
+
+    /**
+     * Lấy danh sách user theo role, từ input q và all
+     */
+    public function fetchUsers(Request $request)
+    {
+        $q = $request->get('q', '');
+        $role = $request->get('role');
+        $all = $request->boolean('all');
+
+        $query = $this->getActiveUsers();
+
+        if (!$all && $q) {
+            $query->where(function($sub) use ($q) {
+                $sub->where('users.name', 'like', "%{$q}%")
+                    ->orWhere('users.email', 'like', "%{$q}%");
+            });
+        }
+
+        if ($role) {
+            $query->where('users.role', $role);
+        }
+
+        $users = $query->get();
+
+        $results = $users->map(fn($u) => [
+            'id' => $u->id,
+            'text' => "{$u->name} ({$u->email})"
+        ]);
+
+        return response()->json(['results' => $results]);
+    }
+
+    /**
+     * Helper: Build query lấy thành viên CLB theo club_id và role
+     */
+    protected function getClubMembersQuery($clubId = null, $role = null)
+    {
+        $query = DB::table('club_members')
+            ->join('members', 'club_members.member_id', '=', 'members.id')
+            ->join('users', 'members.user_id', '=', 'users.id')
+            ->join('clubs', 'club_members.club_id', '=', 'clubs.id')
+            ->where('users.status', 'active');
+
+        if ($clubId) {
+            $query->where('club_members.club_id', $clubId);
+        }
+
+        if ($role) {
+            $query->where('club_members.role', $role);
+        }
+
+        return $query->select(
+            'users.id as user_id',
+            'users.name as user_name',
+            'users.email',
+            'club_members.role',
+            'clubs.name as club_name'
+        );
+    }
+
+    /**
+     * Lấy danh sách thành viên CLB
+     * Nếu role = club_manager, lấy tất cả chủ nhiệm CLB
+     */
     public function fetchClubMembers(Request $request)
     {
         $clubId = $request->get('club_id');
+        $role = $request->get('role');
+
+        // Nếu là chủ nhiệm CLB
+        if ($role === 'club_manager') {
+            $managerIds = DB::table('club_members')
+                ->where('role', 'club_manager')
+                ->pluck('member_id')
+                ->unique()
+                ->toArray();
+
+            if (empty($managerIds)) {
+                return response()->json(['results' => []]);
+            }
+
+            $members = DB::table('members')
+                ->join('users', 'members.user_id', '=', 'users.id')
+                ->whereIn('members.id', $managerIds)
+                ->select('users.id as user_id', 'users.name as user_name', 'users.email')
+                ->get();
+
+            // Gom CLB mà họ là chủ nhiệm
+            $clubsByManager = DB::table('club_members')
+                ->join('clubs', 'club_members.club_id', '=', 'clubs.id')
+                ->where('club_members.role', 'club_manager')
+                ->whereIn('club_members.member_id', $managerIds)
+                ->select('club_members.member_id', 'clubs.name')
+                ->get()
+                ->groupBy('member_id');
+
+            $results = $members->map(function($m) use ($clubsByManager) {
+                $clubList = $clubsByManager[$m->user_id] ?? collect();
+                $clubNames = $clubList->pluck('name')->join(', ');
+                return [
+                    'id' => $m->user_id,
+                    'text' => "{$m->user_name} ({$m->email}) - Chủ nhiệm của: {$clubNames}"
+                ];
+            });
+
+            return response()->json(['results' => $results]);
+        }
+
+        // Nếu là các vai trò khác hoặc thành viên bình thường
         if (!$clubId) {
             return response()->json(['results' => []]);
         }
 
-        $members = DB::table('club_members')
-            ->join('members', 'club_members.member_id', '=', 'members.id')
-            ->join('users', 'members.user_id', '=', 'users.id')
-            ->where('club_members.club_id', $clubId)
-            ->where('users.status', 'active')
-            ->select('users.id', 'users.name', 'users.email')
-            ->get();
+        $members = $this->getClubMembersQuery($clubId, $role)->get();
 
-        $results = $members->map(fn($u) => ['id' => $u->id, 'text' => "{$u->name} ({$u->email})"]);
+        $results = $members->map(fn($m) => [
+            'id' => $m->user_id,
+            'text' => "{$m->user_name} ({$m->email}) - {$m->role} tại {$m->club_name}"
+        ]);
+
         return response()->json(['results' => $results]);
     }
+
+
+
 
 
     // AJAX: lấy tất cả sự kiện

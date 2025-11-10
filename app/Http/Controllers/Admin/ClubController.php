@@ -12,12 +12,14 @@ use App\Models\ClubPlan;
 use App\Models\Document;
 use App\Models\ClubMember;
 use Illuminate\Http\Request;
+use App\Models\ClubUpdateLog;
 use App\Models\FundTransaction;
 use Illuminate\Validation\Rule;
 use App\Jobs\SendNotificationJob;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\ClubUpdateLogService;
 use App\Notifications\CustomNotification;
 use Illuminate\Validation\ValidationException;
 
@@ -38,8 +40,8 @@ class ClubController extends Controller
     }
     public function show($id)
     {
-        // Lấy thông tin CLB
-        $club = Club::with('manager')->findOrFail($id);
+        // Lấy thông tin CLB, bao gồm manager và advisor
+        $club = Club::with(['manager', 'advisor', 'advisorFaculty'])->findOrFail($id);
 
         // Lấy danh sách thành viên CLB, kèm thông tin từ bảng members và users
         $clubMembers = ClubMember::with(['member.user'])
@@ -49,45 +51,54 @@ class ClubController extends Controller
         // Trả về view chi tiết CLB
         return view('admin.clubs.show', compact('club', 'clubMembers'));
     }
-    public function filterMembers(Request $request, $id)
-    {
-        $status = $request->get('status');
-        $keyword = $request->get('keyword');
 
-        $members = ClubMember::with('member.user')
-            ->where('club_id', $id)
-            ->where('role', 'member')
-            ->when($status, function ($q) use ($status) {
-                $q->where('status', $status);
-            })
-            ->when($keyword, function ($q) use ($keyword) {
-                $q->whereHas('member.user', function ($q2) use ($keyword) {
-                    $q2->where('name', 'like', "%$keyword%")
-                        ->orWhere('email', 'like', "%$keyword%");
-                })
-                    ->orWhereHas('member', function ($q3) use ($keyword) {
-                        $q3->where('student_code', 'like', "%$keyword%");
-                    });
-            })
-            ->get();
+    // public function filterMembers(Request $request, $id)
+    // {
+    //     $status = $request->get('status');
+    //     $keyword = $request->get('keyword');
 
-        return view('admin.clubs.partials.members_table', compact('members'));
-    }
+    //     $members = ClubMember::with('member.user')
+    //         ->where('club_id', $id)
+    //         ->where('role', 'member')
+    //         ->when($status, function ($q) use ($status) {
+    //             $q->where('status', $status);
+    //         })
+    //         ->when($keyword, function ($q) use ($keyword) {
+    //             $q->whereHas('member.user', function ($q2) use ($keyword) {
+    //                 $q2->where('name', 'like', "%$keyword%")
+    //                     ->orWhere('email', 'like', "%$keyword%");
+    //             })
+    //                 ->orWhereHas('member', function ($q3) use ($keyword) {
+    //                     $q3->where('student_code', 'like', "%$keyword%");
+    //                 });
+    //         })
+    //         ->get();
+
+    //     return view('admin.clubs.partials.members_table', compact('members'));
+    // }
     public function edit($id)
     {
-        // Lấy CLB
         $club = Club::findOrFail($id);
 
-        // Lấy danh sách ClubMember kèm member và user
+        // Lấy danh sách thành viên trong CLB hiện tại
         $clubMembers = ClubMember::with('member.user')
             ->where('club_id', $id)
             ->get()
-            ->map(function ($item) {
-                // Nếu member hoặc user null → loại bỏ
+            ->filter(function ($item) {
                 if (!$item->member || !$item->member->user) {
-                    return null;
+                    return false;
                 }
 
+                // Kiểm tra xem member này có từng giữ chức vụ khác ngoài 'member' ở CLB khác không
+                $hasOtherRole = ClubMember::where('member_id', $item->member_id)
+                    ->where('role', '!=', 'member')
+                    ->where('club_id', '!=', $item->club_id)
+                    ->exists();
+
+                // Giữ lại nếu KHÔNG có chức vụ nào khác ngoài 'member'
+                return !$hasOtherRole;
+            })
+            ->map(function ($item) {
                 return [
                     'role' => $item->role,
                     'member' => [
@@ -100,11 +111,12 @@ class ClubController extends Controller
                     ],
                 ];
             })
-            ->filter() // loại bỏ các null
+            ->values()
             ->toArray();
 
         return view('admin.clubs.edit', compact('club', 'clubMembers'));
     }
+
     public function searchJson(Request $request)
     {
         $keyword = $request->input('keyword');
@@ -152,7 +164,6 @@ class ClubController extends Controller
                         })->orWhere('student_code', 'like', "%$keyword%");
                     });
                 })
-                ->limit(20)
                 ->get();
 
             $results = $members->map(function ($m) {
@@ -264,51 +275,26 @@ class ClubController extends Controller
         }
     }
 
-    public function update(Request $request, Club $club)
+    public function update(Request $request, Club $club, ClubUpdateLogService $logService)
     {
-        // ✅ Validate dữ liệu
+        // ✅ Validate dữ liệu chỉ cho phép sửa ban quản lý và trạng thái
         $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('clubs', 'name')->ignore($club->id)],
-            'field' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'member_limit' => 'nullable|integer|min:1',
             'status' => 'required|in:active,inactive',
-            'description' => 'nullable|string',
-            'rules' => 'nullable|string',
             'managers' => 'nullable|array',
             'managers.*' => 'nullable|exists:members,id',
-            'logo' => 'nullable|image|max:2048',
         ]);
 
-        // ✅ Check trùng người trong ban quản lý
-        if ($request->filled('managers')) {
-            $managerValues = array_filter($request->managers);
-            if (count($managerValues) !== count(array_unique($managerValues))) {
-                return redirect()->back()
-                    ->withErrors(['managers' => 'Ban quản lý không thể có cùng một người ở nhiều chức vụ.'])
-                    ->withInput();
-            }
-        }
+        $changes = []; // mảng lưu các thay đổi
 
-        // ✅ Upload logo nếu có
-        if ($request->hasFile('logo')) {
-            $club->logo = $request->file('logo')->store('logos', 'public');
+        // ✅ Kiểm tra và lưu thay đổi trạng thái
+        if ($club->status !== $request->status) {
+            $changes['status'] = [
+                'old' => $club->status,
+                'new' => $request->status
+            ];
+            $club->status = $request->status;
+            $club->save();
         }
-
-        // ✅ Cập nhật thông tin cơ bản CLB
-        $club->update([
-            'name' => $request->name,
-            'field' => $request->field,
-            'location' => $request->location,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'member_limit' => $request->member_limit,
-            'status' => $request->status,
-            'description' => $request->description,
-            'rules' => $request->rules,
-        ]);
 
         // ✅ Cập nhật ban quản lý
         $roles = [
@@ -328,26 +314,22 @@ class ClubController extends Controller
 
             if ($newMemberId) {
                 $newMember = Member::find($newMemberId);
-
                 if (!$newMember || !$newMember->user) {
                     return redirect()->back()
                         ->withErrors(['managers.' . $role => 'Thành viên chưa hợp lệ hoặc chưa có user liên kết.'])
                         ->withInput();
                 }
 
-                // Kiểm tra giữ vai trò ở CLB khác
-                $conflict = ClubMember::where('member_id', $newMemberId)
-                    ->where('club_id', '!=', $club->id)
-                    ->where('role', '!=', 'member')
-                    ->exists();
-
-                if ($conflict) {
-                    return redirect()->back()
-                        ->withErrors(['managers.' . $role => 'Thành viên đang giữ chức vụ khác ở CLB khác.'])
-                        ->withInput();
+                $currentMemberId = $current?->id;
+                if ($currentMemberId !== $newMemberId) {
+                    // ✅ Ghi thay đổi
+                    $changes['managers'][$role] = [
+                        'old' => $currentMemberId,
+                        'new' => $newMemberId
+                    ];
                 }
 
-                // Hạ người cũ nếu khác người mới
+                // ✅ Hạ người cũ nếu khác người mới
                 if ($current && $current->id != $newMemberId) {
                     $club->members()->updateExistingPivot($current->id, [
                         'role' => 'member',
@@ -356,7 +338,7 @@ class ClubController extends Controller
                     ]);
                 }
 
-                // Gán role mới
+                // ✅ Gán role mới
                 $club->members()->syncWithoutDetaching([
                     $newMemberId => [
                         'role' => $role,
@@ -366,15 +348,20 @@ class ClubController extends Controller
                     ]
                 ]);
 
-                // Nếu là chủ nhiệm → cập nhật manager_id trong bảng clubs
+                // ✅ Nếu là chủ nhiệm → cập nhật manager_id
                 if ($role === 'club_manager') {
                     $club->manager_id = $newMember->user_id;
                     $club->save();
                 }
 
             } else {
-                // Nếu bỏ trống → hạ người cũ
+                // ✅ Nếu bỏ trống → hạ người cũ
                 if ($current) {
+                    $changes['managers'][$role] = [
+                        'old' => $current->id,
+                        'new' => null
+                    ];
+
                     $club->members()->updateExistingPivot($current->id, [
                         'role' => 'member',
                         'appointed_at' => null,
@@ -389,8 +376,152 @@ class ClubController extends Controller
             }
         }
 
-        return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật CLB thành công!');
+        // ✅ Lưu log nếu có thay đổi
+        if (!empty($changes)) {
+            ClubUpdateLog::create([
+                'club_id' => $club->id,
+                'admin_id' => auth()->id(),
+                'proposer_id' => null,
+                'changed_fields' => json_encode($changes, JSON_UNESCAPED_UNICODE),
+                'type' => 'admin',
+                'status' => 'approved',
+            ]);
+        }
+
+        return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật ban quản lý và trạng thái CLB thành công!');
     }
+
+
+
+
+
+    // public function update(Request $request, Club $club)
+    // {
+    //     // ✅ Validate dữ liệu
+    //     $request->validate([
+    //         'name' => ['required', 'string', 'max:255', Rule::unique('clubs', 'name')->ignore($club->id)],
+    //         'field' => 'nullable|string|max:255',
+    //         'location' => 'nullable|string|max:255',
+    //         'email' => 'nullable|email|max:255',
+    //         'phone' => 'nullable|string|max:20',
+    //         'member_limit' => 'nullable|integer|min:1',
+    //         'status' => 'required|in:active,inactive',
+    //         'description' => 'nullable|string',
+    //         'rules' => 'nullable|string',
+    //         'managers' => 'nullable|array',
+    //         'managers.*' => 'nullable|exists:members,id',
+    //         'logo' => 'nullable|image|max:2048',
+    //     ]);
+
+    //     // ✅ Check trùng người trong ban quản lý
+    //     if ($request->filled('managers')) {
+    //         $managerValues = array_filter($request->managers);
+    //         if (count($managerValues) !== count(array_unique($managerValues))) {
+    //             return redirect()->back()
+    //                 ->withErrors(['managers' => 'Ban quản lý không thể có cùng một người ở nhiều chức vụ.'])
+    //                 ->withInput();
+    //         }
+    //     }
+
+    //     // ✅ Upload logo nếu có
+    //     if ($request->hasFile('logo')) {
+    //         $club->logo = $request->file('logo')->store('logos', 'public');
+    //     }
+
+    //     // ✅ Cập nhật thông tin cơ bản CLB
+    //     $club->update([
+    //         'name' => $request->name,
+    //         'field' => $request->field,
+    //         'location' => $request->location,
+    //         'email' => $request->email,
+    //         'phone' => $request->phone,
+    //         'member_limit' => $request->member_limit,
+    //         'status' => $request->status,
+    //         'description' => $request->description,
+    //         'rules' => $request->rules,
+    //     ]);
+
+    //     // ✅ Cập nhật ban quản lý
+    //     $roles = [
+    //         'club_manager',
+    //         'deputy_manager',
+    //         'secretary',
+    //         'treasurer',
+    //         'event_manager',
+    //         'communication'
+    //     ];
+
+    //     foreach ($roles as $role) {
+    //         $newMemberId = $request->managers[$role] ?? null;
+    //         $newMemberId = $newMemberId ? intval($newMemberId) : null;
+
+    //         $current = $club->members()->wherePivot('role', $role)->first();
+
+    //         if ($newMemberId) {
+    //             $newMember = Member::find($newMemberId);
+
+    //             if (!$newMember || !$newMember->user) {
+    //                 return redirect()->back()
+    //                     ->withErrors(['managers.' . $role => 'Thành viên chưa hợp lệ hoặc chưa có user liên kết.'])
+    //                     ->withInput();
+    //             }
+
+    //             // Kiểm tra giữ vai trò ở CLB khác
+    //             $conflict = ClubMember::where('member_id', $newMemberId)
+    //                 ->where('club_id', '!=', $club->id)
+    //                 ->where('role', '!=', 'member')
+    //                 ->exists();
+
+    //             if ($conflict) {
+    //                 return redirect()->back()
+    //                     ->withErrors(['managers.' . $role => 'Thành viên đang giữ chức vụ khác ở CLB khác.'])
+    //                     ->withInput();
+    //             }
+
+    //             // Hạ người cũ nếu khác người mới
+    //             if ($current && $current->id != $newMemberId) {
+    //                 $club->members()->updateExistingPivot($current->id, [
+    //                     'role' => 'member',
+    //                     'appointed_at' => null,
+    //                     'updated_at' => now(),
+    //                 ]);
+    //             }
+
+    //             // Gán role mới
+    //             $club->members()->syncWithoutDetaching([
+    //                 $newMemberId => [
+    //                     'role' => $role,
+    //                     'appointed_at' => now(),
+    //                     'joined_at' => now(),
+    //                     'status' => 'active',
+    //                 ]
+    //             ]);
+
+    //             // Nếu là chủ nhiệm → cập nhật manager_id trong bảng clubs
+    //             if ($role === 'club_manager') {
+    //                 $club->manager_id = $newMember->user_id;
+    //                 $club->save();
+    //             }
+
+    //         } else {
+    //             // Nếu bỏ trống → hạ người cũ
+    //             if ($current) {
+    //                 $club->members()->updateExistingPivot($current->id, [
+    //                     'role' => 'member',
+    //                     'appointed_at' => null,
+    //                     'updated_at' => now(),
+    //                 ]);
+
+    //                 if ($role === 'club_manager') {
+    //                     $club->manager_id = null;
+    //                     $club->save();
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật CLB thành công!');
+    // }
 
     public function create()
     {
