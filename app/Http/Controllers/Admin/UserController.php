@@ -165,8 +165,17 @@ class UserController extends Controller
        return redirect()->back()->with('success', 'Cập nhật trạng thái thành công!');
 
     }
-    public function destroy(User $user)
+   public function destroy(User $user, Request $request)
 {
-    return $this->softDelete(request(), $user);
+    // $request->delete_reason là lý do xóa
+    $reason = $request->delete_reason;
+
+    // Ví dụ dùng soft delete
+    $user->delete_reason = $reason;
+    $user->save();
+    $user->delete(); // soft delete
+
+    return redirect()->route('admin.users.index')
+                     ->with('success', 'Người dùng đã được xóa vào thùng rác.');
 }
 }

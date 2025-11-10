@@ -35,10 +35,9 @@
                     </div>
                 @endif
 
-                <!-- 2 CỘT CHÍNH -->
                 <div class="row g-5">
 
-                    <!-- CỘT TRÁI: Thông tin chính + Quỹ -->
+                    <!-- Cột trái: Thông tin cơ bản + Ngân sách -->
                     <div class="col-lg-7">
 
                         <!-- Thông tin cơ bản -->
@@ -46,49 +45,54 @@
                             <h5 class="fw-bold text-primary mb-4">Thông tin cơ bản</h5>
 
                             <div class="row g-4">
+                                <!-- CLB -->
                                 <div class="col-12">
                                     <label class="form-label fw-bold">Câu lạc bộ</label>
                                     <div class="form-control bg-light border-0">{{ $event->club?->name ?? '—' }}</div>
                                     <input type="hidden" name="club_id" value="{{ $event->club_id }}">
-                                    <!-- FIX LỖI REQUIRED -->
                                     <input type="hidden" name="created_by" value="{{ $event->created_by }}">
                                 </div>
 
+                                <!-- Tên sự kiện -->
                                 <div class="col-12">
                                     <label class="form-label fw-bold">Tên sự kiện</label>
                                     <div class="form-control bg-light border-0">{{ $event->name }}</div>
                                     <input type="hidden" name="name" value="{{ $event->name }}">
                                 </div>
 
+                                <!-- Mô tả -->
                                 <div class="col-12">
                                     <label class="form-label fw-bold">Mô tả</label>
                                     <textarea name="description" class="form-control" rows="4" placeholder="Nhập mô tả sự kiện...">{{ old('description', $event->description) }}</textarea>
                                 </div>
 
+                                <!-- Thời gian -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Thời gian bắt đầu <span class="text-danger">*</span></label>
                                     <input type="datetime-local" name="start_time" class="form-control" required
                                            value="{{ old('start_time', $event->start_time?->format('Y-m-d\TH:i')) }}">
                                 </div>
-
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Thời gian kết thúc <span class="text-danger">*</span></label>
                                     <input type="datetime-local" name="end_time" class="form-control" required
                                            value="{{ old('end_time', $event->end_time?->format('Y-m-d\TH:i')) }}">
                                 </div>
 
+                                <!-- Địa điểm -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Địa điểm <span class="text-danger">*</span></label>
                                     <input type="text" name="location" class="form-control" required
                                            value="{{ old('location', $event->location) }}">
                                 </div>
 
+                                <!-- Giới hạn người tham gia -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Giới hạn người tham gia</label>
                                     <input type="number" name="max_participants" class="form-control"
                                            value="{{ old('max_participants', $event->max_participants) }}" min="1" placeholder="Không giới hạn">
                                 </div>
 
+                                <!-- Hiển thị -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Hiển thị</label>
                                     <select name="is_public" class="form-select">
@@ -97,6 +101,7 @@
                                     </select>
                                 </div>
 
+                                <!-- Trạng thái -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Trạng thái <span class="text-danger">*</span></label>
                                     <select name="status" class="form-select" required>
@@ -108,38 +113,31 @@
                             </div>
                         </div>
 
-                        <!-- PHẦN QUỸ -->
+                        <!-- Ngân sách -->
                         <div class="bg-gradient-primary text-black rounded-4 shadow-sm p-4">
                             <h5 class="fw-bold mb-4">Quản lý ngân sách (VNĐ)</h5>
                             <div class="row g-4">
                                 <div class="col-md-4">
-                                    <label class="form-label text-black opacity-90">Dự kiến </label>
+                                    <label class="form-label text-black opacity-90">Dự kiến</label>
                                     <input type="number" name="budget_estimated" class="form-control form-control-lg text-primary fw-bold"
-                                           value="{{ old('budget_estimated', $event->budget_estimated) }}" step="1000"
-                                           placeholder="0">
+                                           value="{{ old('budget_estimated', $event->budget_estimated) }}" step="1000" placeholder="0">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-black opacity-90">Quỹ cần cấp</label>
-                                    <input type="number" name="budget_current" class="form-control form-control-lg text-success fw-bold"
-                                           value="{{ old('budget_current', $event->budget_current) }}" step="1000"
-                                           placeholder="0">
+                                    <input type="number" name="budget_requested" class="form-control form-control-lg text-success fw-bold"
+                                           value="{{ old('budget_requested', $event->budget_requested) }}" step="1000" placeholder="0">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label text-black opacity-90">Quỹ đã có</label>
-                                    <input type="number" name="budget_used" class="form-control form-control-lg text-danger fw-bold"
-                                           value="{{ old('budget_used', $event->budget_used) }}" step="1000"
-                                           placeholder="0">
+                                    <label class="form-label text-black opacity-90">Quỹ CLB tự chi</label>
+                                    <input type="number" name="budget_club" class="form-control form-control-lg text-danger fw-bold"
+                                           value="{{ old('budget_club', $event->budget_club) }}" step="1000" placeholder="0">
                                 </div>
                             </div>
-                            <div class="mt-3 p-3 bg-white bg-opacity-10 rounded-3">
-                                <small class="text-black">
-                                    Còn lại: <strong>{{ number_format(($event->budget_current ?? 0) - ($event->budget_used ?? 0)) }}đ</strong>
-                                </small>
-                            </div>
                         </div>
+
                     </div>
 
-                    <!-- CỘT PHẢI: Ảnh + Người tạo -->
+                    <!-- Cột phải: Ảnh + Người tạo + Duyệt -->
                     <div class="col-lg-5">
 
                         <!-- Ảnh bìa -->
@@ -149,8 +147,8 @@
                                  style="height: 380px; cursor: pointer;"
                                  onclick="document.getElementById('poster_input').click()">
 
-                                @if($event->poster)
-                                    <img src="{{ $event->poster_url }}" id="poster_preview"
+                                @if($event->media_id)
+                                    <img src="{{ $event->media?->url }}" id="poster_preview"
                                          class="w-100 h-100 object-fit-cover rounded-4">
                                     <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-3 rounded-circle shadow-lg"
                                             onclick="event.stopPropagation(); removePoster()">
@@ -182,19 +180,20 @@
                                     <div class="fw-bold fs-6">{{ $event->createdBy?->name ?? 'Hệ thống' }}</div>
                                     <small class="text-muted">{{ $event->createdBy?->email ?? '' }}</small>
                                     <div class="text-success small mt-1">
-                                        {{ $event->created_at->format('d/m/Y H:i') }}
+                                        {{ $event->created_at?->format('d/m/Y H:i') }}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Người duyệt -->
                         @if($event->approval_by)
                         <div class="bg-success text-white rounded-4 shadow-sm p-4 mt-4">
                             <h6 class="fw-bold mb-3">Đã duyệt bởi</h6>
                             <div class="d-flex align-items-center">
                                 <div class="bg-white text-success rounded-circle d-flex align-items-center justify-content-center me-3"
                                      style="width:56px; height:56px; font-weight:bold;">
-                                    Check
+                                    ✓
                                 </div>
                                 <div>
                                     <div class="fw-bold fs-6">{{ $event->approvalBy?->name }}</div>
@@ -220,57 +219,3 @@
     </div>
 </div>
 @endsection
-
-@push('styles')
-<style>
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    .poster-zone {
-        transition: all 0.3s ease;
-        border-style: dashed !important;
-    }
-    .poster-zone:hover {
-        background: #e3f2fd !important;
-        border-color: #1976d2 !important;
-    }
-    .object-fit-cover { object-fit: cover; }
-</style>
-@endpush
-
-@push('scripts')
-<script>
-function previewPoster(input) {
-    if (input.files?.[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('poster_preview');
-            const placeholder = document.getElementById('poster_placeholder');
-            preview.src = e.target.result;
-            preview.classList.remove('d-none');
-            if (placeholder) document.querySelector('.poster-zone').removeChild(placeholder);
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
-function removePoster() {
-    if (confirm('Xóa ảnh bìa này?')) {
-        document.getElementById('poster_preview').classList.add('d-none');
-        document.getElementById('poster_input').value = '';
-        document.getElementById('remove_poster').value = '1';
-
-        const zone = document.querySelector('.poster-zone');
-        zone.innerHTML = `
-            <div id="poster_placeholder" class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
-                <i class="fas fa-image fa-5x mb-4 opacity-50"></i>
-                <p class="fw-bold fs-5 mb-1">Click hoặc kéo thả ảnh</p>
-                <small class="opacity-75">JPG, PNG, WEBP • Tối đa 5MB</small>
-            </div>
-            <img id="poster_preview" class="w-100 h-100 object-fit-cover rounded-4 d-none">
-        `;
-        zone.onclick = () => document.getElementById('poster_input').click();
-    }
-}
-</script>
-@endpush

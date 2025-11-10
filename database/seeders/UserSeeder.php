@@ -25,6 +25,16 @@ class UserSeeder extends Seeder
             'remember_token' => Str::random(10),
         ]);
 
+          User::create([
+            'name' => 'Van Tam',
+            'email' => 'tamnvph49996@gmail.com',
+            'password' => Hash::make('123456'),
+            'role' => 'admin',
+            'status' => 'active',
+            'avatar' => null,
+            'remember_token' => Str::random(10),
+        ]);
+
         // 2. Club Manager cố định
       
         // 3. Tạo 20 thành viên (member) ngẫu nhiên

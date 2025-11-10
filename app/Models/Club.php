@@ -38,12 +38,13 @@ class Club extends Model
     }
 
     /** Thành viên CLB (qua bảng club_members) */
-    public function members()
-    {
-        return $this->belongsToMany(User::class, 'club_members', 'club_id', 'member_id')
-            ->withPivot(['role', 'status', 'note', 'joined_at'])
-            ->withTimestamps();
-    }
+public function members()
+{
+    return $this->belongsToMany(Member::class, 'club_members')
+                ->withPivot(['role','status','joined_at','appointed_at'])
+                ->withTimestamps();
+}
+
 
     /** Bài viết CLB */
     public function posts()
@@ -98,6 +99,8 @@ class Club extends Model
         // advisor_id = faculty_members.id
         return $this->belongsTo(FacultyMember::class, 'advisor_id')->with('user');
     }
+    
+
 
 
 }

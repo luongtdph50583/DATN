@@ -2,6 +2,7 @@
    namespace Database\Seeders;
 
 use App\Models\Club;
+use App\Models\ClubRequest;
 use App\Models\Member;
 use App\Models\Post;
 use Illuminate\Database\Seeder;
@@ -15,7 +16,6 @@ use Illuminate\Database\Seeder;
                 MemberSeeder::class,
                 ClubSeeder::class,
                 ClubMemberSeeder::class,
-                EventSeeder::class,
           PostAndCommentSeeder::class,
            ]);
        }

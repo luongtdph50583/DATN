@@ -68,25 +68,32 @@
                     </a>
                 </li>
 
-                <!-- Quản lý CLB -->
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="#sidebarCLB" data-bs-toggle="collapse" role="button"
-                        aria-expanded="false" aria-controls="sidebarCLB">
-                        <i class="ri-team-line"></i> Quản lý CLB
-                    </a>
-                    <div class="collapse menu-dropdown" id="sidebarCLB">
-                        <ul class="nav nav-sm flex-column">
-                            <li class="nav-item">
-                                <a href="{{ route('admin.clubs.index') }}" class="nav-link">Danh sách CLB</a>
+                 <!-- Quản lý CLB -->
+            <li class="nav-item">
+                <a class="nav-link menu-link collapsed" data-bs-toggle="collapse" href="#sidebarclb" role="button"
+                    aria-expanded="false" aria-controls="sidebarclb">
+                    <i class="ri-team-line"></i> <span>Quản lý CLB</span>
+                </a>
+                <div class="collapse" id="sidebarclb">
+                    <ul class="nav nav-sm flex-column">
+                        <li class="nav-item">
+                            <a href="{{ route('admin.clubs.index') }}" class="nav-link">
+                                <i class="ri-list-check-2"></i> Danh sách CLB
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.club_requests.index') }}" class="nav-link">
+                                <i class="ri-file-add-line"></i> Yêu cầu tạo CLB
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.club_requests_update.index') }}" class="nav-link">
+                                <i class="ri-user-add-line"></i> Yêu cầu sủa thông tin CLB
+                            </a>
                             </li>
-                            <li class="nav-item">
-                                <a href="{{ route('admin.club_requests.index') }}" class="nav-link">Yêu cầu tạo CLB</a>
-                            </li>
-                          
-                            
-                        </ul>
-                    </div>
-                </li>
+                    </ul>
+                </div>
+            </li>
 
                 <!-- Quản lý thành viên -->
                 <li class="nav-item">

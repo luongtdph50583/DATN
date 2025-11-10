@@ -148,72 +148,72 @@ $roles = [
 
 
 @push('scripts')
-    {{-- Select2 --}}
+        {{-- Select2 --}}
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Select2 CSS & JS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    {{-- Quill --}}
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+        <script>
+           $(document).ready(function () {
+                $('#logo').change(function (e) {
+                    const [file] = e.target.files;
+                    if (file) $('#logoPreview').attr('src', URL.createObjectURL(file));
+                });
 
-    <script>
-       $(document).ready(function () {
-            $('#logo').change(function (e) {
-                const [file] = e.target.files;
-                if (file) $('#logoPreview').attr('src', URL.createObjectURL(file));
-            });
-
-            $('.select2-member').select2({
-                placeholder: function () {
-                    return $(this).data('placeholder');
-                },
-                allowClear: true,
-                width: '100%',
-                ajax: {
-                    url: '{{ route("admin.clubs.members.search") }}',
-                    dataType: 'json',
-                    delay: 250,
-                    data: function (params) {
-                        return { q: params.term };
+                $('.select2-member').select2({
+                    placeholder: function () {
+                        return $(this).data('placeholder');
                     },
-                    processResults: function (data) {
-                        return {
-                            results: data.map(item => ({
-                                id: item.id,
-                                text: item.text || '—'
-                            }))
-                        };
+                    allowClear: true,
+                    width: '100%',
+                    ajax: {
+                        url: '{{ route("admin.clubs.members.search") }}',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return { q: params.term };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: data.map(item => ({
+                                    id: item.id,
+                                    text: item.text || '—'
+                                }))
+                            };
+                        },
+                        cache: true
                     },
-                    cache: true
-                },
-                templateResult: function (data) {
-                    if (!data.id) return data.text;
-                    return $('<span>' + data.text + '</span>');
-                },
-                templateSelection: function (data) {
-                    return data.text || '—';
-                }
-            });
-
-            $('.select2-member').on('select2:select select2:unselect', function (e) {
-                const val = $(this).val();
-                if (val) {
-                    if (!$(this).find('option[value="' + val + '"]').length) {
-                        $(this).append(new Option(e.params.data.text, val, true, true)).trigger('change');
+                    templateResult: function (data) {
+                        if (!data.id) return data.text;
+                        return $('<span>' + data.text + '</span>');
+                    },
+                    templateSelection: function (data) {
+                        return data.text || '—';
                     }
-                } else {
-                    $(this).find('option').prop('selected', false);
-                }
+                });
+
+                $('.select2-member').on('select2:select select2:unselect', function (e) {
+                    const val = $(this).val();
+                    if (val) {
+                        if (!$(this).find('option[value="' + val + '"]').length) {
+                            $(this).append(new Option(e.params.data.text, val, true, true)).trigger('change');
+                        }
+                    } else {
+                        $(this).find('option').prop('selected', false);
+                    }
+                });
+
+                const quillDesc = new Quill('#description-editor', { theme: 'snow' });
+                const quillRules = new Quill('#rules-editor', { theme: 'snow' });
+
+                $('form').on('submit', function () {
+                    $('#description-input').val(quillDesc.root.innerHTML);
+                    $('#rules-input').val(quillRules.root.innerHTML);
+                });
             });
 
-            const quillDesc = new Quill('#description-editor', { theme: 'snow' });
-            const quillRules = new Quill('#rules-editor', { theme: 'snow' });
-
-            $('form').on('submit', function () {
-                $('#description-input').val(quillDesc.root.innerHTML);
-                $('#rules-input').val(quillRules.root.innerHTML);
-            });
-        });
-
-    </script>
+        </script>
 @endpush
