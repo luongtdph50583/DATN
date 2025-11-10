@@ -23,9 +23,7 @@
                     Xuất Excel
                 </button>
             </form>
-            <button type="button" class="btn btn-warning text-white fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#topMembersModal">
-                TOP 10 THÀNH VIÊN NHIỀU CLB NHẤT
-            </button>
+         
             <a href="{{ route('admin.members.trashed') }}" class="btn btn-outline-danger">
                 Lịch sử xóa ({{ \App\Models\Member::onlyTrashed()->count() }})
             </a>

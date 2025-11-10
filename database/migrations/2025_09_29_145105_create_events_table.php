@@ -59,19 +59,18 @@ return new class extends Migration
                   ->onDelete('set null')
                   ->comment('Hình ảnh / video sự kiện');
 
-            // Ngân sách chi tiết
+            // 🔹 Ngân sách chi tiết (đã sửa)
             $table->decimal('budget_estimated', 15, 2)
                   ->default(0.00)
                   ->comment('Ngân sách dự kiến');
 
-            $table->decimal('budget_current', 15, 2)
+            $table->decimal('budget_requested', 15, 2)
                   ->default(0.00)
-                  ->comment('Ngân sách hiện tại');
+                  ->comment('Ngân sách xin cấp từ nhà trường');
 
-            $table->decimal('budget_used', 15, 2)
+            $table->decimal('budget_club', 15, 2)
                   ->default(0.00)
-                  ->comment('Ngân sách đã sử dụng');
-
+                  ->comment('Ngân sách CLB tự chi');
 
             // Timestamps
             $table->timestamp('created_at')->nullable();

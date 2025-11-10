@@ -11,12 +11,11 @@ class ClubSeeder extends Seeder
 {
     public function run()
     {
-        $faker = Faker::create('vi_VN'); // Tên, địa điểm, mô tả tiếng Việt
+        $faker = Faker::create('vi_VN');
 
-        // Lấy danh sách các club_manager (nếu có)
+        // Lấy danh sách club_manager
         $clubManagers = User::where('role', 'club_manager')->pluck('id')->toArray();
 
-        // Nếu không có manager nào, tạo 1 cái tạm (tránh lỗi)
         if (empty($clubManagers)) {
             $tempManager = User::create([
                 'name' => 'Manager Tạm Thời',
@@ -28,16 +27,23 @@ class ClubSeeder extends Seeder
             $clubManagers = [$tempManager->id];
         }
 
-        // Tên CLB thực tế hơn
         $clubNames = [
             'Tin Học', 'Tiếng Anh', 'Bóng Đá', 'Khiêu Vũ', 'Tình Nguyện',
             'Nghiên Cứu Khoa Học', 'Âm Nhạc', 'Mỹ Thuật', 'Kinh Doanh Trẻ',
             'Robot', 'Marketing', 'Truyền Thông', 'Môi Trường', 'Cờ Vua'
         ];
 
-        for ($i = 0; $i < 10; $i++) { // Tăng lên 10 CLB cho đa dạng
-            $name = 'CLB ' . $clubNames[array_rand($clubNames)];
-            $field = $this->mapFieldFromName($name); // Tự động gán lĩnh vực theo tên
+        $createdNames = []; // mảng lưu tên đã tạo
+
+        for ($i = 0; $i < 10; $i++) {
+            do {
+                $baseName = 'CLB ' . $clubNames[array_rand($clubNames)];
+                // Nếu muốn thêm số để đảm bảo uniqueness
+                $name = $baseName . ($faker->boolean(30) ? ' ' . $faker->numberBetween(1, 99) : '');
+            } while (in_array($name, $createdNames) || Club::where('name', $name)->exists());
+
+            $createdNames[] = $name;
+            $field = $this->mapFieldFromName($name);
 
             Club::create([
                 'name' => $name,
@@ -45,12 +51,11 @@ class ClubSeeder extends Seeder
                 'logo' => $faker->optional(0.9)->imageUrl(300, 300, 'sports', true, 'club'),
                 'field' => $field,
                 'status' => $faker->randomElement(['active', 'pending', 'inactive']),
-                'manager_id' => $faker->optional(0.9)->randomElement($clubManagers), // 90% có manager
+                'manager_id' => $faker->optional(0.9)->randomElement($clubManagers),
                 'email' => $faker->unique()->safeEmail(),
                 'phone' => '0' . $faker->numberBetween(3, 9) . $faker->numberBetween(10000000, 99999999),
                 'member_limit' => $faker->numberBetween(15, 150),
-             'founded_at' => $faker->dateTimeBetween('-5 years', 'now')->format('Y-m-d'),
-
+                'founded_at' => $faker->dateTimeBetween('-5 years', 'now')->format('Y-m-d'),
                 'location' => $faker->randomElement([
                     'TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng',
                     'Trường ĐH Bách Khoa', 'Trường ĐH Sư Phạm', 'Ký túc xá Khu A'
@@ -60,9 +65,6 @@ class ClubSeeder extends Seeder
         }
     }
 
-    /**
-     * Tự động gán lĩnh vực phù hợp theo tên CLB
-     */
     private function mapFieldFromName($name)
     {
         $mapping = [

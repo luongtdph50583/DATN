@@ -17,7 +17,6 @@ class PostSeeder extends Seeder
                 'user_id' => $faker->numberBetween(3, 15),
                 'title' => $faker->sentence(5),
                 'content' => $faker->paragraphs(3, true),
-                'media_id' => $faker->numberBetween(1, 15),
                 'type' => $faker->randomElement(['post', 'notice', 'document']),
                 'status' => $faker->randomElement(['visible', 'hidden']),
                 'created_at' => now(),

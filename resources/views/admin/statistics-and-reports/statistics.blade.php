@@ -89,22 +89,7 @@
     </div>
 
     <!-- Content Row - Biểu đồ -->
-    <div class="row">
-        <div class="col-xl-12 col-lg-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        Biểu đồ số lượng CLB, Thành viên, Sự kiện theo tháng
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <canvas id="statsChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Bộ lọc thời gian (from / to) -->
+    <!-- Bộ lọc thời gian (from / to) -->
  <form method="GET" action="{{ route('admin.stats.index') }}" class="row g-3 mb-4">
     <div class="col-md-3">
         <label for="start_date" class="form-label">Từ ngày</label>
@@ -128,6 +113,22 @@
     </div>
 
 </form>
+    <div class="row">
+        <div class="col-xl-12 col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Biểu đồ số lượng CLB, Thành viên, Sự kiện theo tháng
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="statsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
     <!-- Vùng biểu đồ -->

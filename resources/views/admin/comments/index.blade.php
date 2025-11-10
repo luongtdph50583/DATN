@@ -89,7 +89,7 @@
 
                         </tbody>
 
-                    </table>
+                    </table> 
                     @foreach ($comments as $comment)
                         <div class="modal fade" id="deleteModal{{ $comment->id }}" tabindex="-1"
                             aria-labelledby="deleteModalLabel{{ $comment->id }}" aria-hidden="true">

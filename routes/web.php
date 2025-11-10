@@ -250,15 +250,19 @@ Route::prefix('admin')
         // =========================================================
         // 8. COMMENT & NOTIFICATION
         // =========================================================
-        Route::controller(CommentController::class)
-            ->prefix('comments')
-            ->as('comments.')
-            ->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('/{comment}', 'show')->name('show');
-                Route::delete('/{comment}', 'destroy')->name('destroy');
-                Route::post('/{comment}/toggle-status', 'toggleStatus')->name('toggleStatus');
-            });
+Route::controller(CommentController::class)
+    ->prefix('comments')
+    ->as('comments.')
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/trashed', 'trashed')->name('trashed'); // danh sách đã xóa
+        Route::get('/{comment}', 'show')->name('show');
+        Route::delete('/{comment}', 'destroy')->name('destroy'); // xóa mềm
+        Route::post('/{comment}/toggle-status', 'toggleStatus')->name('toggleStatus');
+        Route::post('/{comment}/restore', 'restore')->name('restore'); // khôi phục
+        Route::delete('/{comment}/force-delete', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
+    });
+
 
         Route::controller(NotificationController::class)
             ->prefix('notifications')
@@ -331,10 +335,16 @@ Route::prefix('admin')
             ->name('event_fund_requests.approveForm');
         Route::post('event_fund_requests/{id}/approve', [EventFundRequestController::class, 'approve'])
             ->name('event_fund_requests.approve');
-        Route::post('event_fund_requests/{id}/reject', [EventFundRequestController::class, 'reject'])
-            ->name('event_fund_requests.reject');
         Route::post('event_fund_settlements/{id}/approve', [EventFundSettlementController::class, 'approve'])
             ->name('event_fund_settlements.approve');
+            
+Route::get('event_fund_requests/{id}/reject', [EventFundRequestController::class, 'showRejectForm'])
+    ->name('event_fund_requests.reject');
+
+// Xử lý POST từ chối
+Route::post('event_fund_requests/{id}/reject', [EventFundRequestController::class, 'reject'])
+    ->name('event_fund_requests.reject.submit');
+
 
         Route::controller(PlanController::class)
             ->prefix('plans')

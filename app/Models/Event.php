@@ -29,8 +29,9 @@ class Event extends Model
         'approval_by',        // GIỮ NGUYÊN
         'media_id',
         'budget_estimated',
-        'budget_current',
-        'budget_used',
+    'budget_requested',
+    'budget_club', // <-- thêm đây
+
         'deleted_by',         // ĐÃ CÓ TRONG DB
         'delete_reason',
     ];
@@ -45,8 +46,8 @@ class Event extends Model
         'is_public'         => 'boolean',
         'max_participants'  => 'integer',
         'budget_estimated'  => 'decimal:2',
-        'budget_current'    => 'decimal:2',
-        'budget_used'       => 'decimal:2',
+        'budget_requested'    => 'decimal:2',
+        'budget_club'       => 'decimal:2',
         'status'            => 'string',
     ];
 
@@ -56,10 +57,10 @@ class Event extends Model
     // RELATIONSHIPS – GIỮ NGUYÊN TÊN CŨ ĐỂ KHÔNG LỖI
     // =================================================================
 
-    public function club(): BelongsTo
-    {
-        return $this->belongsTo(Club::class)->withDefault(['name' => 'Không có CLB']);
-    }
+   public function club(): BelongsTo
+{
+    return $this->belongsTo(Club::class, 'club_id'); // khóa ngoại là club_id
+}
 
     public function createdBy(): BelongsTo
     {
@@ -68,6 +69,10 @@ class Event extends Model
             'email' => '',
         ]);
     }
+    public function fundRequest()
+{
+    return $this->hasOne(EventFundRequest::class, 'event_id');
+}
 
     // GIỮ NGUYÊN TÊN approvalBy – KHÔNG ĐỔI NỮA!
     public function approvalBy(): BelongsTo

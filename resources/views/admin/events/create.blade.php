@@ -133,12 +133,20 @@
                             @error('budget_estimated') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Ngân sách hiện có (VNĐ)</label>
-                            <input type="number" name="budget_current" class="form-control @error('budget_current') is-invalid @enderror"
-                                   value="{{ old('budget_current') }}" min="0" step="0.01" placeholder="VD: 30000000">
-                            @error('budget_current') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+                      <div class="mb-3">
+    <label class="form-label fw-bold">Ngân sách xin cấp từ nhà trường (VNĐ)</label>
+    <input type="number" name="budget_requested" class="form-control @error('budget_requested') is-invalid @enderror"
+           value="{{ old('budget_requested') }}" min="0" step="0.01" placeholder="VD: 30000000">
+    @error('budget_requested') <div class="invalid-feedback">{{ $message }}</div> @enderror
+</div>
+
+<div class="mb-3">
+    <label class="form-label fw-bold">Ngân sách CLB tự chi (VNĐ)</label>
+    <input type="number" name="budget_club" class="form-control @error('budget_club') is-invalid @enderror"
+           value="{{ old('budget_club') }}" min="0" step="0.01" placeholder="VD: 20000000">
+    @error('budget_club') <div class="invalid-feedback">{{ $message }}</div> @enderror
+</div>
+
                     </div>
                 </div>
 

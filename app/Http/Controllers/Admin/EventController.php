@@ -7,9 +7,10 @@ use App\Models\Club;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\ClubMember;
+use App\Models\EventFundRequest;
 use App\Models\Member;
 use App\Models\User;
-use Illuminate\Container\Attributes\Auth;
+use Illuminate\Support\Facades\Auth; 
 use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
@@ -51,7 +52,7 @@ class EventController extends Controller
     return view('admin.events.create', compact('clubs', 'users'));
 }
 
-    public function store(Request $request)
+public function store(Request $request)
 {
     $validated = $request->validate([
         'club_id' => 'required|exists:clubs,id',
@@ -64,18 +65,39 @@ class EventController extends Controller
         'is_public' => 'nullable|boolean',
         'status' => 'required|in:pending,approved,rejected',
         'created_by' => 'required|exists:users,id',
+
+        // 🔹 Các cột ngân sách mới
         'budget_estimated' => 'nullable|numeric|min:0',
-        'budget_current' => 'nullable|numeric|min:0',
+        'budget_requested' => 'nullable|numeric|min:0',
+        'budget_club' => 'nullable|numeric|min:0',
     ]);
+
+    // Mặc định nếu is_public không check thì false (0)
     $validated['is_public'] = $request->has('is_public');
-  // Nếu ngân sách hiện có chưa nhập, mặc định = 0
- $validated['budget_current'] = $validated['budget_current'] ?? 0;
 
+    // Nếu ngân sách không có, mặc định = 0
+    $validated['budget_estimated'] = $validated['budget_estimated'] ?? 0;
+    $validated['budget_requested'] = $validated['budget_requested'] ?? 0;
+    $validated['budget_club'] = $validated['budget_club'] ?? 0;
 
+    DB::transaction(function () use ($validated) {
+        // 1️⃣ Tạo sự kiện
+        $event = Event::create($validated);
 
-    Event::create($validated);
+        // 2️⃣ Nếu có yêu cầu xin cấp kinh phí từ nhà trường
+       if ($event->status === 'approved' && $event->budget_requested > 0) {
+    EventFundRequest::create([
+        'event_id' => $event->id,
+        'requested_by' => $validated['created_by'],
+        'amount_requested' => $event->budget_requested,
+        'status' => 'pending_disbursement',
+        'note' => 'Tự động tạo khi sự kiện được duyệt.',
+    ]);
+}
+    });
 
-    return redirect()->route('admin.events.index')
+    return redirect()
+        ->route('admin.events.index')
         ->with('success', 'Tạo sự kiện thành công!');
 }
    
@@ -134,20 +156,39 @@ class EventController extends Controller
         return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được xóa thành công!');
     }
 
-  public function approve(Event $event)
+ public function approve(Event $event)
 {
+    // 1️⃣ Chỉ duyệt khi sự kiện đang ở trạng thái chờ duyệt
     if ($event->status !== 'pending') {
-        return redirect()->back()->with('error', 'Sự kiện không ở trạng thái chờ duyệt!');
+        return redirect()->back()->with('error', 'Chỉ có thể duyệt sự kiện đang ở trạng thái chờ duyệt!');
     }
 
-    $event->update([
-        'status' => 'approved',
-        'approval_by' => auth()->id(), // ← đổi từ updated_by thành approval_by
-        'approved_at' => now(),        // ← thêm nếu muốn lưu thời gian duyệt
-    ]);
+    DB::beginTransaction();
+    try {
+        // 2️⃣ Cập nhật trạng thái sự kiện
+        $event->update([
+            'status' => 'approved',
+        ]);
 
-    return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được duyệt thành công!');
+        // 3️⃣ Nếu sự kiện có ngân sách yêu cầu thì tạo yêu cầu cấp kinh phí
+        if ($event->budget_requested > 0 && !$event->fundRequest) {
+            EventFundRequest::create([
+                'event_id' => $event->id,
+                'requested_by' => Auth::id(),
+                'amount_requested' => $event->budget_requested,
+                'status' => 'pending_disbursement',
+                'note' => 'Tự động tạo khi sự kiện được duyệt.',
+            ]);
+        }
+
+        DB::commit();
+        return redirect()->back()->with('success', 'Duyệt sự kiện thành công và yêu cầu cấp kinh phí đã được tạo!');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->back()->with('error', 'Đã xảy ra lỗi khi duyệt sự kiện: ' . $e->getMessage());
+    }
 }
+
 
 
     public function reject(Event $event)

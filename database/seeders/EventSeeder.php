@@ -6,7 +6,9 @@ use Illuminate\Database\Seeder;
 use App\Models\Event;
 use App\Models\Club;
 use App\Models\User;
+use App\Models\EventFundRequest;
 use Faker\Factory as Faker;
+use Illuminate\Support\Facades\DB;
 
 class EventSeeder extends Seeder
 {
@@ -46,30 +48,60 @@ class EventSeeder extends Seeder
                 ? $faker->randomElement($adminIds)
                 : null;
 
-           Event::create([
-    'club_id' => $clubId,
-    'name' => $name,
-    'description' => $faker->paragraphs(2, true),
-    'start_time' => $start,
-    'end_time' => $end,
-    'location' => $faker->randomElement([
-        'Hội trường A - ĐH Bách Khoa',
-        'Sân vận động trường',
-        'Phòng họp CLB',
-        'Công viên Lê Văn Tám',
-        'Nhà văn hóa Thanh Niên',
-        'Trường THPT Chuyên Lê Hồng Phong'
-    ]),
-    'max_participants' => $faker->numberBetween(20, 300),
-    'is_public' => $faker->boolean(80),
-    'status' => $status,
-    'created_by' => $faker->randomElement($creatorIds),
-    'approval_by' => $approvalBy,
-    'media_id' => null,
-    'budget_estimated' => $faker->numberBetween(500000, 15000000), // luôn có giá trị
-    'budget_current' => 0,
-    'budget_used' => 0,
-]);
+            DB::transaction(function () use (
+                $faker,
+                $clubId,
+                $name,
+                $start,
+                $end,
+                $status,
+                $approvalBy,
+                $creatorIds
+            ) {
+                $budgetEstimated = $faker->numberBetween(500000, 15000000);
+                $budgetRequested = $faker->boolean(70)
+                    ? $faker->numberBetween(100000, $budgetEstimated)
+                    : 0;
+                $budgetClub = $budgetEstimated - $budgetRequested;
+
+                $event = Event::create([
+                    'club_id' => $clubId,
+                    'name' => $name,
+                    'description' => $faker->paragraphs(2, true),
+                    'start_time' => $start,
+                    'end_time' => $end,
+                    'location' => $faker->randomElement([
+                        'Hội trường A - ĐH Bách Khoa',
+                        'Sân vận động trường',
+                        'Phòng họp CLB',
+                        'Công viên Lê Văn Tám',
+                        'Nhà văn hóa Thanh Niên',
+                        'Trường THPT Chuyên Lê Hồng Phong'
+                    ]),
+                    'max_participants' => $faker->numberBetween(20, 300),
+                    'is_public' => $faker->boolean(80),
+                    'status' => $status,
+                    'created_by' => $faker->randomElement($creatorIds),
+                    'approval_by' => $approvalBy,
+                    'media_id' => null,
+
+                    // 🔹 Các cột ngân sách mới
+                    'budget_estimated' => $budgetEstimated,
+                    'budget_requested' => $budgetRequested,
+                    'budget_club' => $budgetClub,
+                ]);
+
+                // 🔹 Nếu có xin cấp ngân sách thì tạo yêu cầu cấp kinh phí
+                if ($budgetRequested > 0) {
+                    EventFundRequest::create([
+                        'event_id' => $event->id,
+                        'requested_by' => $event->created_by,
+                        'amount_requested' => $budgetRequested,
+                        'status' => 'pending',
+                        'note' => 'Tự động tạo từ Seeder khi có ngân sách xin cấp.',
+                    ]);
+                }
+            });
         }
     }
 
