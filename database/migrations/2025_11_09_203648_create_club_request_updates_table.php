@@ -33,7 +33,8 @@ return new class extends Migration {
             $table->foreign('club_id')->references('id')->on('clubs')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('manager_id')->references('id')->on('users')->onDelete('set null');
-            $table->foreign('advisor_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('advisor_id')->references('id')->on('faculty_members')->onDelete('set null');
+
         });
     }
 
