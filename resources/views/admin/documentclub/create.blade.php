@@ -73,10 +73,15 @@ $oldLevels = old('access_level', []);
             </form>
 @endsection
 @push('scripts')
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {{-- 🧩 Load jQuery trước --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    {{-- 🧩 Sau đó mới load select2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        $(document).ready(function () {
             const select = $('.select2');
 
             select.select2({
@@ -92,25 +97,17 @@ $oldLevels = old('access_level', []);
                 const options = select.find('option');
                 options.prop('disabled', false);
 
-                // === 1️⃣ Nếu chọn "Công khai"
                 if (selected.includes('public')) {
-                    // disable toàn bộ quyền khác
                     options.each(function () {
                         if ($(this).val() !== 'public') $(this).prop('disabled', true);
                     });
-                }
-
-                // === 2️⃣ Nếu chọn "Thành viên"
-                else if (selected.includes('member')) {
+                } else if (selected.includes('member')) {
                     const allExceptPublic = options.map(function () {
                         return $(this).val() !== 'public' ? $(this).val() : null;
                     }).get().filter(v => v);
-                    selected = allExceptPublic; // chọn tất cả trừ công khai
+                    selected = allExceptPublic;
                     select.val(selected).trigger('change.select2');
-                }
-
-                // === 3️⃣ Nếu chọn quyền quản lý khác → tự động thêm "Chủ nhiệm CLB"
-                else {
+                } else {
                     const hasManagerRole = selected.some(v => managerRoles.includes(v) && v !== 'club_manager');
                     if (hasManagerRole && !selected.includes('club_manager')) {
                         selected.push('club_manager');
@@ -118,13 +115,11 @@ $oldLevels = old('access_level', []);
                     }
                 }
 
-                // === 4️⃣ Nếu BỎ chọn "Thành viên" → bỏ hết quyền quản lý
                 if (!selected.includes('member')) {
                     selected = selected.filter(v => !managerRoles.includes(v));
                     select.val(selected).trigger('change.select2');
                 }
 
-                // === Disable hợp lý
                 if (selected.includes('public')) {
                     options.each(function () {
                         if ($(this).val() !== 'public') $(this).prop('disabled', true);
@@ -138,15 +133,9 @@ $oldLevels = old('access_level', []);
                 select.trigger('change.select2');
             }
 
-            // Gọi lần đầu khi load
             updateAccessLogic();
-            // Lắng nghe thay đổi
             select.on('change', updateAccessLogic);
         });
     </script>
-
-
-
-
-
 @endpush
+
