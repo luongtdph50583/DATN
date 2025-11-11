@@ -102,7 +102,7 @@ class ClubRequestUpdateController extends Controller
 
             // 🔹 Validate tên CLB không trùng
             if (!is_null($update->name)) {
-                $existingClub = \App\Models\Club::where('name', $update->name)
+                $existingClub = Club::where('name', $update->name)
                     ->where('id', '!=', $club->id)
                     ->first();
                 if ($existingClub) {
@@ -110,7 +110,7 @@ class ClubRequestUpdateController extends Controller
                 }
             }
 
-            // 🔹 Validate ban quản lý không trùng user_id
+            // 🔹 Validate ban quản lý không trùng user_id trong cùng CLB
             $managerIds = [];
             foreach ($update->memberUpdates as $memberUpdate) {
                 if ($memberUpdate->role !== 'member') {
@@ -119,17 +119,41 @@ class ClubRequestUpdateController extends Controller
                         return back()->withErrors(['members' => 'Các thành viên ban quản lý không được trùng nhau.']);
                     }
                     $managerIds[] = $uid;
+
+                    // 🔹 Kiểm tra role này đã có ở CLB khác chưa
+                    $roleExists = ClubMember::where('role', $memberUpdate->role)
+                        ->whereHas('club', fn($q) => $q->where('id', '!=', $club->id))
+                        ->where('member_id', $memberUpdate->user_id)
+                        ->exists();
+
+                    if ($roleExists) {
+                        return back()->withErrors([
+                            'members' => "Thành viên '{$memberUpdate->user->name}' đã giữ chức vụ '{$memberUpdate->role}' ở CLB khác."
+                        ]);
+                    }
                 }
             }
-            // Nếu có manager_id riêng trong update, cũng kiểm tra
+
+            // Nếu có manager_id riêng trong update, kiểm tra tương tự
             if (!is_null($update->manager_id)) {
                 if (in_array($update->manager_id, $managerIds)) {
                     return back()->withErrors(['manager' => 'Chủ nhiệm không được trùng với thành viên ban quản lý khác.']);
                 }
                 $managerIds[] = $update->manager_id;
+
+                $managerRoleExists = ClubMember::where('role', 'club_manager')
+                    ->whereHas('club', fn($q) => $q->where('id', '!=', $club->id))
+                    ->where('member_id', $update->manager_id)
+                    ->exists();
+
+                if ($managerRoleExists) {
+                    return back()->withErrors([
+                        'manager' => "Người được chỉ định làm Chủ nhiệm đã là Chủ nhiệm ở CLB khác."
+                    ]);
+                }
             }
 
-            // 🔹 1️⃣ Cập nhật giảng viên đỡ đầu nếu có và trạng thái đề xuất là approved
+            // 🔹 1️⃣ Cập nhật giảng viên đỡ đầu nếu có
             if (!is_null($update->advisor_id) && $update->advisor_status === 'approved') {
                 if ($update->advisor_id != $club->advisor_id) {
                     $club->advisor_id = $update->advisor_id;
@@ -149,6 +173,12 @@ class ClubRequestUpdateController extends Controller
                 $club->manager_id = $update->manager_id;
                 $managerMember = Member::where('user_id', $update->manager_id)->first();
                 if ($managerMember) {
+                    $oldManager = $club->clubMembers()->where('role', 'club_manager')->where('member_id', '!=', $managerMember->id)->first();
+                    if ($oldManager) {
+                        $oldManager->role = 'member';
+                        $oldManager->save();
+                    }
+
                     $club->clubMembers()->updateOrCreate(
                         ['role' => 'club_manager'],
                         [
@@ -170,6 +200,15 @@ class ClubRequestUpdateController extends Controller
                 $role = $memberUpdate->role;
 
                 if ($role !== 'member') {
+                    $oldRoleHolder = $club->clubMembers()
+                        ->where('role', $role)
+                        ->where('member_id', '!=', $member->id)
+                        ->first();
+                    if ($oldRoleHolder) {
+                        $oldRoleHolder->role = 'member';
+                        $oldRoleHolder->save();
+                    }
+
                     $club->clubMembers()->updateOrCreate(
                         ['role' => $role],
                         [
@@ -200,7 +239,6 @@ class ClubRequestUpdateController extends Controller
             );
 
         } elseif ($status === 'rejected') {
-            // Từ chối yêu cầu
             $update->status = 'rejected';
             $update->note = $rejectedReason;
             $update->save();
@@ -218,6 +256,7 @@ class ClubRequestUpdateController extends Controller
         return redirect()->route('admin.club_requests_update.index')
             ->with('success', 'Xử lý yêu cầu cập nhật CLB thành công!');
     }
+
 
 
 
