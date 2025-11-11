@@ -103,8 +103,20 @@ public function store(Request $request)
    
     public function show(Event $event)
 {
-    $event->load(['club', 'createdBy', 'approvalBy']);
-    return view('admin.events.show', compact('event'));
+   $event->load([
+        'club',
+        'createdBy',
+        'approvalBy',
+        'registrations.user',
+        'funRequests',
+    ]);
+    // Phân trang người tham gia, eager load user
+    $registrations = $event->registrations()->with('user')->paginate(3);
+
+    // Phân trang giao dịch quỹ, eager load approvedBy và requestedBy nếu cần
+    $funRequests = $event->funRequests()->with(['approvedBy', 'requestedBy'])->paginate(2);
+    
+    return view('admin.events.show', compact('event','registrations', 'funRequests'));
 }
 
 
@@ -124,31 +136,35 @@ public function store(Request $request)
     return view('admin.events.edit', compact('event', 'clubs', 'users'));
 }
 
-    public function update(Request $request, Event $event)
+public function update(Request $request, Event $event)
 {
-   $validated = $request->validate([
-        'club_id' => 'required|exists:clubs,id',
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string',
+    $request->validate([
         'start_time' => 'required|date',
         'end_time' => 'required|date|after_or_equal:start_time',
-        'location' => 'required|string|max:255',
-        'max_participants' => 'nullable|integer|min:1',
-        'is_public' => 'nullable|boolean',
         'status' => 'required|in:pending,approved,rejected',
-        'created_by' => 'required|exists:users,id',
-        'budget_estimated' => 'nullable|numeric|min:0',
-        'budget_current' => 'nullable|numeric|min:0',
-        'budget_used' => 'nullable|numeric|min:0',
+        'media.*' => 'file|mimes:jpeg,png,jpg,gif,mp4,mov,avi|max:10240', // 10MB
     ]);
 
-    $validated['is_public'] = $request->has('is_public');
+    // Cập nhật các trường event
+    $event->update($request->only(['start_time', 'end_time', 'status']));
 
-    $event->update($validated);
+    // Upload media mới
+    if ($request->hasFile('media')) {
+        foreach ($request->file('media') as $file) {
+            $path = $file->store('events', 'public'); // lưu vào storage/app/public/events
+            $event->media()->create([
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $path,
+                'file_type' => $file->getMimeType(),
+                'uploaded_by' => auth()->id(),
+            ]);
+        }
+    }
 
-    return redirect()->route('admin.events.index', $event->id)
-        ->with('success', 'Cập nhật sự kiện thành công!');
+    return redirect()->route('admin.events.edit', $event)->with('success', 'Cập nhật sự kiện thành công!');
 }
+
+
 
     public function destroy(Event $event)
     {

@@ -51,18 +51,18 @@
         
 
         {{-- Câu lạc bộ --}}
-        <div class="mb-3">
-            <label for="club_id" class="form-label">Câu lạc bộ</label>
-            <select name="club_id" id="club_id" class="form-select" required>
-                <option value="">-- Chọn CLB --</option>
-                @foreach($clubs ?? [] as $club)
-                    <option value="{{ $club->id }}" {{ old('club_id') == $club->id ? 'selected' : '' }}>
-                        {{ $club->name }}
-                    </option>
-                @endforeach
-            </select>
-            @error('club_id') <div class="text-danger small">{{ $message }}</div> @enderror
-        </div>
+      <div class="mb-3">
+    <label for="club_id" class="form-label">Câu lạc bộ</label>
+    <select name="club_id" id="club_id" class="form-select select2-club" required>
+        <option value="">-- Chọn CLB --</option>
+        @foreach($clubs ?? [] as $club)
+            <option value="{{ $club->id }}" {{ old('club_id') == $club->id ? 'selected' : '' }}>
+                {{ $club->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('club_id') <div class="text-danger small">{{ $message }}</div> @enderror
+</div>
 
         {{-- Hiển thị bài viết (ẩn/hiện) --}}
         <div class="mb-3">
@@ -136,6 +136,20 @@
                 position: relative;
             }
         </style>
+        <!-- Include Select2 CSS & JS nếu chưa include -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('.select2-club').select2({
+        width: '100%',
+        placeholder: "-- Chọn CLB --",
+        allowClear: true
+    });
+});
+</script>
+
 @endsection
 
 @push('scripts')

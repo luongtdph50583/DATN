@@ -104,7 +104,7 @@
                                     <td>{{ Str::limit($event->location, 25) }}</td>
                                     <td>
                                         <span class="badge bg-info">
-                                            {{ $event->registrations_count ?? 0 }} / {{ $event->max_participants ?? '∞' }}
+                                            {{ $event->registrations->count() ?? 0 }} / {{ $event->max_participants ?? '∞' }}
                                         </span>
                                     </td>
                                     <td>
@@ -276,4 +276,22 @@
     </div>
     @endforeach
 </div>
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Áp dụng Select2 cho dropdown CLB
+        $('select[name="club_id"]').select2({
+            placeholder: '-- Tất cả CLB --',
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+@endpush
+
 @endsection

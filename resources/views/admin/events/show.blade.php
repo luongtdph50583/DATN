@@ -4,6 +4,27 @@
 
 @section('card-body')
 <div class="container-fluid py-4">
+
+    {{-- Thông báo --}}
+    @foreach (['success', 'error'] as $msg)
+        @if(session($msg))
+            <div class="alert alert-{{ $msg == 'success' ? 'success' : 'danger' }} alert-dismissible fade show" role="alert">
+                {{ session($msg) }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+    @endforeach
+
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -12,7 +33,7 @@
                 {{ $event->name }}
             </h1>
             <p class="text-muted small mb-0">
-                ID: #{{ $event->id }} • 
+                ID: #{{ $event->id }} •
                 <span class="badge {{ $event->status == 'approved' ? 'bg-success' : ($event->status == 'pending' ? 'bg-warning text-dark' : 'bg-danger') }}">
                     {{ $event->status == 'pending' ? 'Chờ duyệt' : ($event->status == 'approved' ? 'Đã duyệt' : 'Bị từ chối') }}
                 </span>
@@ -52,7 +73,7 @@
                                 <tr>
                                     <td class="fw-bold text-muted">Thời gian</td>
                                     <td>
-                                        <i class="fas fa-clock text-primary"></i> 
+                                        <i class="fas fa-clock text-primary"></i>
                                         {{ $event->start_time?->format('d/m/Y H:i') }} → {{ $event->end_time?->format('d/m/Y H:i') }}
                                     </td>
                                 </tr>
@@ -125,6 +146,10 @@
                     </h5>
                 </div>
                 <div class="card-body text-center">
+                    @php
+                        $used = $event->transactions->sum('amount') ?? 0;
+                        $percent = $event->budget_estimated > 0 ? ($used / $event->budget_estimated) * 100 : 0;
+                    @endphp
                     <div class="mb-2">
                         <h6 class="text-primary">Dự kiến</h6>
                         <h4 class="text-success fw-bold">{{ number_format($event->budget_estimated ?? 0) }} VNĐ</h4>
@@ -139,10 +164,6 @@
                     </div>
 
                     <div class="progress mb-3" style="height: 30px;">
-                        @php
-                            $used = $event->transactions->sum('amount') ?? 0;
-                            $percent = $event->budget_estimated > 0 ? ($used / $event->budget_estimated) * 100 : 0;
-                        @endphp
                         <div class="progress-bar bg-danger" style="width: {{ $percent }}%">
                             {{ number_format($used) }}đ đã dùng
                         </div>
@@ -159,13 +180,13 @@
             <div class="card shadow-sm">
                 <div class="card-header">
                     <h5 class="mb-0 fw-bold">
-                        <i class="fas fa-users text-info"></i> Người tham gia ({{ $event->registrations->count() }})
+                       <i class="fas fa-users text-info"></i> Người tham gia ({{ $event->registrations->count() }})
                     </h5>
                 </div>
                 <div class="card-body p-0">
                     @if($event->registrations->count())
                         <div class="list-group list-group-flush">
-                            @foreach($event->registrations->take(5) as $reg)
+                            @foreach($event->registrations as $reg)
                                 <div class="list-group-item d-flex align-items-center">
                                     <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center" style="width:40px;height:40px;">
                                         {{ substr($reg->user?->name ?? '?', 0, 1) }}
@@ -177,11 +198,10 @@
                                 </div>
                             @endforeach
                         </div>
-                        @if($event->registrations->count() > 5)
-                            <div class="p-3 text-center border-top">
-                                <small class="text-muted">... và {{ $event->registrations->count() - 5 }} người khác</small>
-                            </div>
-                        @endif
+
+                        <div class="mt-2">
+                          {{ $registrations->links() }}
+                        </div>
                     @else
                         <div class="text-center py-5 text-muted">
                             <i class="fas fa-user-slash fa-3x mb-3"></i>
@@ -197,59 +217,124 @@
             <div class="card shadow-sm">
                 <div class="card-header">
                     <h5 class="mb-0 fw-bold">
-                        <i class="fas fa-exchange-alt text-warning"></i> Giao dịch quỹ ({{ $event->transactions->count() }})
+                        <i class="fas fa-exchange-alt text-warning"></i> Giao dịch quỹ ({{  $event->funRequests->count() }})
                     </h5>
                 </div>
                 <div class="card-body p-0">
-                    @if($event->transactions->count())
-                        <div class="list-group list-group-flush">
-                            @foreach($event->transactions->take(5) as $t)
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <strong>{{ $t->type == 'income' ? '+' : '-' }}{{ number_format($t->amount) }}đ</strong><br>
-                                            <small class="text-muted">{{ $t->description }}</small>
-                                        </div>
-                                        <small class="text-muted">{{ $t->created_at->format('d/m') }}</small>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                        @if($event->transactions->count() > 5)
-                            <div class="p-3 text-center border-top">
-                                <small class="text-muted">... và {{ $event->transactions->count() - 5 }} giao dịch khác</small>
+                    @if ($event->funRequests->count())
+                        <div class="table-responsive mt-3">
+                            <table class="table table-bordered table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Người tạo</th>
+                                        <th>Số tiền yêu cầu</th>
+                                        <th>Số tiền duyệt</th>
+                                        <th>Ghi chú</th>
+                                        <th>Trạng thái</th>
+                                        <th>Người duyệt</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($event->funRequests as $index => $req)
+                                        <tr>
+                                            <td>{{ $index + 1 }}</td>
+                                            <td>{{ optional($req->requestedBy)->name ?? 'Không rõ' }}</td>
+                                            <td class="text-end">{{ number_format($req->amount_requested ?? 0, 0, ',', '.') }} VNĐ</td>
+                                            <td class="text-end">{{ number_format($req->approved_amount ?? 0, 0, ',', '.') }} VNĐ</td>
+                                            <td>{{ Str::limit($req->note ?? '-', 50) }}</td>
+                                            <td>
+                                                @php
+                                                    $statusMap = [
+                                                        'pending_disbursement' => ['label' => 'Chờ giải ngân', 'class' => 'bg-warning text-dark'],
+                                                        'disbursing' => ['label' => 'Đang giải ngân', 'class' => 'bg-info text-white'],
+                                                        'disbursed' => ['label' => 'Đã giải ngân', 'class' => 'bg-success text-white'],
+                                                        'rejected' => ['label' => 'Từ chối', 'class' => 'bg-danger text-white'],
+                                                    ];
+                                                @endphp
+                                                <span class="badge {{ $statusMap[$req->status]['class'] ?? 'bg-secondary' }}">
+                                                    {{ $statusMap[$req->status]['label'] ?? 'Không xác định' }}
+                                                </span>
+                                            </td>
+                                            <td>{{ optional($req->approvedBy)->name ?? '-' }}</td>
+                                            <td>{{ optional($req->created_at)?->format('d/m/Y H:i') ?? '-' }}</td>
+                                            <td>
+                                                <a href="{{ route('admin.event_fund_requests.show', $req) }}" 
+                                                   class="btn btn-info btn-sm" title="Xem">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+
+                            <div class="mt-2 px-2">
+                                {{ $funRequests->links() }}
                             </div>
-                        @endif
+                        </div>
                     @else
-                        <div class="text-center py-5 text-muted">
-                            <i class="fas fa-money-bill fa-3x mb-3"></i>
-                            <p>Chưa có giao dịch</p>
+                        <div class="alert alert-secondary mt-3 text-center">
+                            <i class="fas fa-info-circle me-2"></i>Chưa có yêu cầu quỹ nào cho sự kiện này.
                         </div>
                     @endif
                 </div>
             </div>
         </div>
 
-        <!-- Hình ảnh sự kiện -->
+        <!-- Media -->
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header">
                     <h5 class="mb-0 fw-bold">
-                        <i class="fas fa-images text-secondary"></i> Hình ảnh sự kiện
+                        <i class="fas fa-images text-secondary"></i> Hình ảnh / Video sự kiện
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if($event->media_id)
-                        <img src="{{ $event->poster_url }}" class="img-fluid rounded shadow" alt="Poster">
+                    @if($event->media->count())
+                        <div class="row g-3">
+                            @foreach($event->media as $media)
+                                <div class="col-md-2 col-4">
+                                    <div class="card border-0 shadow-sm">
+                                        @if(Str::startsWith($media->file_type, 'image'))
+                                            <img src="{{ asset('storage/' . $media->file_path) }}" 
+                                                 class="img-fluid rounded" 
+                                                 style="height:100px; object-fit:cover; width:100%;" 
+                                                 alt="{{ $media->file_name }}">
+                                        @elseif(Str::startsWith($media->file_type, 'video'))
+                                            <video controls 
+                                                   class="w-100 rounded" 
+                                                   style="height:100px; object-fit:cover;">
+                                                <source src="{{ asset('storage/' . $media->file_path) }}" type="{{ $media->file_type }}">
+                                            </video>
+                                        @endif
+                                        <div class="card-body py-1 px-2 text-center">
+                                            <small class="d-block text-truncate" title="{{ $media->file_name }}">{{ $media->file_name }}</small>
+                                            <div class="mt-1">
+                                                <a href="{{ asset('storage/' . $media->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="Mở media">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                                <a href="{{ asset('storage/' . $media->file_path) }}" download class="btn btn-sm btn-outline-success" title="Tải xuống">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     @else
                         <div class="text-center py-5 text-muted">
                             <i class="fas fa-image fa-4x mb-3"></i>
-                            <p>Chưa có hình ảnh</p>
+                            <p>Chưa có hình ảnh / video nào</p>
                         </div>
                     @endif
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- Nút xóa mềm -->
@@ -268,7 +353,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa 
+                        <i class="fas fa-exclamation-triangle"></i> Xác nhận xóa
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -289,11 +374,12 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times"></i> Hủy
                     </button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash"></i> Xóa  ngay
+                        <i class="fas fa-trash"></i> Xóa ngay
                     </button>
                 </div>
             </div>

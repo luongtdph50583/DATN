@@ -26,9 +26,9 @@ class Media extends Model
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
-    public function related()
+      public function related()
     {
-        return $this->morphTo();
+        return $this->morphTo(__FUNCTION__, 'related_type', 'related_id');
     }
 
     // ✅ Scope: chỉ lấy media chưa bị xóa
