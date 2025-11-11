@@ -90,30 +90,7 @@ class ClubController extends Controller
 
 
 
-    // public function filterMembers(Request $request, $id)
-    // {
-    //     $status = $request->get('status');
-    //     $keyword = $request->get('keyword');
 
-    //     $members = ClubMember::with('member.user')
-    //         ->where('club_id', $id)
-    //         ->where('role', 'member')
-    //         ->when($status, function ($q) use ($status) {
-    //             $q->where('status', $status);
-    //         })
-    //         ->when($keyword, function ($q) use ($keyword) {
-    //             $q->whereHas('member.user', function ($q2) use ($keyword) {
-    //                 $q2->where('name', 'like', "%$keyword%")
-    //                     ->orWhere('email', 'like', "%$keyword%");
-    //             })
-    //                 ->orWhereHas('member', function ($q3) use ($keyword) {
-    //                     $q3->where('student_code', 'like', "%$keyword%");
-    //                 });
-    //         })
-    //         ->get();
-
-    //     return view('admin.clubs.partials.members_table', compact('members'));
-    // }
     public function edit($id)
     {
         $club = Club::findOrFail($id);
@@ -177,54 +154,31 @@ class ClubController extends Controller
     }
 
 
-    public function searchMembers(Request $request)
+    public function members(Request $request, Club $club)
     {
-        try {
-            $keyword = $request->get('q');
+{
+    $keyword = $request->get('q');
+    $status = $request->get('status');
 
-            $members = Member::with('user')
-                ->whereHas('user')
-                ->whereDoesntHave('clubs', function ($q) {
-                    $q->whereIn('club_members.role', [
-                        'club_manager',
-                        'deputy_manager',
-                        'secretary',
-                        'treasurer',
-                        'event_manager',
-                        'communication',
-                    ]);
-                })
-                ->when($keyword, function ($q) use ($keyword) {
-                    $q->where(function ($sub) use ($keyword) {
-                        $sub->whereHas('user', function ($query) use ($keyword) {
-                            $query->where('name', 'like', "%$keyword%")
-                                ->orWhere('email', 'like', "%$keyword%");
-                        })->orWhere('student_code', 'like', "%$keyword%");
-                    });
-                })
-                ->get();
+    $clubMembers = $club->clubMembers()->with('member.user')
+        ->when($status, fn($q) => $q->where('status', $status))
+        ->when($keyword, function ($q) use ($keyword) {
+            $q->whereHas('member.user', fn($u) => $u->where('name', 'like', "%{$keyword}%"))
+              ->orWhereHas('member', fn($m) => $m->where('student_code', 'like', "%{$keyword}%"));
+        })
+        ->orderBy('joined_at', 'desc')
+        ->paginate(20);
 
-            $results = $members->map(function ($m) {
-                $name = $m->user->name ?? 'Không rõ';
-                $email = $m->user->email ?? '—';
-                $code = $m->student_code ?? '—';
-                return [
-                    'id' => $m->id,
-                    'text' => "{$name} ({$code}) - {$email}",
-                ];
-            });
+    $hasResults = $clubMembers->count() > 0;
 
-            return response()->json($results);
-        } catch (\Throwable $e) {
-            Log::error('Lỗi khi tìm kiếm thành viên:', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-            return response()->json(['error' => 'Đã xảy ra lỗi server'], 500);
-        }
-    }
- public function destroy(Request $request, $id)
+    return view('admin.clubs.show', compact('club', 'clubMembers', 'hasResults'));
+}
+
+}
+
+    
+
+    public function destroy(Request $request, $id)
 {
     $club = Club::with(['posts', 'documents'])->findOrFail($id);
     $reason = $request->input('delete_reason', 'Vi phạm nội quy');
@@ -712,36 +666,6 @@ public function update(Request $request, Club $club, ClubUpdateLogService $logSe
                 ->withErrors(['error' => 'Đã xảy ra lỗi: ' . $e->getMessage()])
                 ->withInput();
         }
-    }
-
-
-
-
-
-
-    public function searchAllMembers(Request $request)
-    {
-        $query = $request->get('q', '');
-
-        $members = Member::with('user')
-            ->when($query, function ($q) use ($query) {
-                $q->whereHas('user', function ($sub) use ($query) {
-                    $sub->where('name', 'like', "%$query%")
-                        ->orWhere('email', 'like', "%$query%");
-                })->orWhere('student_code', 'like', "%$query%");
-            })
-            ->select('id', 'student_code', 'user_id')
-            ->limit(10)
-            ->get();
-
-        return response()->json(
-            $members->map(function ($m) {
-                return [
-                    'id' => $m->id,
-                    'text' => $m->user->name . ' (' . $m->student_code . ')',
-                ];
-            })
-        );
     }
 
 public function removeMember(Request $request, Club $club, Member $member)

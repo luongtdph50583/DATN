@@ -54,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', 'edit')->name('edit');
             Route::patch('/', 'update')->name('update');
             Route::delete('/', 'destroy')->name('destroy');
-            
+
         });
 });
 
@@ -84,7 +84,7 @@ Route::prefix('admin')
     Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
         ->name('users.toggleStatus');
 
-    
+
         // =========================================================
         // 2. EVENT MANAGEMENT – ĐÃ HOÀN CHỈNH 100%
         // =========================================================
@@ -156,42 +156,43 @@ Route::prefix('admin')
 
 
 
-       Route::controller(ClubController::class)
-    ->prefix('clubs')
-    ->as('clubs.')
-    ->group(function () {
+        Route::controller(ClubController::class)
+            ->prefix('clubs')
+            ->as('clubs.')
+            ->group(function () {
 
-        // ♻️ Trang thùng rác (phải để trên /{id})
-        Route::get('/trash', 'trash')->name('trash');
+                // ♻️ Trang thùng rác (phải để trên /{id})
+                Route::get('/trash', 'trash')->name('trash');
 
-        // 🔄 Khôi phục CLB
-        Route::patch('/{id}/restore', 'restore')->name('restore');
+                // 🔄 Khôi phục CLB
+                Route::patch('/{id}/restore', 'restore')->name('restore');
 
-        // ❌ Xóa vĩnh viễn CLB
-        Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
+                // ❌ Xóa vĩnh viễn CLB
+                Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
 
-        Route::get('/', 'index')->name('index');
-        Route::get('/create', 'create')->name('create');
-        Route::post('/', 'store')->name('store');
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
 
-        // Các route dựa trên {id} phải để sau route cố định
-        Route::get('/{id}', 'show')->name('show');
-        Route::get('/{id}/edit', 'edit')->name('edit');
-        Route::put('/{id}', 'update')->name('update');
-        Route::delete('/{id}', 'destroy')->name('destroy');
+                // Các route dựa trên {id} phải để sau route cố định
+                Route::get('/{id}', 'show')->name('show');
+                Route::get('/{id}/edit', 'edit')->name('edit');
+                Route::put('/{id}', 'update')->name('update');
+                Route::delete('/{id}', 'destroy')->name('destroy');
 
-        // Lọc thành viên CLB
-        Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
+                // Lọc thành viên CLB
+                Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
 
-        // Tìm kiếm thành viên
-        Route::get('/members/search', 'searchMembers')->name('members.search');
+                // 🔹 Tìm kiếm thành viên (thêm route mới)
+                Route::get('/{id}/members', 'members')->name('members');
+                Route::get('/{id}/members/search', 'members')->name('members.search'); // <- khớp form
 
-        // Tìm kiếm CLB real-time
-        Route::post('/search', 'searchJson')->name('search');
 
-        // Xóa thành viên
-        Route::delete('/{club}/members/{member}', 'removeMember')->name('members.remove');
-    });
+
+                // Xóa thành viên
+                Route::delete('/{club}/members/{member}', 'removeMember')->name('members.remove');
+            });
+
 
 
         Route::get('/club-balance/{clubId}', [FundController::class, 'getClubBalance'])
@@ -407,7 +408,7 @@ Route::controller(CommentController::class)
             ->name('event_fund_requests.approve');
         Route::post('event_fund_settlements/{id}/approve', [EventFundSettlementController::class, 'approve'])
             ->name('event_fund_settlements.approve');
-            
+
 Route::get('event_fund_requests/{id}/reject', [EventFundRequestController::class, 'showRejectForm'])
     ->name('event_fund_requests.reject');
 
