@@ -361,6 +361,9 @@ Route::controller(CommentController::class)
                 Route::get('/events', 'events')->name('events');
                 Route::get('/clubs', 'clubs')->name('clubs');
                 Route::get('/members', 'members')->name('members');
+                Route::get('/accounts', 'accounts')->name('accounts');
+                Route::get('/posts', 'posts')->name('posts');   
+                Route::get('/funds', 'fundRequests')->name('funds');
             });
 
         Route::controller(ClubReportController::class)
@@ -370,6 +373,8 @@ Route::controller(CommentController::class)
                 Route::get('/', 'show')->name('show');
                 Route::get('/pdf', 'exportPdf')->name('pdf');
             });
+            Route::get('/stats/accounts/pdf', [StatisticsController::class, 'accountsPdf'])
+    ->name('stats.accounts.pdf');
 
         Route::controller(StatisticsController::class)
             ->prefix('statistics-and-reports')

@@ -6,12 +6,16 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Club;
 use App\Models\Event;
+use App\Models\EventFundRequest;
+use App\Models\Fund;
 use Carbon\Carbon;
 use App\Models\Member;
-
+use App\Models\Post;
+use Carbon\CarbonPeriod;
+use PDF;
 class StatisticsController extends Controller
 {
- public function index(Request $request)
+public function index(Request $request)
 {
     // === 1️⃣ Xử lý nút "Đặt lại" ===
     if ($request->has('reset')) {
@@ -19,96 +23,53 @@ class StatisticsController extends Controller
     }
 
     // === 2️⃣ Lọc theo thời gian ===
-    $startDate = $request->input('start_date');
-    $endDate = $request->input('end_date');
+    $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
+    $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
 
-    if (!$startDate || !$endDate) {
-        $startDate = now()->startOfYear()->toDateString();
-        $endDate = now()->endOfYear()->toDateString();
-    }
+    // === 3️⃣ Query tổng quan ===
+    $clubCount   = Club::whereBetween('created_at', [$startDate, $endDate])->count();
+    $memberCount = User::where('role', 'member')->whereBetween('created_at', [$startDate, $endDate])->count();
+    $eventCount  = Event::whereBetween('created_at', [$startDate, $endDate])->count();
+    $fundCount   = EventFundRequest::whereBetween('created_at', [$startDate, $endDate])->count();      // bảng quỹ
+    $postCount   = Post::whereBetween('created_at', [$startDate, $endDate])->count();      // bảng bài viết
+    $accountCount = User::whereBetween('created_at', [$startDate, $endDate])->count();     // tất cả user
 
-    // === 3️⃣ Tạo query cơ bản cho CLB ===
-    $query = Club::withCount(['members', 'events'])
-        ->whereBetween('created_at', [$startDate, $endDate]);
-
-    // 🔹 Lọc theo trạng thái
-    if ($request->filled('status')) {
-        $query->where('status', $request->status);
-    }
-
-    // 🔹 Lọc theo từ khóa tìm kiếm (theo tên CLB)
-    if ($request->filled('search')) {
-        $query->where('name', 'like', '%' . $request->search . '%');
-    }
-
-    // 🔹 Sắp xếp theo tùy chọn
-    switch ($request->input('sort')) {
-        case 'top_members':
-            $query->orderByDesc('members_count');
-            break;
-        case 'least_members':
-            $query->orderBy('members_count');
-            break;
-        case 'oldest':
-            $query->orderBy('created_at', 'asc');
-            break;
-        case 'most_events':
-            $query->orderByDesc('events_count');
-            break;
-        default:
-            $query->latest();
-            break;
-    }
-
-    // Lấy dữ liệu (có phân trang + giữ bộ lọc)
-    $clubs = $query->paginate(10)->appends($request->all());
-
-    // === 4️⃣ Tính toán số liệu tổng quan ===
-    $clubCount = Club::whereBetween('created_at', [$startDate, $endDate])->count();
-    $memberCount = User::where('role', 'member')
-        ->whereBetween('created_at', [$startDate, $endDate])
-        ->count();
-    $eventCount = Event::whereBetween('created_at', [$startDate, $endDate])->count();
-
-    // === 5️⃣ Chuẩn bị dữ liệu cho biểu đồ thống kê theo tháng ===
+    // === 4️⃣ Chuẩn bị dữ liệu theo tháng ===
+    $labels = [];
     $clubsPerMonth = [];
     $membersPerMonth = [];
     $eventsPerMonth = [];
-    $labels = [];
+    $fundsPerMonth = [];
+    $postsPerMonth = [];
+    $accountsPerMonth = [];
 
     $period = \Carbon\CarbonPeriod::create($startDate, '1 month', $endDate);
 
     foreach ($period as $date) {
         $month = $date->month;
-        $year = $date->year;
+        $year  = $date->year;
         $labels[] = "Tháng {$month}/{$year}";
 
-        $clubsPerMonth[] = Club::whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->count();
-
-        $membersPerMonth[] = User::where('role', 'member')
-            ->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->count();
-
-        $eventsPerMonth[] = Event::whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
-            ->count();
+        $clubsPerMonth[]   = Club::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
+        $membersPerMonth[] = User::where('role', 'member')->whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
+        $eventsPerMonth[]  = Event::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
+        $fundsPerMonth[]   = EventFundRequest::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
+        $postsPerMonth[]   = Post::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
+        $accountsPerMonth[]= User::whereYear('created_at', $year)->whereMonth('created_at', $month)->count();
     }
 
-    // === 6️⃣ Trả dữ liệu về view ===
+    // === 5️⃣ Trả dữ liệu về view ===
     return view('admin.statistics-and-reports.statistics', compact(
-        'clubs',
-        'clubCount', 'memberCount', 'eventCount',
-        'clubsPerMonth', 'membersPerMonth', 'eventsPerMonth',
+        'clubCount', 'memberCount', 'eventCount', 'fundCount', 'postCount', 'accountCount',
+        'clubsPerMonth', 'membersPerMonth', 'eventsPerMonth', 'fundsPerMonth', 'postsPerMonth', 'accountsPerMonth',
         'labels', 'startDate', 'endDate'
     ))->with([
-        'sort' => $request->input('sort', ''),
+        'sort'   => $request->input('sort', ''),
         'status' => $request->input('status', ''),
         'search' => $request->input('search', ''),
     ]);
 }
+
 
 
 
@@ -373,7 +334,176 @@ public function events(Request $request)
 }
 
 
+     public function accounts(Request $request)
+    {
+        // 🔹 Reset filter
+        if ($request->has('reset')) {
+            return redirect()->route('admin.stats.accounts');
+        }
+
+        // 🔹 Lọc thời gian
+        $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
+        $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
+
+        // 🔹 Lọc trạng thái và vai trò
+        $status = $request->input('status'); // active / inactive / null
+        $role   = $request->input('role');   // admin / member / null
+
+        // 🔹 Query filter cho bảng + chart + card
+        $filteredQuery = User::whereBetween('created_at', [$startDate, $endDate]);
+
+        if ($status) {
+            $filteredQuery->where('status', $status);
+        }
+
+        if ($role) {
+            $filteredQuery->where('role', $role);
+        }
+
+        // 🔹 Tính số liệu cho card (clone query để không ảnh hưởng phân trang)
+        $activeCount   = (clone $filteredQuery)->where('status', 'active')->count();
+        $inactiveCount = (clone $filteredQuery)->where('status', 'inactive')->count();
+
+        // 🔹 Phân trang bảng
+        $accounts = $filteredQuery->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->appends($request->all());
+
+        // 🔹 Dữ liệu biểu đồ theo tháng
+        $labels = [];
+        $accountsPerMonth = [];
+
+        $period = CarbonPeriod::create($startDate, '1 month', $endDate);
+        foreach ($period as $date) {
+            $month = $date->month;
+            $year  = $date->year;
+            $labels[] = "Tháng {$month}/{$year}";
+
+            $accountsPerMonth[] = (clone $filteredQuery)
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->count();
+        }
+
+  return view('admin.statistics-and-reports.accounts', compact(
+            'accounts', 'activeCount', 'inactiveCount',
+            'labels', 'accountsPerMonth',
+            'status', 'role', 'startDate', 'endDate'
+        ));
+    }
+
+
+public function accountsPdf(Request $request)
+{
+    $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
+    $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
+    $status    = $request->input('status');
+    $role      = $request->input('role');
+
+    $accountsQuery = User::whereBetween('created_at', [$startDate, $endDate]);
+    if ($status) $accountsQuery->where('status', $status);
+    if ($role) $accountsQuery->where('role', $role);
+    $accounts = $accountsQuery->orderBy('created_at', 'desc')->get();
+
+    $activeCount = $accounts->where('status', 'active')->count();
+    $inactiveCount = $accounts->where('status', 'inactive')->count();
+
+    $pdf = PDF::loadView('admin.statistics-and-reports.accounts-pdf', [
+        'accounts' => $accounts,
+        'activeCount' => $activeCount,
+        'inactiveCount' => $inactiveCount,
+        'status' => $status,
+        'role' => $role,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+    ]);
+
+    return $pdf->download('thongke_taikhoan_' . now()->format('Ymd_His') . '.pdf');
+}
+public function fundRequests(Request $request)
+{
+    // Reset filter
+    if ($request->has('reset')) {
+        return redirect()->route('admin.stats.funds');
+    }
+
+    $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
+    $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
+    $status    = $request->input('status'); // pending_disbursement, disbursing, disbursed, rejected
+
+    $query = EventFundRequest::with(['event', 'requestedBy', 'approvedBy', 'disbursedBy', 'rejectedBy'])
+        ->whereBetween('created_at', [$startDate, $endDate]);
+
+    if ($status) {
+        $query->where('status', $status);
+    }
+
+    $fundRequests = $query->orderByDesc('created_at')->paginate(10)->appends($request->all());
+
+    // Tổng quan
+    $totalRequests = $query->count();
+    $totalRequestedAmount = $query->sum('amount_requested');
+    $totalApprovedAmount  = $query->sum('approved_amount');
+
+    // Biểu đồ theo tháng
+    $labels = [];
+    $requestsPerMonth = [];
+    $period = CarbonPeriod::create($startDate, '1 month', $endDate);
+
+    foreach ($period as $date) {
+        $labels[] = "Tháng {$date->month}/{$date->year}";
+        $requestsPerMonth[] = EventFundRequest::whereYear('created_at', $date->year)
+            ->whereMonth('created_at', $date->month)
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->count();
+    }
+
+    return view('admin.statistics-and-reports.fund-requests', compact(
+        'fundRequests', 'totalRequests', 'totalRequestedAmount', 'totalApprovedAmount',
+        'startDate', 'endDate', 'status', 'labels', 'requestsPerMonth'
+    ));
+
 
 
 }
 
+public function posts(Request $request)
+{
+    // === Bộ lọc ===
+    $status = $request->input('status');
+    $type = $request->input('type');
+    $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
+    $endDate = $request->input('end_date') ?: now()->endOfYear()->toDateString();
+
+    // === Query cơ bản ===
+    $query = Post::with(['user','club'])
+        ->whereBetween('created_at', [$startDate, $endDate]);
+
+    if ($status) $query->where('status', $status);
+    if ($type) $query->where('type', $type);
+
+    $posts = $query->latest()->paginate(10)->appends($request->all());
+
+    // === Thống kê nhanh ===
+    $pendingCount = Post::where('status','pending')->whereBetween('created_at',[$startDate,$endDate])->count();
+    $approvedCount = Post::where('status','approved')->whereBetween('created_at',[$startDate,$endDate])->count();
+    $rejectedCount = Post::where('status','rejected')->whereBetween('created_at',[$startDate,$endDate])->count();
+    $featuredCount = Post::where('is_featured',true)->whereBetween('created_at',[$startDate,$endDate])->count();
+
+    // === Biểu đồ số lượng bài viết theo tháng ===
+    $labels = [];
+    $postsPerMonth = [];
+    $period = CarbonPeriod::create($startDate, '1 month', $endDate);
+    foreach($period as $date){
+        $labels[] = 'Tháng '.$date->month.'/'.$date->year;
+        $postsPerMonth[] = Post::whereYear('created_at',$date->year)
+            ->whereMonth('created_at',$date->month)
+            ->count();
+    }
+
+    return view('admin.statistics-and-reports.posts', compact(
+        'posts','pendingCount','approvedCount','rejectedCount','featuredCount',
+        'labels','postsPerMonth','status','type','startDate','endDate'
+    ));
+}
+}
