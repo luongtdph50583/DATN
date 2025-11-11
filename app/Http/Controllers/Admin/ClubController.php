@@ -40,20 +40,54 @@ class ClubController extends Controller
     }
     public function show($id)
     {
-        // Lấy thông tin CLB, bao gồm manager và advisor
+        // Lấy thông tin CLB, kèm số lượng bài viết & sự kiện đã duyệt
         $club = Club::with([
             'manager',
-            'advisorFaculty.user' // advisor_id join với faculty_members rồi join với user
-        ])->findOrFail($id);
+            'advisorFaculty.user' // Giảng viên đỡ đầu
+        ])->withCount([
+                    'posts as total_posts' => function ($query) {
+                        $query->where('status', 'approved')
+                            ->where('is_visible', true);
+                    },
+                    'events as total_events' => function ($query) {
+                        $query->where('status', 'approved');
+                    }
+                ])->findOrFail($id);
 
-        // Lấy danh sách thành viên CLB, kèm thông tin từ bảng members và users
+        // Lấy danh sách thành viên CLB, phân trang 10 bản ghi/trang
         $clubMembers = ClubMember::with(['member.user'])
             ->where('club_id', $id)
+            ->paginate(10);
+
+        // 3 bài viết nổi bật gần đây
+        $featuredPosts = Post::where('club_id', $id)
+            ->where('status', 'approved')
+            ->where('is_visible', true)
+            ->orderBy('is_featured', 'desc') // ưu tiên bài nổi bật
+            ->orderBy('created_at', 'desc')  // mới tạo gần đây trước
+            ->take(3)
+            ->get();
+
+        // 3 sự kiện sắp diễn ra
+        $upcomingEvents = Event::where('club_id', $id)
+            ->where('status', 'approved')
+            ->where('start_time', '>=', now()) // sự kiện chưa bắt đầu
+            ->orderBy('start_time', 'asc')     // sự kiện sớm nhất trước
+            ->take(3)
             ->get();
 
         // Trả về view chi tiết CLB
-        return view('admin.clubs.show', compact('club', 'clubMembers'));
+        return view('admin.clubs.show', compact(
+            'club',
+            'clubMembers',
+            'featuredPosts',
+            'upcomingEvents'
+        ));
     }
+
+
+
+
 
 
     // public function filterMembers(Request $request, $id)

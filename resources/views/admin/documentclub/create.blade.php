@@ -96,25 +96,17 @@ $(document).ready(function() {
                 const options = select.find('option');
                 options.prop('disabled', false);
 
-                // === 1️⃣ Nếu chọn "Công khai"
                 if (selected.includes('public')) {
-                    // disable toàn bộ quyền khác
                     options.each(function () {
                         if ($(this).val() !== 'public') $(this).prop('disabled', true);
                     });
-                }
-
-                // === 2️⃣ Nếu chọn "Thành viên"
-                else if (selected.includes('member')) {
+                } else if (selected.includes('member')) {
                     const allExceptPublic = options.map(function () {
                         return $(this).val() !== 'public' ? $(this).val() : null;
                     }).get().filter(v => v);
-                    selected = allExceptPublic; // chọn tất cả trừ công khai
+                    selected = allExceptPublic;
                     select.val(selected).trigger('change.select2');
-                }
-
-                // === 3️⃣ Nếu chọn quyền quản lý khác → tự động thêm "Chủ nhiệm CLB"
-                else {
+                } else {
                     const hasManagerRole = selected.some(v => managerRoles.includes(v) && v !== 'club_manager');
                     if (hasManagerRole && !selected.includes('club_manager')) {
                         selected.push('club_manager');
@@ -122,13 +114,11 @@ $(document).ready(function() {
                     }
                 }
 
-                // === 4️⃣ Nếu BỎ chọn "Thành viên" → bỏ hết quyền quản lý
                 if (!selected.includes('member')) {
                     selected = selected.filter(v => !managerRoles.includes(v));
                     select.val(selected).trigger('change.select2');
                 }
 
-                // === Disable hợp lý
                 if (selected.includes('public')) {
                     options.each(function () {
                         if ($(this).val() !== 'public') $(this).prop('disabled', true);
@@ -142,15 +132,9 @@ $(document).ready(function() {
                 select.trigger('change.select2');
             }
 
-            // Gọi lần đầu khi load
             updateAccessLogic();
-            // Lắng nghe thay đổi
             select.on('change', updateAccessLogic);
         });
     </script>
-
-
-
-
-
 @endpush
+
