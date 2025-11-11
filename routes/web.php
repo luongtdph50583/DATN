@@ -156,7 +156,7 @@ Route::prefix('admin')
 
 
 
-       Route::controller(ClubController::class)
+Route::controller(ClubController::class)
     ->prefix('clubs')
     ->as('clubs.')
     ->group(function () {
@@ -170,28 +170,26 @@ Route::prefix('admin')
         // ❌ Xóa vĩnh viễn CLB
         Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
 
+        // ✅ ⚡ Đặt các route tìm kiếm và filter TRƯỚC route {club}
+        Route::get('/members/search', 'searchMembers')->name('members.search');
+        Route::post('/search', 'searchJson')->name('search');
+        Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
+
+        // ✅ CRUD chính
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
 
-        // Các route dựa trên {id} phải để sau route cố định
-        Route::get('/{id}', 'show')->name('show');
-        Route::get('/{id}/edit', 'edit')->name('edit');
-        Route::put('/{id}', 'update')->name('update');
-        Route::delete('/{id}', 'destroy')->name('destroy');
-
-        // Lọc thành viên CLB
-        Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
-
-        // Tìm kiếm thành viên
-        Route::get('/members/search', 'searchMembers')->name('members.search');
-
-        // Tìm kiếm CLB real-time
-        Route::post('/search', 'searchJson')->name('search');
+        // ⚠️ Các route có {club} để SAU CÙNG
+        Route::get('/{club}', 'show')->name('show');
+        Route::get('/{club}/edit', 'edit')->name('edit');
+        Route::put('/{club}', 'update')->name('update');
+        Route::delete('/{club}', 'destroy')->name('destroy');
 
         // Xóa thành viên
         Route::delete('/{club}/members/{member}', 'removeMember')->name('members.remove');
     });
+
 
 
         Route::get('/club-balance/{clubId}', [FundController::class, 'getClubBalance'])

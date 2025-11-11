@@ -30,7 +30,11 @@
         <option value="active">Hoạt động</option>
         <option value="inactive">Ngưng hoạt động</option>
     </select>
+    <button type="submit" class="btn btn-primary btn-sm">
+        <i class="fas fa-search"></i> Tìm kiếm
+    </button>
 </form>
+
 @endsection
 
 @section('card-body')
@@ -146,4 +150,83 @@
         });
     });
 </script>
+<script>
+document.getElementById('search-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // tránh reload page
+
+    const formData = new FormData(this);
+    const params = new URLSearchParams();
+    formData.forEach((value, key) => {
+        if (value) params.append(key, value);
+    });
+
+    fetch("{{ route('admin.clubs.search') }}", {
+        method: "POST",
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+        },
+        body: params
+    })
+    .then(res => res.json())
+    .then(clubs => {
+        const tbody = document.getElementById('club-table-body');
+        tbody.innerHTML = '';
+
+        if (clubs.length === 0) {
+            tbody.innerHTML = `<tr>
+                <td colspan="8" class="text-center text-muted">Không tìm thấy CLB nào.</td>
+            </tr>`;
+            return;
+        }
+
+        clubs.forEach((club, index) => {
+            tbody.innerHTML += `
+            <tr>
+                <td>${index+1}</td>
+                <td><img src="${club.logo ? '/storage/' + club.logo : '/images/default-club.png'}"
+                    alt="Logo" class="rounded-circle" width="40" height="40"></td>
+                <td><strong>${club.name}</strong></td>
+                <td>${club.field ?? ''}</td>
+                <td>${club.manager?.member?.user?.name ?? '—'}</td>
+                <td>${club.founded_at ? new Date(club.founded_at).toLocaleDateString('vi-VN') : '—'}</td>
+                <td>
+                    ${club.status === 'active' 
+                        ? '<span class="badge bg-success">Hoạt động</span>' 
+                        : '<span class="badge bg-secondary">Ngưng hoạt động</span>'}
+                </td>
+                <td class="text-center">
+                    <a href="/admin/clubs/${club.id}" class="btn btn-info btn-sm" title="Chi tiết">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="/admin/clubs/${club.id}/edit" class="btn btn-warning btn-sm" title="Sửa">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button type="button" class="btn btn-danger btn-sm btn-open-delete" 
+                        data-id="${club.id}" data-name="${club.name}" title="Xóa">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+        });
+
+        // Reattach modal delete buttons
+        document.querySelectorAll('.btn-open-delete').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+                document.getElementById('club-delete-message').innerText =
+                    `Bạn chắc muốn xóa câu lạc bộ "${name}" không?`;
+                const form = document.getElementById('delete-club-form');
+                form.action = `/admin/clubs/${id}`;
+                new bootstrap.Modal(document.getElementById('deleteClubModal')).show();
+            });
+        });
+
+    })
+    .catch(err => console.error(err));
+});
+</script>
+
+
 @endpush
