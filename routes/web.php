@@ -371,8 +371,16 @@ Route::controller(CommentController::class)
                 Route::get('/', 'show')->name('show');
                 Route::get('/pdf', 'exportPdf')->name('pdf');
             });
+            Route::get('/stats/events/pdf', [StatisticsController::class, 'exportPdf'])->name('stats.events.pdf');
+
+          Route::get('/stats/clubs/pdf', [StatisticsController::class, 'clubsPdf'])
+    ->name('stats.clubs.pdf');
+
             Route::get('/stats/accounts/pdf', [StatisticsController::class, 'accountsPdf'])
     ->name('stats.accounts.pdf');
+    Route::get('/stats/funds/pdf', [StatisticsController::class, 'fundsPdf'])
+    ->name('stats.funds.pdf');
+
 
         Route::controller(StatisticsController::class)
             ->prefix('statistics-and-reports')

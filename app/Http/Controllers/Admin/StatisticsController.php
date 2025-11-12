@@ -13,6 +13,7 @@ use App\Models\Member;
 use App\Models\Post;
 use Carbon\CarbonPeriod;
 use PDF;
+
 class StatisticsController extends Controller
 {
 public function index(Request $request)
@@ -182,7 +183,66 @@ public function clubs(Request $request)
         'labels', 'clubsPerMonth', 'membersPerMonth', 'eventsPerMonth'
     ));
 }
+public function clubsPdf(Request $request)
+{
+    $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
+    $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
+    $status    = $request->input('status');
+    $sort      = $request->input('sort');
+    $search    = $request->input('search');
 
+    $clubsQuery = \App\Models\Club::whereBetween('created_at', [$startDate, $endDate]);
+
+    if ($status) {
+        $clubsQuery->where('status', $status);
+    }
+
+    if ($search) {
+        $clubsQuery->where('name', 'like', "%$search%");
+    }
+
+    // ✅ Sắp xếp theo yêu cầu
+    switch ($sort) {
+        case 'top_members':
+            $clubsQuery->withCount('members')->orderByDesc('members_count');
+            break;
+        case 'least_members':
+            $clubsQuery->withCount('members')->orderBy('members_count');
+            break;
+        case 'oldest':
+            $clubsQuery->orderBy('created_at');
+            break;
+        case 'most_events':
+            $clubsQuery->withCount('events')->orderByDesc('events_count');
+            break;
+        default:
+            $clubsQuery->orderBy('created_at', 'desc');
+            break;
+    }
+
+    $clubs = $clubsQuery->get();
+
+    // ✅ Thống kê cơ bản
+    $activeCount = $clubs->where('status', 'active')->count();
+    $pendingCount = $clubs->where('status', 'pending')->count();
+    $inactiveCount = $clubs->where('status', 'inactive')->count();
+
+    // ✅ Tạo PDF từ view
+    $pdf = \PDF::loadView('admin.statistics-and-reports.partials.club_pdf', [
+        'clubs' => $clubs,
+        'activeCount' => $activeCount,
+        'pendingCount' => $pendingCount,
+        'inactiveCount' => $inactiveCount,
+        'status' => $status,
+        'sort' => $sort,
+        'search' => $search,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+    ]);
+
+    // ⚡ Tải file về trực tiếp
+    return $pdf->download('thongke_caulacbo_' . now()->format('Ymd_His') . '.pdf');
+}
 
 
 
@@ -193,16 +253,37 @@ public function members(Request $request)
 {
     $sort = $request->get('sort', 'newest');
     $status = $request->get('status', '');
+    $selectedClubs = $request->get('clubs', []); // mảng ID CLB
 
-    // --- Query bảng (không lọc theo ngày) ---
+    // --- Query bảng member ---
     $membersQuery = Member::query();
+
+    // Filter trạng thái
     if ($status) {
         $membersQuery->where('status', $status);
     }
+
+    // Filter theo CLB (nếu chọn)
+$selectedClubs = $request->get('clubs', []);
+if (!empty($selectedClubs)) {
+    $membersQuery->whereHas('clubs', fn($q) => $q->whereIn('clubs.id', $selectedClubs));
+}
+
+
+    // Sắp xếp
     $membersQuery->orderBy('created_at', $sort === 'oldest' ? 'asc' : 'desc');
+
+    // Pagination
     $members = $membersQuery->paginate(10);
 
-    // --- Query dữ liệu biểu đồ (lọc theo thời gian nếu có) ---
+    // --- Lấy tất cả CLB cho filter ---
+    $allClubs = Club::orderBy('name')->get();
+
+    // --- Tính tổng active / inactive ---
+    $activeCount = Member::where('status', 'active')->count();
+    $inactiveCount = Member::where('status', 'inactive')->count();
+
+    // --- Dữ liệu biểu đồ theo tháng ---
     $startDate = $request->get('start_date');
     $endDate = $request->get('end_date');
 
@@ -212,12 +293,23 @@ public function members(Request $request)
     $period = new \DatePeriod($start, new \DateInterval('P1M'), (clone $end)->modify('+1 month'));
 
     $membersPerMonth = [];
+    $labels = [];
+
     foreach ($period as $date) {
         $month = Carbon::instance($date);
         $key = $month->format('Y-m');
-        $membersPerMonth[$key] = Member::whereYear('created_at', $month->year)
-                                        ->whereMonth('created_at', $month->month)
-                                        ->count();
+
+        $monthQuery = Member::whereYear('created_at', $month->year)
+                            ->whereMonth('created_at', $month->month);
+
+        // Nếu filter CLB, áp dụng cho biểu đồ luôn
+        if (!empty($selectedClubs)) {
+            $monthQuery->whereHas('clubs', function ($q) use ($selectedClubs) {
+                $q->whereIn('clubs.id', $selectedClubs);
+            });
+        }
+
+        $membersPerMonth[$key] = $monthQuery->count();
         $labels[] = 'Tháng ' . $month->month . '/' . $month->year;
     }
 
@@ -225,10 +317,12 @@ public function members(Request $request)
         'members' => $members,
         'sort' => $sort,
         'status' => $status,
-        'activeCount' => Member::where('status', 'active')->count(),
-        'inactiveCount' => Member::where('status', 'inactive')->count(),
+        'activeCount' => $activeCount,
+        'inactiveCount' => $inactiveCount,
+        'allClubs' => $allClubs,
+        'selectedClubs' => $selectedClubs,
         'labels' => $labels,
-        'membersPerMonth' => array_values($membersPerMonth), // dùng cho Chart.js
+        'membersPerMonth' => array_values($membersPerMonth),
         'startDate' => $startDate,
         'endDate' => $endDate,
     ]);
@@ -238,100 +332,139 @@ public function members(Request $request)
 
 
 
+
 public function events(Request $request)
 {
-    // Tham số lọc bảng
-    $sort = $request->get('sort', 'newest');
-    $status = $request->get('status', '');
-
-    // Kiểm tra nếu bấm nút Đặt lại (trong trường hợp người dùng bấm nút Đặt lại của biểu đồ)
-    // Nếu bạn muốn reset toàn bộ, nên dùng một tham số reset khác hoặc xử lý reset trong Blade
-    if ($request->has('reset')) {
-        // Giữ lại các filter của bảng nếu có trong URL
-        $queryParams = $request->only(['sort', 'status']);
-        return redirect()->route('admin.stats.events', $queryParams);
-    }
-
-    // Tham số lọc cho biểu đồ
+    $sort = $request->get('sort','newest');
+    $status = $request->get('status','');
+    $selectedClub = $request->get('club');
     $startDate = $request->get('start_date');
     $endDate = $request->get('end_date');
 
-    // --- DỮ LIỆU BẢNG (Events Table) ---
-    $query = Event::query()->with('club');
+    $query = Event::with('club');
 
-    // 1. Lọc theo Trạng thái (Status)
-    if ($status) {
+    // Lọc trạng thái
+    if($status){
         $query->where('status', $status);
     }
 
-    // 2. Sắp xếp (Sort)
-    // Sửa lỗi 'event_date' và thêm logic cho start_asc, start_desc
-    switch ($sort) {
-        case 'oldest': // Cũ nhất theo created_at (thời gian tạo)
-            $query->orderBy('created_at', 'asc');
-            break;
-        case 'start_asc': // Sắp xếp theo Thời gian bắt đầu (Sớm nhất)
-            $query->orderBy('start_time', 'asc');
-            break;
-        case 'start_desc': // Sắp xếp theo Thời gian bắt đầu (Muộn nhất)
-            $query->orderBy('start_time', 'desc');
-            break;
-        case 'newest': // Mặc định: Mới nhất theo created_at (thời gian tạo)
-        default:
-            $query->orderBy('created_at', 'desc');
-            break;
+    // Lọc CLB
+    if($selectedClub){
+        $query->where('club_id', $selectedClub);
     }
 
-    $events = $query->paginate(10)->appends(['sort' => $sort, 'status' => $status, 'start_date' => $startDate, 'end_date' => $endDate]);
+    // Lọc ngày tháng theo start_time
+    if($startDate){
+        $query->whereDate('start_time', '>=', Carbon::parse($startDate)->startOfDay());
+    }
+    if($endDate){
+        $query->whereDate('start_time', '<=', Carbon::parse($endDate)->endOfDay());
+    }
 
-    // --- DỮ LIỆU BIỂU ĐỒ (Chart Data) ---
+    // Sắp xếp
+    switch($sort){
+        case 'oldest': $query->orderBy('created_at','asc'); break;
+        case 'start_asc': $query->orderBy('start_time','asc'); break;
+        case 'start_desc': $query->orderBy('start_time','desc'); break;
+        default: $query->orderBy('created_at','desc'); break;
+    }
+
+    $events = $query->paginate(10)->appends($request->query());
+
+    // Dữ liệu biểu đồ
     $labels = [];
     $eventsPerMonth = [];
-
-    // Nếu không có filter, mặc định 12 tháng gần nhất
-    // Lưu ý: Biểu đồ này đếm theo thời gian tạo sự kiện (created_at)
     $start = $startDate ? Carbon::parse($startDate)->startOfMonth() : Carbon::now()->subMonths(11)->startOfMonth();
     $end = $endDate ? Carbon::parse($endDate)->endOfMonth() : Carbon::now()->endOfMonth();
 
-    // Tạo các mốc tháng từ start → end
     $period = new \DatePeriod(
         $start,
         new \DateInterval('P1M'),
-        (clone $end)->modify('+1 day') // Dùng +1 day để bao gồm cả tháng cuối cùng
+        (clone $end)->modify('+1 day')
     );
 
-    // Lấy tất cả sự kiện đã tạo trong khoảng thời gian để tối ưu truy vấn
-    $monthlyEvents = Event::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, count(*) as count')
-        ->whereBetween('created_at', [$start, $end])
-        ->groupBy('year', 'month')
+    $monthlyEvents = Event::selectRaw('YEAR(start_time) as year, MONTH(start_time) as month, count(*) as count')
+        ->when($status, fn($q)=>$q->where('status',$status))
+        ->when($selectedClub, fn($q)=>$q->where('club_id',$selectedClub))
+        ->whereBetween('start_time', [$start, $end])
+        ->groupBy('year','month')
         ->get()
-        ->keyBy(function ($item) {
-            return $item->year . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
-        });
+        ->keyBy(fn($item)=> $item->year.'-'.str_pad($item->month,2,'0',STR_PAD_LEFT));
 
-    foreach ($period as $date) {
+    foreach($period as $date){
         $month = Carbon::instance($date);
-        $key = $month->year . '-' . str_pad($month->month, 2, '0', STR_PAD_LEFT);
-
-        // 🔥 Hiển thị tiếng Việt: "Tháng 1/2025"
-        $labels[] = 'Tháng ' . $month->month . '/' . $month->year;
-
-        // Lấy số lượng từ collection đã query, nếu không có thì là 0
+        $key = $month->year.'-'.str_pad($month->month,2,'0',STR_PAD_LEFT);
+        $labels[] = 'Tháng '.$month->month.'/'.$month->year;
         $eventsPerMonth[] = $monthlyEvents->get($key)->count ?? 0;
     }
 
+    $allClubs = Club::orderBy('name')->get();
 
     return view('admin.statistics-and-reports.events', [
         'events' => $events,
         'sort' => $sort,
         'status' => $status,
-        // Chuyển lại giá trị cho input type="date"
-        'startDate' => $startDate, 
-        'endDate' => $endDate, 
+        'selectedClub' => $selectedClub,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
         'labels' => $labels,
         'eventsPerMonth' => $eventsPerMonth,
+        'allClubs' => $allClubs,
     ]);
 }
+
+public function exportPdf(Request $request)
+{
+    $sort = $request->get('sort', 'newest');
+    $status = $request->get('status', '');
+    $selectedClub = $request->get('club');
+    $startDate = $request->get('start_date');
+    $endDate = $request->get('end_date');
+
+    $query = Event::with('club');
+
+    if ($status) {
+        $query->where('status', $status);
+    }
+
+    if ($selectedClub) {
+        $query->where('club_id', $selectedClub);
+    }
+
+    if ($startDate) {
+        $query->whereDate('start_time', '>=', Carbon::parse($startDate)->startOfDay());
+    }
+
+    if ($endDate) {
+        $query->whereDate('start_time', '<=', Carbon::parse($endDate)->endOfDay());
+    }
+
+    switch ($sort) {
+        case 'oldest': $query->orderBy('created_at','asc'); break;
+        case 'start_asc': $query->orderBy('start_time','asc'); break;
+        case 'start_desc': $query->orderBy('start_time','desc'); break;
+        default: $query->orderBy('created_at','desc'); break;
+    }
+
+    // Lấy tất cả dữ liệu (không phân trang)
+    $events = $query->get();
+
+    $allClubs = Club::orderBy('name')->get();
+
+    // Tạo PDF
+    $pdf = PDF::loadView('admin.statistics-and-reports.events-pdf', [
+        'events' => $events,
+        'sort' => $sort,
+        'status' => $status,
+        'selectedClub' => $selectedClub,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'allClubs' => $allClubs,
+    ]);
+
+    return $pdf->download('events_' . now()->format('Ymd_His') . '.pdf');
+}
+
 
 
      public function accounts(Request $request)
@@ -421,51 +554,119 @@ public function accountsPdf(Request $request)
     return $pdf->download('thongke_taikhoan_' . now()->format('Ymd_His') . '.pdf');
 }
 public function fundRequests(Request $request)
-{
-    // Reset filter
-    if ($request->has('reset')) {
-        return redirect()->route('admin.stats.funds');
+    {
+        // Reset filter
+        if ($request->has('reset')) {
+            return redirect()->route('admin.stats.funds');
+        }
+
+        $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
+        $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
+        $status    = $request->input('status'); // pending_disbursement, disbursing, disbursed, rejected
+        $selectedClub = $request->input('club'); // filter theo CLB
+
+        $allClubs = Club::orderBy('name')->get();
+
+        // Build query
+        $query = EventFundRequest::with(['event.club', 'requestedBy'])
+            ->whereBetween('created_at', [$startDate, $endDate]);
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($selectedClub) {
+            $query->whereHas('event', fn($q) => $q->where('club_id', $selectedClub));
+        }
+
+        // Pagination + preserve filters
+        $fundRequests = $query->orderByDesc('created_at')->paginate(10)->appends($request->all());
+
+        // Tổng quan
+        $totalRequests = $query->count();
+        $totalRequestedAmount = $query->sum('amount_requested');
+        $totalApprovedAmount  = $query->sum('approved_amount');
+
+        // Biểu đồ theo tháng
+        $labels = [];
+        $requestsPerMonth = [];
+        $period = CarbonPeriod::create($startDate, '1 month', $endDate);
+
+        foreach ($period as $date) {
+            $labels[] = "Tháng {$date->month}/{$date->year}";
+            $requestsPerMonth[] = EventFundRequest::whereYear('created_at', $date->year)
+                ->whereMonth('created_at', $date->month)
+                ->when($status, fn($q) => $q->where('status', $status))
+                ->when($selectedClub, fn($q) => $q->whereHas('event', fn($q2) => $q2->where('club_id', $selectedClub)))
+                ->count();
+        }
+
+        return view('admin.statistics-and-reports.fund-requests', compact(
+            'fundRequests', 'totalRequests', 'totalRequestedAmount', 'totalApprovedAmount',
+            'startDate', 'endDate', 'status', 'allClubs', 'selectedClub', 'labels', 'requestsPerMonth'
+        ));
     }
 
-    $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
-    $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
-    $status    = $request->input('status'); // pending_disbursement, disbursing, disbursed, rejected
+    /**
+     * Xuất PDF
+     */
+    public function fundsPdf(Request $request)
+    {
+        $startDate = $request->get('start_date') ?: now()->startOfYear()->toDateString();
+        $endDate   = $request->get('end_date') ?: now()->endOfYear()->toDateString();
+        $status    = $request->get('status');
+        $selectedClub = $request->get('club');
 
-    $query = EventFundRequest::with(['event', 'requestedBy', 'approvedBy', 'disbursedBy', 'rejectedBy'])
-        ->whereBetween('created_at', [$startDate, $endDate]);
+        $query = EventFundRequest::with(['event.club', 'requestedBy'])
+            ->whereBetween('created_at', [$startDate, $endDate]);
 
-    if ($status) {
-        $query->where('status', $status);
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($selectedClub) {
+            $query->whereHas('event', fn($q) => $q->where('club_id', $selectedClub));
+        }
+
+        // Lấy tất cả dữ liệu, không phân trang
+        $fundRequests = $query->orderByDesc('created_at')->get();
+
+        // Tổng quan
+        $totalRequests = $fundRequests->count();
+        $totalRequestedAmount = $fundRequests->sum('amount_requested');
+        $totalApprovedAmount  = $fundRequests->sum('approved_amount');
+
+        // Biểu đồ theo tháng
+        $start = Carbon::parse($startDate)->startOfMonth();
+        $end   = Carbon::parse($endDate)->endOfMonth();
+        $period = CarbonPeriod::create($start, '1 month', $end);
+
+        $monthlyData = $fundRequests->groupBy(fn($item) => Carbon::parse($item->created_at)->format('Y-m'));
+
+        $labels = [];
+        $requestsPerMonth = [];
+        foreach ($period as $date) {
+            $key = $date->format('Y-m');
+            $labels[] = 'Tháng '.$date->month.'/'.$date->year;
+            $requestsPerMonth[] = isset($monthlyData[$key]) ? count($monthlyData[$key]) : 0;
+        }
+
+        // Xuất PDF
+        $pdf = Pdf::loadView('admin.statistics-and-reports.funds_pdf', [
+            'fundRequests' => $fundRequests,
+            'totalRequests' => $totalRequests,
+            'totalRequestedAmount' => $totalRequestedAmount,
+            'totalApprovedAmount' => $totalApprovedAmount,
+            'labels' => $labels,
+            'requestsPerMonth' => $requestsPerMonth,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'status' => $status,
+            'selectedClub' => $selectedClub
+        ]);
+
+        return $pdf->download('fund_requests.pdf');
     }
-
-    $fundRequests = $query->orderByDesc('created_at')->paginate(10)->appends($request->all());
-
-    // Tổng quan
-    $totalRequests = $query->count();
-    $totalRequestedAmount = $query->sum('amount_requested');
-    $totalApprovedAmount  = $query->sum('approved_amount');
-
-    // Biểu đồ theo tháng
-    $labels = [];
-    $requestsPerMonth = [];
-    $period = CarbonPeriod::create($startDate, '1 month', $endDate);
-
-    foreach ($period as $date) {
-        $labels[] = "Tháng {$date->month}/{$date->year}";
-        $requestsPerMonth[] = EventFundRequest::whereYear('created_at', $date->year)
-            ->whereMonth('created_at', $date->month)
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->count();
-    }
-
-    return view('admin.statistics-and-reports.fund-requests', compact(
-        'fundRequests', 'totalRequests', 'totalRequestedAmount', 'totalApprovedAmount',
-        'startDate', 'endDate', 'status', 'labels', 'requestsPerMonth'
-    ));
-
-
-
-}
 
 public function posts(Request $request)
 {

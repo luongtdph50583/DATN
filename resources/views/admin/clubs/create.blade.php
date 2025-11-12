@@ -106,7 +106,11 @@ $roles = [
                                 <label class="form-label">Lĩnh vực</label>
                                 <input type="text" name="field" class="form-control" value="{{ old('field') }}">
                             </div>
-
+                            <div class="mb-3">
+                                    <label class="form-label">Slogan</label>
+                                    <input type="text" name="slogan" class="form-control" placeholder="Nhập slogan của CLB"
+                                        value="{{ old('slogan', $club->slogan ?? '') }}">
+                                </div>
                             <div class="mb-3">
                                 <label class="form-label">Địa điểm</label>
                                 <input type="text" name="location" class="form-control" value="{{ old('location') }}">

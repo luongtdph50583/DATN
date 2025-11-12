@@ -4,12 +4,18 @@
 
 @section('card-body')
 <div class="container-fluid mt-4">
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Thống kê Sự kiện</h1>
         <a href="{{ route('admin.stats.index') }}" class="btn btn-secondary btn-sm">
             ← Quay lại trang thống kê
         </a>
     </div>
+
+ <a href="{{ route('admin.stats.clubs.pdf', request()->query()) }}" class="btn btn-danger">
+    <i class="fas fa-file-pdf me-1"></i> Xuất PDF
+</a>
+
+
     {{-- 🧭 Bộ lọc thống kê --}}
     <form id="filterForm" method="GET" action="{{ route('admin.stats.clubs') }}">
         <div class="row mb-4 align-items-end g-3">
@@ -81,12 +87,38 @@
 </div>
 @endsection
 
-
 @push('scripts')
 {{-- ✅ Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-{{-- ✅ Xử lý AJAX realtime --}}
+{{-- ✅ Xuất PDF (Tải về trực tiếp) --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const exportBtn = document.getElementById('exportPdfBtn');
+    const form = document.getElementById('filterForm');
+
+    exportBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const params = new URLSearchParams(new FormData(form)).toString();
+        const url = "{{ route('admin.stats.clubs.pdf') }}?" + params;
+
+        // ⚡ Tải file PDF trực tiếp (không mở tab)
+        fetch(url)
+            .then(response => response.blob())
+            .then(blob => {
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = 'thong_ke_cau_lac_bo.pdf';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            })
+            .catch(err => console.error('Lỗi tải PDF:', err));
+    });
+});
+</script>
+
+{{-- ✅ AJAX lọc dữ liệu realtime --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('filterForm');
@@ -94,12 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const search = document.getElementById('searchClub');
     let timer = null;
 
-    // Khi thay đổi dropdown (sort, status)
-    selects.forEach(select => {
-        select.addEventListener('change', fetchData);
-    });
-
-    // Khi nhập tìm kiếm (realtime debounce)
+    selects.forEach(select => select.addEventListener('change', fetchData));
     search.addEventListener('input', () => {
         clearTimeout(timer);
         timer = setTimeout(fetchData, 400);

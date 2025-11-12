@@ -595,14 +595,15 @@ public function update(Request $request, Club $club, ClubUpdateLogService $logSe
     }
 
     // ✅ Xử lý thêm CLB
-    public function store(Request $request)
+ public function store(Request $request)
     {
-        DB::beginTransaction();
+        \DB::beginTransaction();
 
         try {
             // ✅ Validate dữ liệu
             $request->validate([
                 'name' => 'required|string|max:255|unique:clubs,name',
+                'slogan' => 'nullable|string|max:255',
                 'field' => 'nullable|string|max:255',
                 'location' => 'nullable|string|max:255',
                 'email' => 'nullable|email|max:255',
@@ -617,9 +618,11 @@ public function update(Request $request, Club $club, ClubUpdateLogService $logSe
             ]);
 
             // ✅ Upload logo nếu có
-            $logoPath = $request->hasFile('logo') ? $request->file('logo')->store('logos', 'public') : null;
+            $logoPath = $request->hasFile('logo')
+                ? $request->file('logo')->store('logos', 'public')
+                : null;
 
-            // ✅ Check trùng người trong ban quản lý
+            // ✅ Kiểm tra trùng người trong ban quản lý
             if ($request->filled('managers')) {
                 $managerValues = array_filter($request->managers);
                 if (count($managerValues) !== count(array_unique($managerValues))) {
@@ -632,6 +635,7 @@ public function update(Request $request, Club $club, ClubUpdateLogService $logSe
             // ✅ Tạo CLB
             $club = Club::create([
                 'name' => $request->name,
+                'slogan' => $request->slogan, // 👈 thêm dòng này
                 'field' => $request->field,
                 'location' => $request->location,
                 'email' => $request->email,
@@ -659,9 +663,9 @@ public function update(Request $request, Club $club, ClubUpdateLogService $logSe
                 if ($memberId) {
                     $member = Member::with('user')->find($memberId);
                     if (!$member || !$member->user) {
-                        DB::rollBack();
+                        \DB::rollBack();
                         return redirect()->back()
-                            ->withErrors(['managers' => "Thành viên ID {$memberId} không hợp lệ hoặc chưa liên kết user."])
+->withErrors(['managers' => "Thành viên ID {$memberId} không hợp lệ hoặc chưa liên kết user."])
                             ->withInput();
                     }
 
@@ -671,19 +675,19 @@ public function update(Request $request, Club $club, ClubUpdateLogService $logSe
                         ->exists();
 
                     if ($conflict) {
-                        DB::rollBack();
+                        \DB::rollBack();
                         return redirect()->back()
                             ->withErrors(['managers' => "Thành viên {$member->user->name} đang giữ chức vụ quản lý ở CLB khác."])
                             ->withInput();
                     }
 
-                    // Nếu là Chủ nhiệm → cập nhật manager_id bằng user_id
+                    // Nếu là Chủ nhiệm → cập nhật manager_id
                     if ($role === 'club_manager') {
                         $club->manager_id = $member->user_id;
                         $club->save();
                     }
 
-                    // Lưu vào pivot table club_members
+                    // Lưu vào bảng pivot
                     ClubMember::create([
                         'club_id' => $club->id,
                         'member_id' => $memberId,
@@ -695,14 +699,14 @@ public function update(Request $request, Club $club, ClubUpdateLogService $logSe
                 }
             }
 
-            DB::commit();
+            \DB::commit();
 
             return redirect()->route('admin.clubs.index')
                 ->with('success', 'Thêm câu lạc bộ thành công!');
         } catch (\Throwable $e) {
-            DB::rollBack();
+            \DB::rollBack();
 
-            Log::error('Lỗi khi thêm CLB', [
+            \Log::error('Lỗi khi thêm CLB', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
@@ -713,6 +717,8 @@ public function update(Request $request, Club $club, ClubUpdateLogService $logSe
                 ->withInput();
         }
     }
+
+
 
 
 
