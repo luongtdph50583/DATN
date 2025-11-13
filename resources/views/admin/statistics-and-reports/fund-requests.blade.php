@@ -8,6 +8,9 @@
         <h1 class="h3 mb-0 text-gray-800">Thống kê Quỹ Sự kiện</h1>
         <a href="{{ route('admin.stats.index') }}" class="btn btn-secondary btn-sm">← Quay lại trang thống kê</a>
     </div>
+<a href="{{ route('admin.stats.funds.pdf', request()->query()) }}" class="btn btn-danger mb-3">
+    <i class="fas fa-file-pdf"></i> Xuất PDF
+</a>
 
     <!-- Tổng quan -->
     <div class="row mb-4">
@@ -38,30 +41,45 @@
     </div>
 
     <!-- Bộ lọc -->
-    <form method="GET" action="{{ route('admin.stats.funds') }}" class="row g-3 mb-4">
-        <div class="col-md-3">
-            <label for="start_date" class="form-label">Từ ngày</label>
-            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ $startDate }}">
-        </div>
-        <div class="col-md-3">
-            <label for="end_date" class="form-label">Đến ngày</label>
-            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ $endDate }}">
-        </div>
-        <div class="col-md-3">
-            <label for="status" class="form-label">Trạng thái</label>
-            <select name="status" id="status" class="form-control">
-                <option value="">-- Tất cả --</option>
-                <option value="pending_disbursement" {{ $status=='pending_disbursement'?'selected':'' }}>Chờ giải ngân</option>
-                <option value="disbursing" {{ $status=='disbursing'?'selected':'' }}>Đang giải ngân</option>
-                <option value="disbursed" {{ $status=='disbursed'?'selected':'' }}>Đã giải ngân</option>
-                <option value="rejected" {{ $status=='rejected'?'selected':'' }}>Bị từ chối</option>
-            </select>
-        </div>
-        <div class="col-md-3 d-flex align-items-end gap-2">
-            <button type="submit" class="btn btn-primary w-100">Lọc</button>
-            <button type="submit" name="reset" value="true" class="btn btn-secondary w-100">Đặt lại</button>
-        </div>
-    </form>
+<form method="GET" action="{{ route('admin.stats.funds') }}" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-2">
+        <label for="start_date" class="form-label">Từ ngày</label>
+        <input type="date" name="start_date" id="start_date" class="form-control" value="{{ $startDate }}">
+    </div>
+
+    <div class="col-md-2">
+        <label for="end_date" class="form-label">Đến ngày</label>
+        <input type="date" name="end_date" id="end_date" class="form-control" value="{{ $endDate }}">
+    </div>
+
+    <div class="col-md-2">
+        <label for="status" class="form-label">Trạng thái</label>
+        <select name="status" id="status" class="form-select">
+            <option value="">-- Tất cả --</option>
+            <option value="pending_disbursement" {{ $status=='pending_disbursement'?'selected':'' }}>Chờ giải ngân</option>
+            <option value="disbursing" {{ $status=='disbursing'?'selected':'' }}>Đang giải ngân</option>
+            <option value="disbursed" {{ $status=='disbursed'?'selected':'' }}>Đã giải ngân</option>
+            <option value="rejected" {{ $status=='rejected'?'selected':'' }}>Bị từ chối</option>
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <label for="club" class="form-label">Câu lạc bộ</label>
+        <select name="club" id="club" class="form-select">
+            <option value="">-- Tất cả CLB --</option>
+            @foreach($allClubs as $club)
+                <option value="{{ $club->id }}" {{ $selectedClub == $club->id ? 'selected' : '' }}>
+                    {{ $club->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100">Áp dụng lọc</button>
+        <button type="submit" name="reset" value="true" class="btn btn-secondary w-100">Đặt lại</button>
+    </div>
+</form>
 
     <!-- Danh sách chi tiết -->
     <div class="card shadow mb-4">
@@ -140,6 +158,19 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<script>
+$(document).ready(function() {
+    $('#club').select2({
+        placeholder: 'Chọn CLB',
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
+
 @endsection
 
 @push('scripts')

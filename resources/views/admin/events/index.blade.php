@@ -166,7 +166,7 @@
                                             </a>
 
                                             <!-- Xóa mềm -->
-                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ $event->id }}" title="Xóa sự kiện">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ $event->id }}" title="Xóa sự kiện">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>

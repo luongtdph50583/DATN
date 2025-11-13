@@ -71,9 +71,9 @@
 
                                                                                             <td>{{ $statusLabels[$doc->status] ?? ucfirst($doc->status) }}</td>
                                                                                             <td>{{ strtoupper($doc->file_type) }}</td>
-                                                                                           <td>
+    <td>
     <!-- Xem -->
-    <a href="{{ route('admin.documentclub.show', $doc->id) }}" class="btn btn-sm btn-outline-primary" title="Xem">
+    <a href="{{ route('admin.documentclub.show', $doc->id) }}" class="btn btn-sm btn-info" title="Xem">
         <i class="fas fa-eye"></i>
     </a>
 
@@ -81,7 +81,9 @@
         <!-- Duyệt -->
         <form action="{{ route('admin.documentclub.approve', $doc->id) }}" method="POST" class="d-inline">
             @csrf
-            <button class="btn btn-sm btn-outline-success" title="Duyệt"><i class="fas fa-check"></i></button>
+            <button class="btn btn-sm btn-outline-success" title="Duyệt">
+                <i class="fas fa-check"></i>
+            </button>
         </form>
 
         <!-- Từ chối -->
@@ -90,7 +92,7 @@
         </button>
     @elseif($doc->status === 'approved')
         <!-- Sửa -->
-        <a href="{{ route('admin.documentclub.edit', $doc->id) }}" class="btn btn-sm btn-outline-warning" title="Sửa">
+        <a href="{{ route('admin.documentclub.edit', $doc->id) }}" class="btn btn-sm btn-warning" title="Sửa">
             <i class="fas fa-edit"></i>
         </a>
     @endif
@@ -109,6 +111,7 @@
         </button>
     </form>
 </td>
+
 
                                                                                         </tr>
                                         @endforeach

@@ -44,8 +44,8 @@
                     </div>
 
 
-                <div class="mb-2"><strong>Ghi chú:</strong></div>
-                <textarea class="form-control" rows="4" readonly>{{ $request->note ?? 'Không có ghi chú' }}</textarea>
+                    <div class="mb-2"><strong>Ghi chú:</strong></div>
+                    <textarea class="form-control" rows="4" readonly>{{ $request->note ?? 'Không có ghi chú' }}</textarea>
 
                     <div class="mb-2"><strong>Người xử lý:</strong>
                         {{ $request->handler->name ?? '—' }}

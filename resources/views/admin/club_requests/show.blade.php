@@ -126,7 +126,7 @@
 
         {{-- Giảng viên đỡ đầu --}}
     <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-light fw-bold">Giảng viên đỡ đầu</div>
+        <div class="card-header bg-light fw-bold">Giảng viên phụ trách</div>
         <div class="card-body">
             @if($request->advisorFaculty)
                 <p><strong>Họ tên:</strong> {{ $request->advisorFaculty->user->name ?? '—' }}</p>

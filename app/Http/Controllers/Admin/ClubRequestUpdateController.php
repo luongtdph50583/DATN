@@ -153,39 +153,82 @@ class ClubRequestUpdateController extends Controller
                 }
             }
 
+            // 🔹 Chuẩn bị mảng thay đổi để lưu log
+            $changes = [];
+
             // 🔹 1️⃣ Cập nhật giảng viên đỡ đầu nếu có
             if (!is_null($update->advisor_id) && $update->advisor_status === 'approved') {
                 if ($update->advisor_id != $club->advisor_id) {
+                    $changes['advisor_id'] = [
+                        'old' => $club->advisor_id,
+                        'new' => $update->advisor_id
+                    ];
                     $club->advisor_id = $update->advisor_id;
                 }
             }
 
-            // 🔹 2️⃣ Cập nhật thông tin CLB
+            // 🔹 2️⃣ Cập nhật thông tin CLB và lưu thay đổi
             $fields = ['name', 'slogan', 'description', 'field', 'member_limit', 'email', 'phone', 'logo', 'rules', 'location'];
             foreach ($fields as $field) {
                 if (!is_null($update->$field)) {
-                    $club->$field = $update->$field;
+                    $oldValue = $club->$field;
+                    $newValue = $update->$field;
+                    if ($oldValue != $newValue) {
+                        $changes[$field] = [
+                            'old' => $oldValue,
+                            'new' => $newValue
+                        ];
+                        $club->$field = $newValue;
+                    }
                 }
             }
 
             // 🔹 3️⃣ Cập nhật manager (chủ nhiệm)
             if (!is_null($update->manager_id) && $update->manager_id != $club->manager_id) {
+                $oldManagerMember = $club->clubMembers()->where('role', 'club_manager')->first();
+                $oldManagerId = $oldManagerMember ? $oldManagerMember->member_id : null;
+
                 $club->manager_id = $update->manager_id;
                 $managerMember = Member::where('user_id', $update->manager_id)->first();
                 if ($managerMember) {
-                    $oldManager = $club->clubMembers()->where('role', 'club_manager')->where('member_id', '!=', $managerMember->id)->first();
-                    if ($oldManager) {
-                        $oldManager->role = 'member';
-                        $oldManager->save();
+                    $newManagerId = $managerMember->id;
+
+                    // Lưu thay đổi chủ nhiệm
+                    if (!isset($changes['managers'])) {
+                        $changes['managers'] = [];
+                    }
+                    $changes['managers']['club_manager'] = [
+                        'old' => $oldManagerId,
+                        'new' => $newManagerId
+                    ];
+
+                    if ($oldManagerMember && $oldManagerMember->member_id != $newManagerId) {
+                        $oldManagerMember->role = 'member';
+                        $oldManagerMember->appointed_at = null;
+                        $oldManagerMember->save();
                     }
 
-                    $club->clubMembers()->updateOrCreate(
-                        ['role' => 'club_manager'],
-                        [
-                            'member_id' => $managerMember->id,
+                    // Kiểm tra xem member này đã có trong club chưa
+                    $existingManager = $club->clubMembers()
+                        ->where('member_id', $newManagerId)
+                        ->first();
+
+                    if ($existingManager) {
+                        // Nếu member đã tồn tại, chỉ cập nhật role
+                        $existingManager->role = 'club_manager';
+                        $existingManager->appointed_at = now();
+                        $existingManager->save();
+                    } else {
+                        // Nếu chưa tồn tại, tạo mới
+                        ClubMember::create([
+                            'club_id' => $club->id,
+                            'member_id' => $newManagerId,
+                            'role' => 'club_manager',
                             'appointed_at' => now(),
-                        ]
-                    );
+                            'joined_at' => now(),
+                            'status' => 'active',
+                        ]);
+                    }
                 }
             }
 
@@ -200,35 +243,86 @@ class ClubRequestUpdateController extends Controller
                 $role = $memberUpdate->role;
 
                 if ($role !== 'member') {
+                    // Tìm người đang giữ role này (khác member hiện tại)
                     $oldRoleHolder = $club->clubMembers()
                         ->where('role', $role)
                         ->where('member_id', '!=', $member->id)
                         ->first();
+
+                    // Kiểm tra xem member này đã có trong club chưa
+                    $existingMember = $club->clubMembers()
+                        ->where('member_id', $member->id)
+                        ->first();
+
+                    $oldMemberId = $oldRoleHolder ? $oldRoleHolder->member_id : null;
+                    $newMemberId = $member->id;
+
+                    // Lưu thay đổi nếu có
+                    if ($oldMemberId != $newMemberId) {
+                        if (!isset($changes['managers'])) {
+                            $changes['managers'] = [];
+                        }
+                        $changes['managers'][$role] = [
+                            'old' => $oldMemberId,
+                            'new' => $newMemberId
+                        ];
+                    }
+
+                    // Hạ người cũ xuống member nếu có
                     if ($oldRoleHolder) {
                         $oldRoleHolder->role = 'member';
+                        $oldRoleHolder->appointed_at = null;
                         $oldRoleHolder->save();
                     }
 
-                    $club->clubMembers()->updateOrCreate(
-                        ['role' => $role],
-                        [
+                    // Cập nhật hoặc tạo mới với điều kiện đúng (club_id + member_id)
+                    if ($existingMember) {
+                        // Nếu member đã tồn tại, chỉ cập nhật role
+                        $existingMember->role = $role;
+                        $existingMember->appointed_at = now();
+                        $existingMember->save();
+                    } else {
+                        // Nếu chưa tồn tại, tạo mới
+                        ClubMember::create([
+                            'club_id' => $club->id,
                             'member_id' => $member->id,
+                            'role' => $role,
                             'appointed_at' => now(),
-                        ]
-                    );
+                            'joined_at' => now(),
+                            'status' => 'active',
+                        ]);
+                    }
                 } else {
-                    $club->clubMembers()->firstOrCreate(
-                        ['role' => 'member', 'member_id' => $member->id],
-                        ['appointed_at' => now()]
-                    );
+                    // Đối với role 'member', chỉ tạo nếu chưa tồn tại
+                    $existingMember = $club->clubMembers()
+                        ->where('member_id', $member->id)
+                        ->first();
+
+                    if (!$existingMember) {
+                        ClubMember::create([
+                            'club_id' => $club->id,
+                            'member_id' => $member->id,
+                            'role' => 'member',
+                            'joined_at' => now(),
+                            'status' => 'active',
+                        ]);
+                    }
                 }
             }
 
-            // 🔹 5️⃣ Cập nhật trạng thái yêu cầu
+            // 🔹 5️⃣ Lưu log vào club_update_logs nếu có thay đổi
+            if (!empty($changes)) {
+                $this->logService = app(ClubUpdateLogService::class);
+                // Lưu proposer_id là người đề xuất thay đổi
+                $proposerId = $creatorUser ? $creatorUser->id : null;
+                $this->logService->logAdminUpdate($club, $changes, auth()->id(), $proposerId);
+            }
+
+            // 🔹 6️⃣ Cập nhật trạng thái yêu cầu
             $update->status = 'approved';
             $update->save();
 
-            // 🔹 6️⃣ Gửi thông báo
+            // 🔹 7️⃣ Gửi thông báo
             SendNotificationJob::dispatch(
                 $creatorUser->id,
                 "Yêu cầu cập nhật CLB được duyệt",

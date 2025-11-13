@@ -422,7 +422,7 @@ class ClubController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật ban quản lý và trạng thái CLB thành công!');
+        return redirect()->route('admin.clubs.index')->with('success', 'Cập nhật thành công');
     }
 
 
@@ -696,6 +696,7 @@ class ClubController extends Controller
 
 
 
+
     public function searchAllMembers(Request $request)
     {
         $query = $request->get('q', '');
@@ -721,24 +722,24 @@ class ClubController extends Controller
         );
     }
 
-public function removeMember(Request $request, Club $club, Member $member)
-{
-    // Kiểm tra xem member có trong club không
-    if (!$club->members()->where('member_id', $member->id)->exists()) {
-        return redirect()->back()->with('error', 'Thành viên không thuộc CLB này.');
+    public function removeMember(Request $request, Club $club, Member $member)
+    {
+        // Kiểm tra xem member có trong club không
+        if (!$club->members()->where('member_id', $member->id)->exists()) {
+            return redirect()->back()->with('error', 'Thành viên không thuộc CLB này.');
+        }
+
+        // Không cho xóa chủ nhiệm
+        $pivot = $club->members()->where('member_id', $member->id)->first()->pivot;
+        if ($pivot->role === 'club_manager') {
+            return redirect()->back()->with('error', 'Không thể xóa Chủ nhiệm khỏi CLB.');
+        }
+
+        // Xóa khỏi pivot table
+        $club->members()->detach($member->id);
+
+        return redirect()->back()->with('success', 'Đã xóa thành viên khỏi CLB.');
     }
-
-    // Không cho xóa chủ nhiệm
-    $pivot = $club->members()->where('member_id', $member->id)->first()->pivot;
-    if ($pivot->role === 'club_manager') {
-        return redirect()->back()->with('error', 'Không thể xóa Chủ nhiệm khỏi CLB.');
-    }
-
-    // Xóa khỏi pivot table
-    $club->members()->detach($member->id);
-
-    return redirect()->back()->with('success', 'Đã xóa thành viên khỏi CLB.');
-}
 
 
 

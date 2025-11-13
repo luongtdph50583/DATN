@@ -90,7 +90,12 @@
                             <a href="{{ route('admin.club_requests_update.index') }}" class="nav-link">
                                 <i class="ri-user-add-line"></i> Yêu cầu sủa thông tin CLB
                             </a>
-                            </li>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.club_update_logs.index') }}" class="nav-link">
+                                <i class="ri-history-line"></i> Lịch sử thay đổi CLB
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </li>

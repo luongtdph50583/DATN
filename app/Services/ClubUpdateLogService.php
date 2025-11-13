@@ -93,16 +93,18 @@ class ClubUpdateLogService
     }
 
     /**
-     * Admin tự chỉnh sửa CLB trực tiếp
+     * Admin tự chỉnh sửa CLB trực tiếp hoặc duyệt đề xuất
      */
-    public function logAdminUpdate(Club $club, array $changes, int $adminId): ClubUpdateLog
+    public function logAdminUpdate(Club $club, array $changes, int $adminId, ?int $proposerId = null): ClubUpdateLog
     {
+        // Không cần json_encode vì model đã có cast 'changed_fields' => 'array'
+        // Model sẽ tự động encode khi lưu và decode khi lấy
         return ClubUpdateLog::create([
             'club_id' => $club->id,
             'admin_id' => $adminId,
-            'proposer_id' => null,
-            'changed_fields' => json_encode($changes, JSON_UNESCAPED_UNICODE),
-            'type' => 'admin',
+            'proposer_id' => $proposerId,
+            'changed_fields' => $changes, // Model sẽ tự cast thành JSON
+            'type' => $proposerId ? 'proposer' : 'admin',
             'status' => 'approved',
         ]);
     }

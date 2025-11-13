@@ -9,7 +9,7 @@ class Club extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = [
+protected $fillable = [
         'name',
         'description',
         'logo',

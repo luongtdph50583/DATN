@@ -146,8 +146,61 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary">Thêm CLB</button>
-            </form>
+
+                {{-- Cột phải --}}
+                <div class="col-md-8">
+                    <div class="card border-info shadow-sm">
+                        <div class="card-header bg-info text-white">Thông tin chi tiết</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Tên CLB</label>
+                                <input type="text" name="name" class="form-control" value="{{ old('name') }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Lĩnh vực</label>
+                                <input type="text" name="field" class="form-control" value="{{ old('field') }}">
+                            </div>
+                            <div class="mb-3">
+                                    <label class="form-label">Slogan</label>
+                                    <input type="text" name="slogan" class="form-control" placeholder="Nhập slogan của CLB"
+                                        value="{{ old('slogan', $club->slogan ?? '') }}">
+                                </div>
+                            <div class="mb-3">
+                                <label class="form-label">Địa điểm</label>
+                                <input type="text" name="location" class="form-control" value="{{ old('location') }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ old('email') }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Điện thoại</label>
+                                <input type="text" name="phone" class="form-control" value="{{ old('phone') }}">
+                            </div>
+
+                            {{-- Mô tả --}}
+                            <div class="mb-3">
+                                <label class="form-label">Mô tả</label>
+                                <div id="description-editor" style="height: 200px;">{!! old('description') !!}</div>
+                                <input type="hidden" name="description" id="description-input">
+                            </div>
+
+                            {{-- Nội quy --}}
+                            <div class="mb-3">
+                                <label class="form-label">Nội quy</label>
+                                <div id="rules-editor" style="height: 200px;">{!! old('rules') !!}</div>
+                                <input type="hidden" name="rules" id="rules-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary">Thêm CLB</button>
+        </form>
 @endsection
 
 
