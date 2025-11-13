@@ -95,6 +95,10 @@ public function posts()
     {
         return $this->hasOne(FacultyMember::class);
     }
+    public function memberInfo()
+    {
+        return $this->hasOne(Member::class, 'user_id');
+    }
 
 
 }

@@ -10,7 +10,7 @@ use App\Models\ClubMember;
 use App\Models\EventFundRequest;
 use App\Models\Member;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
@@ -100,7 +100,7 @@ public function store(Request $request)
         ->route('admin.events.index')
         ->with('success', 'Tạo sự kiện thành công!');
 }
-   
+
     public function show(Event $event)
 {
    $event->load([
@@ -115,7 +115,7 @@ public function store(Request $request)
 
     // Phân trang giao dịch quỹ, eager load approvedBy và requestedBy nếu cần
     $funRequests = $event->funRequests()->with(['approvedBy', 'requestedBy'])->paginate(2);
-    
+
     return view('admin.events.show', compact('event','registrations', 'funRequests'));
 }
 
@@ -224,7 +224,7 @@ public function update(Request $request, Event $event)
 public function getEventsByClub($clubId)
 {
     try {
-        $events = \App\Models\Event::where('club_id', $clubId)
+        $events = Event::where('club_id', $clubId)
             ->select('id', 'name', 'start_time', 'end_time')
             ->orderBy('start_time', 'desc')
             ->get();
@@ -300,7 +300,7 @@ public function softDelete(Request $request, Event $event)
 public function deleted()
 {
     $events = Event::onlyTrashed()
-        ->with(['club', 'createdBy', 'deletedBy']) 
+        ->with(['club', 'createdBy', 'deletedBy'])
         ->latest('deleted_at')
         ->paginate(15);
 
