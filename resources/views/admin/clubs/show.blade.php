@@ -154,27 +154,50 @@
             <div class="card-header bg-secondary text-white fw-bold">Danh sách thành viên CLB</div>
             <div class="card-body">
 
-                {{-- 🔹 Form lọc và tìm kiếm --}}
-                {{-- <form method="GET" action="{{ route('admin.clubs.members', $club->id) }}" class="row mb-3 g-2"> --}}
+                <div class="row g-2 align-items-center mb-3" id="memberFilters">
+                    <div class="col-md-4">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="fas fa-search text-secondary"></i></span>
+                            <input
+                                type="text"
+                                id="memberSearchInput"
+                                class="form-control"
+                                placeholder="Tìm theo tên hoặc MSSV"
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
                     <div class="col-md-3">
-                        <select name="status" class="form-select" onchange="this.form.submit()">
-                            <option value="">-- Chọn trạng thái --</option>
-                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Hoạt động</option>
-                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Ngưng hoạt động
-                            </option>
-                            <option value="banned" {{ request('status') === 'banned' ? 'selected' : '' }}>Bị cấm</option>
+                        <select id="memberStatusFilter" class="form-select form-select-sm">
+                            <option value="">-- Tất cả trạng thái --</option>
+                            <option value="active">Hoạt động</option>
+                            <option value="inactive">Ngưng hoạt động</option>
+                            <option value="banned">Bị cấm</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <input type="text" name="q" value="{{ request('q') }}" class="form-control"
-                            placeholder="Tìm theo tên hoặc MSSV">
+                    <div class="col-md-3">
+                        <div id="memberFilterFeedback" class="text-muted small"></div>
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
+                    <div class="col-md-2 text-end">
+                        <button type="button" id="memberResetFilter" class="btn btn-outline-secondary btn-sm w-100">
+                            Đặt lại
+                        </button>
                     </div>
-                </form>
+                </div>
 
                 <div class="table-responsive">
+                    @php
+                        $memberRoleLabels = [
+                            'club_manager' => 'Chủ nhiệm',
+                            'deputy_manager' => 'Phó chủ nhiệm',
+                            'secretary' => 'Thư ký',
+                            'treasurer' => 'Thủ quỹ',
+                            'event_manager' => 'Quản lý sự kiện',
+                            'communication' => 'Truyền thông',
+                            'member' => 'Thành viên',
+                        ];
+                        $membersStartIndex = ($clubMembers->currentPage() - 1) * $clubMembers->perPage() + 1;
+                    @endphp
                     <table class="table table-bordered table-striped" id="membersTable">
                         <thead class="table-light">
                             <tr>
@@ -182,58 +205,23 @@
                                 <th>Tên</th>
                                 <th>Mã SV</th>
                                 <th>Vai trò</th>
-                                <th>Trạng thái</th>
                                 <th>Ngày tham gia</th>
+                                <th>Trạng thái</th>
                                 <th class="text-center">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @php
-                                $index = ($clubMembers->currentPage() - 1) * $clubMembers->perPage() + 1;
-                                $roleLabels = [
-                                    'club_manager' => 'Chủ nhiệm',
-                                    'deputy_manager' => 'Phó chủ nhiệm',
-                                    'secretary' => 'Thư ký',
-                                    'treasurer' => 'Thủ quỹ',
-                                    'event_manager' => 'Quản lý sự kiện',
-                                    'communication' => 'Truyền thông',
-                                    'member' => 'Thành viên',
-                                ];
-                            @endphp
-
-                            @forelse($clubMembers as $member)
-                                @if($member->role === 'member')
-                                    <tr>
-                                        <td>{{ $index++ }}</td>
-                                        <td>{{ $member->member->user->name ?? '—' }}</td>
-                                        <td>{{ $member->member->student_code ?? '—' }}</td>
-                                        <td>{{ $roleLabels[$member->role] ?? $member->role }}</td>
-                                        <td>
-                                            <span class="badge bg-{{ $member->status === 'active' ? 'success' : 'secondary' }}">
-                                                {{ $member->status === 'active' ? 'Hoạt động' : 'Ngưng' }}
-                                            </span>
-                                        </td>
-                                        <td>{{ $member->joined_at ? \Carbon\Carbon::parse($member->joined_at)->format('d/m/Y') : '—' }}
-                                        </td>
-                                        <td class="text-center">
-                                            <a href="{{ url('admin/members/' . $member->member->id) }}" class="btn btn-info btn-sm">
-                                                <i class="fas fa-eye"></i> Chi tiết
-                                            </a>
-                                            
-                                        </td>
-                                    </tr>
-                                @endif
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center text-muted">Chưa có thành viên nào.</td>
-                                </tr>
-                            @endforelse
+                        <tbody id="membersTableBody">
+                            @include('admin.clubs.partials.members_rows', [
+                                'members' => $clubMembers,
+                                'startIndex' => $membersStartIndex,
+                                'roleLabels' => $memberRoleLabels,
+                            ])
                         </tbody>
                     </table>
                 </div>
 
                 {{-- Phân trang --}}
-                <div class="d-flex justify-content-center mt-3">
+                <div class="d-flex justify-content-center mt-3" id="membersPagination">
                     {{ $clubMembers->appends(request()->query())->links() }}
                 </div>
             </div>
@@ -243,7 +231,7 @@
 
             <!-- Thông tin giảng viên đỡ đầu -->
             <div class="card mb-4 shadow-sm border-secondary">
-                <div class="card-header bg-warning text-white fw-bold">Giảng viên đỡ đầu</div>
+                <div class="card-header bg-warning text-white fw-bold">Giảng viên phụ trách</div>
                 <div class="card-body">
                     @if($club->advisorFaculty)
                         <div class="row mb-2">
@@ -258,7 +246,7 @@
                             </div>
                         </div>
                     @else
-                        <em>Chưa có giảng viên đỡ đầu</em>
+                        <em>Chưa có giảng viên phụ trách</em>
                     @endif
                 </div>
             </div>
@@ -365,46 +353,129 @@
 
 
 @push('scripts')
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const statusFilter = document.getElementById('statusFilter');
-            const searchInput = document.getElementById('searchInput');
+            const searchInput = document.getElementById('memberSearchInput');
+            const statusFilter = document.getElementById('memberStatusFilter');
+            const resetButton = document.getElementById('memberResetFilter');
             const tableBody = document.getElementById('membersTableBody');
+            const paginationWrapper = document.getElementById('membersPagination');
+            const feedback = document.getElementById('memberFilterFeedback');
+            const endpoint = @json(route('admin.clubs.members.filter', $club->id));
 
-            function filterMembers() {
-                const status = statusFilter.value.toLowerCase();
-                const keyword = searchInput.value.toLowerCase();
+            const initialState = {
+                tableHtml: tableBody.innerHTML,
+                paginationHtml: paginationWrapper ? paginationWrapper.innerHTML : '',
+            };
 
-                tableBody.querySelectorAll('tr').forEach(row => {
-                    const name = row.getAttribute('data-name');
-                    const code = row.getAttribute('data-code');
-                    const rowStatus = row.getAttribute('data-status');
+            const updateFeedback = (count = null) => {
+                if (!feedback) {
+                    return;
+                }
+                if (count === null) {
+                    feedback.textContent = '';
+                } else {
+                    feedback.textContent = `Tìm thấy ${count} thành viên`;
+                }
+            };
 
-                    const matchStatus = status === '' || rowStatus === status;
-                    const matchKeyword = name.includes(keyword) || code.includes(keyword);
+            const restoreInitial = () => {
+                tableBody.innerHTML = initialState.tableHtml;
+                if (paginationWrapper) {
+                    paginationWrapper.innerHTML = initialState.paginationHtml;
+                    paginationWrapper.style.display = '';
+                }
+                updateFeedback(null);
+            };
 
-                    row.style.display = matchStatus && matchKeyword ? '' : 'none';
+            const isFiltered = () => (
+                searchInput.value.trim() !== '' || statusFilter.value.trim() !== ''
+            );
+
+            let debounceTimer;
+            let abortController = null;
+
+            const fetchMembers = () => {
+                if (!isFiltered()) {
+                    if (abortController) {
+                        abortController.abort();
+                        abortController = null;
+                    }
+                    restoreInitial();
+                    return;
+                }
+
+                if (abortController) {
+                    abortController.abort();
+                }
+                abortController = new AbortController();
+
+                const params = new URLSearchParams();
+                if (searchInput.value.trim()) {
+                    params.append('keyword', searchInput.value.trim());
+                }
+                if (statusFilter.value.trim()) {
+                    params.append('status', statusFilter.value.trim());
+                }
+
+                tableBody.classList.add('opacity-50');
+
+                fetch(`${endpoint}?${params.toString()}`, { signal: abortController.signal })
+                    .then(response => response.json())
+                    .then(data => {
+                        tableBody.innerHTML = data.html;
+                        updateFeedback(data.count ?? 0);
+                        if (paginationWrapper) {
+                            paginationWrapper.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        if (error.name !== 'AbortError') {
+                            console.error('Lỗi lọc thành viên CLB:', error);
+                        }
+                    })
+                    .finally(() => {
+                        tableBody.classList.remove('opacity-50');
+                    });
+            };
+
+            const debounceFetch = () => {
+                if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+                debounceTimer = setTimeout(fetchMembers, 300);
+            };
+
+            searchInput.addEventListener('input', debounceFetch);
+            statusFilter.addEventListener('change', fetchMembers);
+            resetButton.addEventListener('click', () => {
+                searchInput.value = '';
+                statusFilter.value = '';
+                restoreInitial();
+            });
+
+            updateFeedback(null);
+
+            // Xử lý modal xóa thành viên (nếu sử dụng)
+            const removeMemberModal = document.getElementById('removeMemberModal');
+            if (removeMemberModal) {
+                removeMemberModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    if (!button) return;
+                    const memberId = button.getAttribute('data-member-id');
+                    const clubId = button.getAttribute('data-club-id');
+                    const form = removeMemberModal.querySelector('form');
+                    if (!form) return;
+                    const actionTemplate = form.dataset.actionTemplate || form.getAttribute('action');
+                    if (!form.dataset.actionTemplate) {
+                        form.dataset.actionTemplate = actionTemplate;
+                    }
+                    const updatedAction = form.dataset.actionTemplate
+                        .replace('club_id', clubId)
+                        .replace('member_id', memberId);
+                    form.setAttribute('action', updatedAction);
                 });
             }
-
-            statusFilter.addEventListener('change', filterMembers);
-            searchInput.addEventListener('input', filterMembers);
-        });
-        document.addEventListener('DOMContentLoaded', function () {
-            // Xử lý sự kiện khi mở modal
-            $('#removeMemberModal').on('show.bs.modal', function (event) {
-                var button = $(event.relatedTarget); // Nút kích hoạt modal
-                var memberId = button.data('member-id'); // Lấy member_id
-                var clubId = button.data('club-id'); // Lấy club_id
-
-                // Cập nhật form action với club_id và member_id
-                var form = $(this).find('form');
-                var actionUrl = form.attr('action')
-                    .replace('club_id', clubId)  // Thay 'club_id' bằng clubId
-                    .replace('member_id', memberId); // Thay 'member_id' bằng memberId
-                form.attr('action', actionUrl);
-            });
         });
     </script>
 @endpush

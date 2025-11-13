@@ -86,30 +86,40 @@ class ClubController extends Controller
         }
     }
 
-    // public function filterMembers(Request $request, $id)
-    // {
-    //     $status = $request->get('status');
-    //     $keyword = $request->get('keyword');
+    public function filterMembers(Request $request, Club $club)
+    {
+        $status = $request->get('status');
+        $keyword = $request->get('keyword');
 
-    //     $members = ClubMember::with('member.user')
-    //         ->where('club_id', $id)
-    //         ->where('role', 'member')
-    //         ->when($status, function ($q) use ($status) {
-    //             $q->where('status', $status);
-    //         })
-    //         ->when($keyword, function ($q) use ($keyword) {
-    //             $q->whereHas('member.user', function ($q2) use ($keyword) {
-    //                 $q2->where('name', 'like', "%$keyword%")
-    //                     ->orWhere('email', 'like', "%$keyword%");
-    //             })
-    //                 ->orWhereHas('member', function ($q3) use ($keyword) {
-    //                     $q3->where('student_code', 'like', "%$keyword%");
-    //                 });
-    //         })
-    //         ->get();
+        $members = ClubMember::with(['member.user'])
+            ->where('club_id', $club->id)
+            ->where('role', 'member')
+            ->when($status, function ($query) use ($status) {
+                $query->where('status', $status);
+            })
+            ->when($keyword, function ($query) use ($keyword) {
+                $query->where(function ($subQuery) use ($keyword) {
+                    $subQuery->whereHas('member.user', function ($userQuery) use ($keyword) {
+                        $userQuery->where('name', 'like', "%{$keyword}%")
+                            ->orWhere('email', 'like', "%{$keyword}%");
+                    })->orWhereHas('member', function ($memberQuery) use ($keyword) {
+                        $memberQuery->where('student_code', 'like', "%{$keyword}%");
+                    });
+                });
+            })
+            ->orderByDesc('joined_at')
+            ->get();
 
-    //     return view('admin.clubs.partials.members_table', compact('members'));
-    // }
+        $html = view('admin.clubs.partials.members_rows', [
+            'members' => $members,
+            'startIndex' => 1,
+        ])->render();
+
+        return response()->json([
+            'html' => $html,
+            'count' => $members->count(),
+        ]);
+    }
     public function edit($id)
     {
         $club = Club::findOrFail($id);

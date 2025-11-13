@@ -8,7 +8,7 @@
 
 <body style="font-family: Arial, sans-serif; line-height: 1.6;">
     <h2>{{ $title }}</h2>
-    <p>{!! nl2br(e($messageContent)) !!}</p>
+    <div>{!! $messageHtml !!}</div>
 </body>
 
 </html>

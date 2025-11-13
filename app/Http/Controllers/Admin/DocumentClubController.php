@@ -15,9 +15,28 @@ use Illuminate\Support\Facades\Storage;
 class DocumentClubController extends Controller
 {
     // Hiển thị danh sách tài liệu phân loại theo MIME type
-    public function index()
+    public function index(Request $request)
     {
-        $documents = Document::with('club', 'uploader')->latest()->get();
+        $search = trim((string) $request->input('search', ''));
+        $selectedType = $request->input('type', 'all');
+
+        $documentsQuery = Document::with('club', 'uploader')->latest();
+
+        if ($search !== '') {
+            $documentsQuery->where(function ($query) use ($search) {
+                $query->where('file_name', 'like', "%{$search}%")
+                    ->orWhere('title', 'like', "%{$search}%")
+                    ->orWhereHas('uploader', function ($uploaderQuery) use ($search) {
+                        $uploaderQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if (!empty($selectedType) && $selectedType !== 'all') {
+            $documentsQuery->where('file_type', $selectedType);
+        }
+
+        $documents = $documentsQuery->get();
 
         // Nhóm theo CLB trước, sau đó nhóm theo tag
         $documentsByClub = $documents->groupBy(function ($doc) {
@@ -42,7 +61,22 @@ class DocumentClubController extends Controller
             });
         });
 
-        return view('admin.documentclub.index', compact('documentsByClub'));
+        $typeOptions = [
+            'all' => 'Tất cả loại',
+            'pdf' => 'PDF',
+            'doc' => 'Word',
+            'xls' => 'Excel',
+            'jpg' => 'Hình ảnh',
+            'mp3' => 'Âm thanh',
+            'mp4' => 'Video',
+        ];
+
+        return view('admin.documentclub.index', [
+            'documentsByClub' => $documentsByClub,
+            'search' => $search,
+            'selectedType' => $selectedType,
+            'typeOptions' => $typeOptions,
+        ]);
     }
 
 

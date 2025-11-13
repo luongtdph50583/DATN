@@ -176,7 +176,7 @@ Route::prefix('admin')
                 // ✅ ⚡ Đặt các route tìm kiếm và filter TRƯỚC route {club}
                 Route::get('/members/search', 'searchMembers')->name('members.search');
                 Route::post('/search', 'searchJson')->name('search');
-                Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
+        Route::get('/{club}/members/filter', 'filterMembers')->name('members.filter');
 
                 // ✅ CRUD chính
                 Route::get('/', 'index')->name('index');

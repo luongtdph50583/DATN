@@ -35,10 +35,15 @@ class CreateClubsTable extends Migration
                 ->nullOnDelete()
                 ->comment('Giảng viên đỡ đầu');
 
+            // ✅ Trạng thái xác nhận của giảng viên đỡ đầu
+            $table->enum('advisor_status', ['pending', 'approved', 'rejected'])
+                ->default('pending')
+                ->comment('Trạng thái phê duyệt của giảng viên đỡ đầu');
+
             // Liên hệ & giới hạn
             $table->string('email')->nullable()->comment('Email liên hệ');
             $table->string('phone')->nullable()->comment('Số điện thoại liên hệ');
-            $table->string('logo')->nullable()->comment('Logo của CLB'); // <-- Thêm cột logo
+            $table->string('logo')->nullable()->comment('Logo của CLB');
             $table->integer('member_limit')->nullable()->comment('Giới hạn số lượng thành viên');
 
             // Kế hoạch & thông tin thêm
@@ -48,16 +53,16 @@ class CreateClubsTable extends Migration
 
             $table->timestamps();
         });
-
     }
+
 
 
     public function down()
     {
         // Nếu có bảng liên quan
-      
 
-        
+
+
 
         Schema::dropIfExists('clubs');
     }

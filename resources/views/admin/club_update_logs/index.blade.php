@@ -29,9 +29,8 @@
                         <th>Người thực hiện</th>
                         <th>Người đề xuất</th>
                         <th>Loại</th>
-                        <th>Trạng thái</th>
                         <th>Ngày thay đổi</th>
-                        <th>Số trường thay đổi</th>
+
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -61,7 +60,7 @@
                                 @if($log->type === 'proposer' && $log->proposer)
                                     <span class="badge bg-info text-dark">{{ $log->proposer->name }}</span>
                                 @else
-                                    <span class="text-muted">—</span>
+                                    <span class="text-muted">không có</span>
                                 @endif
                             </td>
 
@@ -77,30 +76,13 @@
                             </td>
 
                             {{-- Trạng thái --}}
-                            <td>
-                                @if($log->status === 'approved')
-                                    <span class="badge bg-success">Đã duyệt</span>
-                                @elseif($log->status === 'rejected')
-                                    <span class="badge bg-danger">Từ chối</span>
-                                @else
-                                    <span class="badge bg-warning text-dark">Chờ duyệt</span>
-                                @endif
-                            </td>
+
 
                             {{-- Ngày --}}
                             <td>{{ $log->created_at->format('d/m/Y H:i') }}</td>
 
                             {{-- Số trường thay đổi --}}
-                            <td>
-                                @php
-                                    $changedFields = is_array($log->changed_fields) ? $log->changed_fields : [];
-                                    $count = count($changedFields);
-                                    if (isset($changedFields['managers']) && is_array($changedFields['managers'])) {
-                                        $count += count($changedFields['managers']) - 1;
-                                    }
-                                @endphp
-                                <span class="badge bg-secondary">{{ $count }}</span>
-                            </td>
+
 
                             {{-- Xem chi tiết --}}
                             <td>

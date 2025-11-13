@@ -71,70 +71,61 @@ $oldLevels = old('access_level', []);
 
                 <button type="submit" class="btn btn-primary">Tải lên</button>
             </form>
-@endsection
-@push('scripts')
-      <!-- Include Select2 CSS & JS nếu chưa có -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
-$(document).ready(function() {
-    $('.select2-club').select2({
-        width: '100%',
-        placeholder: "Chọn CLB",
-        allowClear: true
-    });
-});
-</script>
-    <script>
-       
+    $(document).ready(function () {
+        const select = $('#access_level'); // ✅ đúng selector
+        select.select2({
+            width: '100%',
+            placeholder: "Chọn mức truy cập",
+            allowClear: true
+        });
 
-            const managerRoles = ['communication', 'event_manager', 'secretary', 'treasurer', 'deputy_manager', 'club_manager'];
+        const managerRoles = ['communication', 'event_manager', 'secretary', 'treasurer', 'deputy_manager', 'club_manager'];
 
-            function updateAccessLogic() {
-                let selected = select.val() || [];
-                const options = select.find('option');
-                options.prop('disabled', false);
+        function updateAccessLogic() {
+            let selected = select.val() || [];
+            const options = select.find('option');
+            options.prop('disabled', false);
 
-                if (selected.includes('public')) {
-                    options.each(function () {
-                        if ($(this).val() !== 'public') $(this).prop('disabled', true);
-                    });
-                } else if (selected.includes('member')) {
-                    const allExceptPublic = options.map(function () {
-                        return $(this).val() !== 'public' ? $(this).val() : null;
-                    }).get().filter(v => v);
-                    selected = allExceptPublic;
-                    select.val(selected).trigger('change.select2');
-                } else {
-                    const hasManagerRole = selected.some(v => managerRoles.includes(v) && v !== 'club_manager');
-                    if (hasManagerRole && !selected.includes('club_manager')) {
-                        selected.push('club_manager');
-                        select.val(selected).trigger('change.select2');
-                    }
-                }
-
-                if (!selected.includes('member')) {
-                    selected = selected.filter(v => !managerRoles.includes(v));
+            if (selected.includes('public')) {
+                options.each(function () {
+                    if ($(this).val() !== 'public') $(this).prop('disabled', true);
+                });
+            } else if (selected.includes('member')) {
+                const allExceptPublic = options.map(function () {
+                    return $(this).val() !== 'public' ? $(this).val() : null;
+                }).get().filter(v => v);
+                selected = allExceptPublic;
+                select.val(selected).trigger('change.select2');
+            } else {
+                const hasManagerRole = selected.some(v => managerRoles.includes(v) && v !== 'club_manager');
+                if (hasManagerRole && !selected.includes('club_manager')) {
+                    selected.push('club_manager');
                     select.val(selected).trigger('change.select2');
                 }
-
-                if (selected.includes('public')) {
-                    options.each(function () {
-                        if ($(this).val() !== 'public') $(this).prop('disabled', true);
-                    });
-                } else if (selected.length > 0) {
-                    options.each(function () {
-                        if ($(this).val() === 'public') $(this).prop('disabled', true);
-                    });
-                }
-
-                select.trigger('change.select2');
             }
 
-            updateAccessLogic();
-            select.on('change', updateAccessLogic);
-        });
-    </script>
-@endpush
+            if (!selected.includes('member')) {
+                selected = selected.filter(v => !managerRoles.includes(v));
+                select.val(selected).trigger('change.select2');
+            }
+
+            if (selected.includes('public')) {
+                options.each(function () {
+                    if ($(this).val() !== 'public') $(this).prop('disabled', true);
+                });
+            } else if (selected.length > 0) {
+                options.each(function () {
+                    if ($(this).val() === 'public') $(this).prop('disabled', true);
+                });
+            }
+
+            select.trigger('change.select2');
+        }
+
+        updateAccessLogic();
+        select.on('change', updateAccessLogic);
+    });
+</script>
+@endsection
 
