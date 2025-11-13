@@ -155,7 +155,7 @@
             <div class="card-body">
 
                 {{-- 🔹 Form lọc và tìm kiếm --}}
-                <form method="GET" action="{{ route('admin.clubs.members', $club->id) }}" class="row mb-3 g-2">
+                {{-- <form method="GET" action="{{ route('admin.clubs.members', $club->id) }}" class="row mb-3 g-2"> --}}
                     <div class="col-md-3">
                         <select name="status" class="form-select" onchange="this.form.submit()">
                             <option value="">-- Chọn trạng thái --</option>
@@ -219,11 +219,7 @@
                                             <a href="{{ url('admin/members/' . $member->member->id) }}" class="btn btn-info btn-sm">
                                                 <i class="fas fa-eye"></i> Chi tiết
                                             </a>
-                                            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                                data-bs-target="#removeMemberModal" data-member-id="{{ $member->member->id }}"
-                                                data-club-id="{{ $club->id }}">
-                                                <i class="fas fa-trash-alt"></i> Xóa
-                                            </button>
+                                            
                                         </td>
                                     </tr>
                                 @endif

@@ -73,22 +73,21 @@ $oldLevels = old('access_level', []);
             </form>
 @endsection
 @push('scripts')
-    {{-- 🧩 Load jQuery trước --}}
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <!-- Include Select2 CSS & JS nếu chưa có -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    {{-- 🧩 Sau đó mới load select2 --}}
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
+<script>
+$(document).ready(function() {
+    $('.select2-club').select2({
+        width: '100%',
+        placeholder: "Chọn CLB",
+        allowClear: true
+    });
+});
+</script>
     <script>
-        $(document).ready(function () {
-            const select = $('.select2');
-
-            select.select2({
-                placeholder: "Chọn mức truy cập",
-                allowClear: true,
-                width: '100%'
-            });
+       
 
             const managerRoles = ['communication', 'event_manager', 'secretary', 'treasurer', 'deputy_manager', 'club_manager'];
 

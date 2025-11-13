@@ -23,7 +23,8 @@ class Club extends Model
         'founded_at',
         'location',
         'rules',
-        'deleted_reason'
+        'deleted_reason',
+        'slogan'
     ];
 
     protected $casts = [
@@ -99,7 +100,7 @@ public function members()
         // advisor_id = faculty_members.id
         return $this->belongsTo(FacultyMember::class, 'advisor_id')->with('user');
     }
-    
+
 
 
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Event extends Model
 {
     use HasFactory, SoftDeletes;
@@ -31,7 +31,6 @@ class Event extends Model
         'budget_estimated',
     'budget_requested',
     'budget_club', // <-- thêm đây
-
         'deleted_by',         // ĐÃ CÓ TRONG DB
         'delete_reason',
     ];
@@ -69,10 +68,11 @@ class Event extends Model
             'email' => '',
         ]);
     }
-    public function fundRequest()
+  public function funRequests()
 {
-    return $this->hasOne(EventFundRequest::class, 'event_id');
+    return $this->hasMany(EventFundRequest::class, 'event_id', 'id');
 }
+
 
     // GIỮ NGUYÊN TÊN approvalBy – KHÔNG ĐỔI NỮA!
     public function approvalBy(): BelongsTo
@@ -92,9 +92,24 @@ class Event extends Model
         ]);
     }
 
-    public function media(): BelongsTo
+     public function media()
     {
-        return $this->belongsTo(Media::class)->withDefault();
+        return $this->morphMany(Media::class, 'related', 'related_type', 'related_id');
+    }
+     // Ví dụ phân loại hình ảnh, video
+    public function images(): MorphMany
+    {
+        return $this->media()->where('file_type', 'image');
+    }
+
+    public function videos(): MorphMany
+    {
+        return $this->media()->where('file_type', 'video');
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->media()->where('file_type', 'document');
     }
 
     public function registrations(): HasMany

@@ -26,7 +26,8 @@ use App\Http\Controllers\Admin\{
     DocumentClubController,
     ClubLeaveRequestController,
     ClubUpdateLogController,
-    ClubRequestUpdateController
+    ClubRequestUpdateController,
+    TrashController
 
 };
 use App\Http\Controllers\FundController;
@@ -161,6 +162,7 @@ Route::prefix('admin')
             ->as('clubs.')
             ->group(function () {
 
+
                 // ♻️ Trang thùng rác (phải để trên /{id})
                 Route::get('/trash', 'trash')->name('trash');
 
@@ -170,28 +172,28 @@ Route::prefix('admin')
                 // ❌ Xóa vĩnh viễn CLB
                 Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
 
-                Route::get('/', 'index')->name('index');
-                Route::get('/create', 'create')->name('create');
-                Route::post('/', 'store')->name('store');
 
-                // Các route dựa trên {id} phải để sau route cố định
-                Route::get('/{id}', 'show')->name('show');
-                Route::get('/{id}/edit', 'edit')->name('edit');
-                Route::put('/{id}', 'update')->name('update');
-                Route::delete('/{id}', 'destroy')->name('destroy');
+        // ✅ ⚡ Đặt các route tìm kiếm và filter TRƯỚC route {club}
+        Route::get('/members/search', 'searchMembers')->name('members.search');
+        Route::post('/search', 'searchJson')->name('search');
+        Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
 
-                // Lọc thành viên CLB
-                Route::get('/{id}/members/filter', 'filterMembers')->name('members.filter');
+        // ✅ CRUD chính
+        Route::get('/', 'index')->name('index');
+        Route::get('/create', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
 
-                // 🔹 Tìm kiếm thành viên (thêm route mới)
-                Route::get('/{id}/members', 'members')->name('members');
-                Route::get('/{id}/members/search', 'members')->name('members.search'); // <- khớp form
-
+        // ⚠️ Các route có {club} để SAU CÙNG
+        Route::get('/{club}', 'show')->name('show');
+        Route::get('/{club}/edit', 'edit')->name('edit');
+        Route::put('/{club}', 'update')->name('update');
+        Route::delete('/{club}', 'destroy')->name('destroy');
 
 
                 // Xóa thành viên
                 Route::delete('/{club}/members/{member}', 'removeMember')->name('members.remove');
             });
+
 
 
 
@@ -362,6 +364,9 @@ Route::controller(CommentController::class)
                 Route::get('/events', 'events')->name('events');
                 Route::get('/clubs', 'clubs')->name('clubs');
                 Route::get('/members', 'members')->name('members');
+                Route::get('/accounts', 'accounts')->name('accounts');
+                Route::get('/posts', 'posts')->name('posts');   
+                Route::get('/funds', 'fundRequests')->name('funds');
             });
 
         Route::controller(ClubReportController::class)
@@ -371,6 +376,8 @@ Route::controller(CommentController::class)
                 Route::get('/', 'show')->name('show');
                 Route::get('/pdf', 'exportPdf')->name('pdf');
             });
+            Route::get('/stats/accounts/pdf', [StatisticsController::class, 'accountsPdf'])
+    ->name('stats.accounts.pdf');
 
         Route::controller(StatisticsController::class)
             ->prefix('statistics-and-reports')

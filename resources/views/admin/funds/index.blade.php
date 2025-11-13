@@ -179,21 +179,19 @@ $pendingCount = $transactions->where('status', 'pending_disbursement')->count();
         </div>
     </div>
 </div>
-
-@endsection
-
-@section('scripts')
-<!-- Include Select2 JS & CSS nếu chưa include ở layout -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-    $(document).ready(function() {
-        $('.select2').select2({
-            width: '100%',
-            placeholder: "Chọn CLB",
-            allowClear: true
-        });
+$(document).ready(function() {
+    $('.select2').select2({
+        width: '100%',
+        placeholder: "Chọn CLB",
+        allowClear: true
     });
+});
 </script>
+
 @endsection
+
+
