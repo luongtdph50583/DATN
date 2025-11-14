@@ -61,30 +61,39 @@
 @endsection
 
 @push('scripts')
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Select2 -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <!-- CKEditor -->
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
-
     <script>
+        // Đảm bảo CKEditor chỉ load một lần
+        if (typeof ClassicEditor === 'undefined' && typeof window.CKEDITOR === 'undefined') {
+            console.warn('CKEditor is not loaded. Make sure it is included in app.blade.php');
+        }
+
         $(function () {
             // ==========================
             // CKEditor 5 - lưu plain text
+            // CKEditor đã được load trong app.blade.php
             // ==========================
             let ckEditorInstance = null;
             const $contentHtmlInput = $('#contentHtmlInput');
             const initialContent = @json(old('content_html', ''));
 
-            ClassicEditor.create(document.querySelector('#editor'), {
+            // Kiểm tra xem ClassicEditor có sẵn không
+            if (typeof ClassicEditor === 'undefined') {
+                console.error('CKEditor ClassicEditor is not loaded');
+                return;
+            }
+
+            // Kiểm tra element editor có tồn tại không
+            const editorElement = document.querySelector('#editor');
+            if (!editorElement) {
+                console.error('Editor element #editor not found');
+                return;
+            }
+
+            ClassicEditor.create(editorElement, {
                 toolbar: [
                     'heading',
                     '|',
-                    'bold', 'italic', 'underline', 'strikethrough',
+                    'bold', 'italic',
                     '|',
                     'bulletedList', 'numberedList',
                     '|',
@@ -166,11 +175,11 @@
                 if (!$select.length || $select.prev('.select-actions').length) return;
 
                 const $toolbar = $(`
-                    <div class="mb-2 d-flex gap-2 align-items-center select-actions">
-                        <button type="button" class="btn btn-sm btn-outline-primary select-all-btn">Chọn tất cả</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary deselect-all-btn">Bỏ chọn tất cả</button>
-                    </div>
-                `);
+                            <div class="mb-2 d-flex gap-2 align-items-center select-actions">
+                                <button type="button" class="btn btn-sm btn-outline-primary select-all-btn">Chọn tất cả</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary deselect-all-btn">Bỏ chọn tất cả</button>
+                            </div>
+                        `);
                 $toolbar.insertBefore($select);
 
                 $toolbar.find('.select-all-btn').on('click', function () {
@@ -242,9 +251,9 @@
             // ==========================
             const renderUserTarget = (useOld) => {
                 $targetWrapper.html(`
-                    <label class="form-label">Chọn người nhận</label>
-                    <select id="users_select" name="users[]" class="form-select" multiple></select>
-                `);
+                            <label class="form-label">Chọn người nhận</label>
+                            <select id="users_select" name="users[]" class="form-select" multiple></select>
+                        `);
 
                 const $select = $('#users_select');
                 initSelect2($select, {
@@ -264,13 +273,13 @@
 
             const renderClubTarget = (useOld) => {
                 $targetWrapper.html(`
-                    <label class="form-label">Chọn CLB</label>
-                    <select id="club_select" name="club_id" class="form-select">
-                        <option value="">-- Chọn CLB --</option>
-                    </select>
-                    <label class="form-label mt-3">Chọn thành viên</label>
-                    <select id="club_members" name="users[]" class="form-select" multiple disabled></select>
-                `);
+                            <label class="form-label">Chọn CLB</label>
+                            <select id="club_select" name="club_id" class="form-select">
+                                <option value="">-- Chọn CLB --</option>
+                            </select>
+                            <label class="form-label mt-3">Chọn thành viên</label>
+                            <select id="club_members" name="users[]" class="form-select" multiple disabled></select>
+                        `);
 
                 const $clubSelect = $('#club_select');
                 const $membersSelect = $('#club_members');
@@ -326,21 +335,21 @@
 
             const renderRoleTarget = (useOld) => {
                 $targetWrapper.html(`
-                        <label class="form-label">Chọn vai trò</label>
-                        <select id="role_select" name="role" class="form-select" required>
-                            <option value="">-- Chọn vai trò --</option>
-                            <option value="club_manager">Chủ nhiệm CLB</option>
-                            <option value="deputy_manager">Phó chủ nhiệm</option>
-                            <option value="secretary">Thư ký</option>
-                            <option value="treasurer">Thủ quỹ</option>
-                            <option value="event_manager">Quản lý sự kiện</option>
-                            <option value="communication">Truyền thông</option>
-                            <option value="member">Thành viên thường</option>
-                            <option value="admin">Admin hệ thống</option>
-                        </select>
-                        <label class="form-label mt-3">Chọn người</label>
-                        <select id="role_users" name="users[]" class="form-select" multiple disabled></select>
-                    `);
+                                <label class="form-label">Chọn vai trò</label>
+                                <select id="role_select" name="role" class="form-select" required>
+                                    <option value="">-- Chọn vai trò --</option>
+                                    <option value="club_manager">Chủ nhiệm CLB</option>
+                                    <option value="deputy_manager">Phó chủ nhiệm</option>
+                                    <option value="secretary">Thư ký</option>
+                                    <option value="treasurer">Thủ quỹ</option>
+                                    <option value="event_manager">Quản lý sự kiện</option>
+                                    <option value="communication">Truyền thông</option>
+                                    <option value="member">Thành viên thường</option>
+                                    <option value="admin">Admin hệ thống</option>
+                                </select>
+                                <label class="form-label mt-3">Chọn người</label>
+                                <select id="role_users" name="users[]" class="form-select" multiple disabled></select>
+                            `);
 
                 const $roleSelect = $('#role_select');
                 const $usersSelect = $('#role_users');
@@ -395,13 +404,13 @@
 
             const renderEventTarget = (useOld) => {
                 $targetWrapper.html(`
-                    <label class="form-label">Chọn sự kiện</label>
-                    <select id="event_select" name="event_id" class="form-select">
-                        <option value="">-- Chọn sự kiện --</option>
-                    </select>
-                    <label class="form-label mt-3">Chọn người tham gia</label>
-                    <select id="event_members" name="users[]" class="form-select" multiple disabled></select>
-                `);
+                            <label class="form-label">Chọn sự kiện</label>
+                            <select id="event_select" name="event_id" class="form-select">
+                                <option value="">-- Chọn sự kiện --</option>
+                            </select>
+                            <label class="form-label mt-3">Chọn người tham gia</label>
+                            <select id="event_members" name="users[]" class="form-select" multiple disabled></select>
+                        `);
 
                 const $eventSelect = $('#event_select');
                 const $membersSelect = $('#event_members');

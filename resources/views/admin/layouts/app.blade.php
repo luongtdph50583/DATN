@@ -30,17 +30,35 @@
 
     <!-- Custom Css -->
     <link href="{{ asset('assets/css/custom.min.css') }}" rel="stylesheet" type="text/css" />
+
+    <!-- Fix for missing hkgrotesk font -->
+    <style>
+        @font-face {
+            font-family: 'hkgrotesk';
+            src: local('Arial'), local('Helvetica'), local('sans-serif');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
+
     <link href="{{ asset('assets/libs/quill/quill.core.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/libs/quill/quill.bubble.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/libs/quill/quill.snow.css') }}" rel="stylesheet" type="text/css" />
 
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- SimpleBar CSS -->
-    <link href="{{ asset('assets/libs/simplebar/simplebar.min.css') }}" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.css" rel="stylesheet" />
+
+    <!-- Toastify CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
 <body>
@@ -122,30 +140,53 @@
     </div>
 
     <!-- JAVASCRIPT -->
-    <script src="{{ asset('assets/libs/jquery/jquery.min.js') }}"></script>
+    <!-- jQuery (CDN) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Bootstrap -->
     <script src="{{ asset('assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+    <!-- SimpleBar -->
     <script src="{{ asset('assets/libs/simplebar/simplebar.min.js') }}"></script>
+
+    <!-- Node Waves -->
     <script src="{{ asset('assets/libs/node-waves/waves.min.js') }}"></script>
+
+    <!-- Feather Icons -->
     <script src="{{ asset('assets/libs/feather-icons/feather.min.js') }}"></script>
 
+    <!-- Core JS Files -->
     <script src="{{ asset('assets/js/layout.js') }}"></script>
     <script src="{{ asset('assets/js/plugins.js') }}"></script>
     <script src="{{ asset('assets/js/app.js') }}"></script>
 
+    <!-- Plugin Libraries -->
     <script src="{{ asset('assets/libs/apexcharts/apexcharts.min.js') }}"></script>
     <script src="{{ asset('assets/libs/jsvectormap/jsvectormap.min.js') }}"></script>
     <script src="{{ asset('assets/libs/jsvectormap/maps/world-merc.js') }}"></script>
     <script src="{{ asset('assets/libs/swiper/swiper-bundle.min.js') }}"></script>
     <script src="{{ asset('assets/js/pages/dashboard-ecommerce.init.js') }}"></script>
 
+    <!-- Editor Libraries -->
     <script src="{{ asset('assets/libs/@ckeditor/ckeditor5-build-classic/build/ckeditor.js') }}"></script>
     <script src="{{ asset('assets/libs/quill/quill.min.js') }}"></script>
     <script src="{{ asset('assets/js/pages/form-editor.init.js') }}"></script>
 
-    <!-- Select2 JS -->
-
+    <!-- CDN Libraries -->
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Toastify JS -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <!-- Choices.js -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <!-- Flatpickr -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <!-- Chèn script riêng từng trang -->
     @stack('scripts')
