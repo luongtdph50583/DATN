@@ -17,13 +17,35 @@
             </div>
 
             <!-- Sidebar Menu -->
-            <ul class="admin-menu list-unstyled">
-                <li><a href="{{ url('admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="{{ url('admin/posts') }}"><i class="fas fa-newspaper"></i> Posts</a></li>
-                <li><a href="{{ url('admin/users') }}"><i class="fas fa-users"></i> Users</a></li>
-                <li><a href="{{ url('admin/settings') }}"><i class="fas fa-cogs"></i> Settings</a></li>
-                <li><a href="{{ route('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-            </ul>
+      <ul class="admin-menu list-unstyled">
+    <li><a href="{{ url('admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+    <li><a href="{{ url('admin/posts') }}"><i class="fas fa-newspaper"></i> Posts</a></li>
+    <li><a href="{{ url('admin/users') }}"><i class="fas fa-users"></i> Users</a></li>
+    <li><a href="{{ url('admin/settings') }}"><i class="fas fa-cogs"></i> Settings</a></li>
+
+    @auth
+        <!-- Logout chỉ hiển thị khi đã đăng nhập -->
+        <li>
+            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">
+                @csrf
+            </form>
+        </li>
+    @endauth
+
+    @guest
+        <!-- Login chỉ hiển thị khi chưa đăng nhập -->
+        <li>
+            <a href="{{ route('login') }}">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+        </li>
+    @endguest
+</ul>
+
+
 
             <!-- Optional Sidebar Info -->
             <div class="offcanvas__contact mt-4">

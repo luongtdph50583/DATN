@@ -32,6 +32,8 @@ use App\Http\Controllers\Admin\{
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
+use App\Http\Controllers\HomeController as AdminHomeController;
+use App\Http\Controllers\Client\HomeController as ClientHomeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +61,10 @@ Route::middleware(['auth'])->group(function () {
         });
 });
 
+Route::get('/', [ClientHomeController::class, 'index'])->name('client.home');
+Route::prefix('admin')->middleware([CheckRole::class . ':admin'])->group(function () {
+    Route::get('/dashboard', [AdminHomeController::class, 'index'])->name('admin.dashboard');
+});
 // === ADMIN ROUTES ===
 Route::prefix('admin')
     ->middleware(['auth', CheckRole::class . ':admin'])
