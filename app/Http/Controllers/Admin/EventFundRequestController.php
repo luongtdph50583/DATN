@@ -12,28 +12,32 @@ use Illuminate\Support\Facades\Auth;
 class EventFundRequestController extends Controller
 {
     // 1️⃣ Hiển thị danh sách yêu cầu
-public function index(Request $request)
+  public function index(Request $request)
 {
+    // Query chính, load quan hệ
     $query = EventFundRequest::with(['event.club', 'requestedBy', 'approvedBy', 'disbursedBy'])
         ->orderBy('created_at', 'desc');
- // Tổng chi: tổng approved_amount của các giao dịch đã duyệt
-    $totalExpense = EventFundRequest::whereIn('status', ['disbursing','disbursed'])
+
+    // Tổng chi: tổng approved_amount của các giao dịch đã duyệt hoặc đang giải ngân
+    $totalExpense = EventFundRequest::whereIn('status', ['disbursing', 'disbursed'])
         ->sum('approved_amount');
 
     // Số lượng đang chờ giải ngân
     $pendingCount = EventFundRequest::where('status', 'pending_disbursement')->count();
 
+    // Số lượng đang giải ngân
+    $disbursingCount = EventFundRequest::where('status', 'disbursing')->count();
+
     // Lọc theo CLB
     if ($request->filled('club_id')) {
-        $query->whereHas('event', function($q) use ($request) {
+        $query->whereHas('event', function ($q) use ($request) {
             $q->where('club_id', $request->club_id);
         });
     }
 
     // Lọc theo trạng thái
     if ($request->filled('status')) {
-        // Chỉ nhận 2 trạng thái: pending_disbursement (Chờ giải ngân) và disbursed (Đã giải ngân)
-        if (in_array($request->status, ['pending_disbursement','disbursed'])) {
+        if (in_array($request->status, ['pending_disbursement', 'disbursing', 'disbursed'])) {
             $query->where('status', $request->status);
         }
     }
@@ -45,90 +49,24 @@ public function index(Request $request)
     if ($request->filled('date_to')) {
         $query->whereDate('created_at', '<=', $request->date_to);
     }
+$totalDisbursedAmount = EventFundRequest::whereIn('status', ['disbursing', 'disbursed'])
+    ->sum('amount_disbursed');
 
     $transactions = $query->paginate(20);
 
-    $clubs = Club::all(); // để hiển thị select filter
+    $clubs = Club::all(); // dùng cho filter
 
     return view('admin.funds.index', [
         'transactions' => $transactions,
         'clubs' => $clubs,
-         'totalExpense' => $totalExpense,
+        'totalExpense' => $totalExpense,
+          'totalDisbursedAmount' => $totalDisbursedAmount, // tổng số tiền đã giải ngân
         'pendingCount' => $pendingCount,
+        'disbursingCount' => $disbursingCount, // thêm biến này cho card "Đang giải ngân"
     ]);
 }
 
 
-
-    // 2️⃣ Form tạo mới
-    public function create()
-    {
-        $events = Event::all();
-        $clubs = Club::all();
-        $sourceTypes = ['school' => 'Quỹ nhà trường', 'sponsor' => 'Nhà tài trợ', 'club' => 'Quỹ CLB'];
-return view('admin.event_funds.requests.create', compact('events', 'clubs', 'sourceTypes'));
-    }
-
-    // 3️⃣ Lưu yêu cầu mới
-    public function store(Request $request)
-    {
-        $request->validate([
-            'event_id' => 'required|exists:events,id',
-            'source_type' => 'required|in:school,sponsor,club',
-            'amount_requested' => 'required|numeric|min:0',
-            'note' => 'nullable|string',
-        ]);
-
-        EventFundRequest::create([
-            'event_id' => $request->event_id,
-            'source_type' => $request->source_type,
-            'amount_requested' => $request->amount_requested,
-            'note' => $request->note,
-            'requested_by' => Auth::id(),
-            'status' => 'pending',
-        ]);
-
-        return redirect()->route('admin.event_fund_requests.index')
-                         ->with('success', 'Đã thêm yêu cầu cấp kinh phí.');
-    }
-
-    // 4️⃣ Form chỉnh sửa
-    public function edit($id)
-    {
-        $request = EventFundRequest::findOrFail($id);
-        $events = Event::all();
-        return view('admin.event_funds.requests.edit', compact('request', 'events'));
-    }
-
-    // 5️⃣ Cập nhật yêu cầu (chỉ update thông tin, không thay đổi status đã duyệt)
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'event_id' => 'required|exists:events,id',
-            'amount_requested' => 'required|numeric|min:0',
-        ]);
-
-        $fundRequest = EventFundRequest::findOrFail($id);
-
-        // Không thay đổi status nếu đã approved
-        $fundRequest->event_id = $request->event_id;
-        $fundRequest->amount_requested = $request->amount_requested;
-        $fundRequest->note = $request->note ?? $fundRequest->note;
-        $fundRequest->save();
-
-        return redirect()->route('admin.event_fund_requests.index')
-                         ->with('success', 'Cập nhật yêu cầu cấp kinh phí thành công!');
-    }
-
-    // 6️⃣ Xóa yêu cầu
-    public function destroy($id)
-    {
-        $fundRequest = EventFundRequest::findOrFail($id);
-        $fundRequest->delete();
-
-        return redirect()->route('admin.event_fund_requests.index')
-                         ->with('success', 'Đã xóa yêu cầu cấp kinh phí.');
-    }
 
     // 7️⃣ Form duyệt yêu cầu
     public function approveForm($id)
@@ -138,69 +76,61 @@ return view('admin.event_funds.requests.create', compact('events', 'clubs', 'sou
     }
 
     // 8️⃣ Duyệt yêu cầu và cộng quỹ
-public function approve(Request $request, $id)
-{
-    $fundRequest = EventFundRequest::findOrFail($id);
+    public function approve(Request $request, $id)
+    {
+        $fundRequest = EventFundRequest::findOrFail($id);
 
-    if ($fundRequest->status === 'disbursed' || $fundRequest->status === 'approved') {
-        return redirect()->back()->with('info', 'Yêu cầu này đã được duyệt.');
-    }
-
-    // Validate
-    $request->validate([
-        'approved_amount' => 'required|numeric|min:0|max:' . $fundRequest->amount_requested,
-        'disbursed_by' => 'required|exists:users,id',
-        'disbursement_date' => 'required|date',
-        'disbursement_proof' => 'nullable|array',
-        'disbursement_proof.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
-    ]);
-
-    $fundRequest->approved_amount = $request->approved_amount;
-    $fundRequest->status = 'disbursed';
-    $fundRequest->approved_by = auth()->id();
-    $fundRequest->disbursed_by = $request->disbursed_by;
-    $fundRequest->disbursement_date = $request->disbursement_date;
-
-    if($request->hasFile('disbursement_proof')) {
-        $files = [];
-        foreach($request->file('disbursement_proof') as $file) {
-            $files[] = $file->store('disbursement_proofs', 'public');
+        // Chỉ duyệt khi đang pending_disbursement
+        if ($fundRequest->status !== 'pending_disbursement') {
+            return redirect()->back()->with('info', 'Yêu cầu này đã được duyệt trước đó.');
         }
-        $fundRequest->disbursement_proof = json_encode($files);
+
+        // Validate số tiền duyệt
+        $request->validate([
+            'approved_amount' => 'required|numeric|min:0|max:' . $fundRequest->amount_requested,
+        ]);
+
+        // Gán thông tin duyệt
+        $fundRequest->approved_amount = $request->approved_amount;
+        $fundRequest->disbursement_start = $request->disbursement_start;
+          $fundRequest->disbursement_end = $request->disbursement_end;
+
+        $fundRequest->approved_by = auth()->id();
+
+        // ❗ Chỉ chuyển sang trạng thái *đang giải ngân* chứ KHÔNG giải ngân ngay
+        $fundRequest->status = 'disbursing';
+
+        $fundRequest->save();
+
+        return redirect()->route('admin.event_fund_requests.index')
+            ->with('success', 'Yêu cầu đã được duyệt. Trạng thái: ĐANG GIẢI NGÂN.');
     }
-
-    $fundRequest->save();
-
-    return redirect()->route('admin.event_fund_requests.index')
-                     ->with('success', 'Yêu cầu đã được duyệt và lưu thông tin giải ngân thành công.');
-}
-
 
 
     // 9️⃣ Từ chối / hủy yêu cầu
-public function showRejectForm($id)
-{
-    $request = EventFundRequest::findOrFail($id);
-    return view('admin.event_funds.requests.reject', compact('request'));
-}
+    public function showRejectForm($id)
+    {
+        $request = EventFundRequest::findOrFail($id);
+        return view('admin.event_funds.requests.reject', compact('request'));
+    }
 
-// Xử lý POST từ chối
-public function reject(Request $request, $id)
-{
-    $requestFund = EventFundRequest::findOrFail($id);
+    // Xử lý POST từ chối
+    public function reject(Request $request, $id)
+    {
+        $requestFund = EventFundRequest::findOrFail($id);
 
-    $request->validate([
-        'rejection_reason' => 'required|string|max:500',
-    ]);
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
 
-    $requestFund->update([
-        'status' => 'rejected',
-        'rejection_reason' => $request->rejection_reason,
-        'approved_by' => auth()->id(),
-    ]);
+        $requestFund->update([
+            'status' => 'rejected',
+            'rejection_reason' => $request->rejection_reason,
+            'approved_by' => auth()->id(),
+        ]);
 
-    return redirect()->route('admin.funds.index')->with('success', 'Yêu cầu đã bị từ chối thành công.');
-}
+        return redirect()->route('admin.funds.index')->with('success', 'Yêu cầu đã bị từ chối thành công.');
+    }
 
 
     // 10️⃣ Xem chi tiết yêu cầu
@@ -209,4 +139,77 @@ public function reject(Request $request, $id)
         $request = EventFundRequest::with(['event', 'user'])->findOrFail($id);
         return view('admin.event_funds.requests.show', compact('request'));
     }
+    public function disbursing($id)
+    {
+        $request = EventFundRequest::findOrFail($id);
+        return view('admin.event_funds.requests.disbursing', compact('request'));
+    }
+  // Cập nhật giải ngân (đang giải ngân)
+public function updateDisbursement(Request $request, $id)
+{
+    $fundRequest = EventFundRequest::findOrFail($id);
+
+    $request->validate([
+        'disbursement_amount' => 'required|numeric|min:0|max:' . ($fundRequest->approved_amount - $fundRequest->amount_disbursed),
+        'disbursement_proof.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+    ]);
+
+    $amount = $request->disbursement_amount;
+
+    // Upload minh chứng
+    $files = $fundRequest->disbursement_proof ? json_decode($fundRequest->disbursement_proof, true) : [];
+    if($request->hasFile('disbursement_proof')) {
+        foreach($request->file('disbursement_proof') as $file) {
+            $files[] = $file->store('disbursement_proofs', 'public');
+        }
+    }
+    $fundRequest->disbursement_proof = json_encode($files);
+
+    // Cập nhật số tiền đã giải ngân
+    $fundRequest->amount_disbursed += $amount;
+
+    // Lưu vào lịch sử giải ngân
+    $history = $fundRequest->disbursement_history ? json_decode($fundRequest->disbursement_history, true) : [];
+    $history[] = [
+        'amount' => $amount,
+        'date' => now(),
+        'disbursed_by_id' => auth()->id(),
+        'disbursed_by_name' => auth()->user()->name,
+        'proof' => $files,
+    ];
+    $fundRequest->disbursement_history = json_encode($history);
+
+    // Kiểm tra action
+    if($request->action === 'complete' || $fundRequest->amount_disbursed >= $fundRequest->approved_amount) {
+        $fundRequest->status = 'disbursed';
+        $fundRequest->disbursement_date = now();
+    } else {
+        $fundRequest->status = 'disbursing';
+    }
+
+    $fundRequest->save();
+
+    return redirect()->route('admin.event_fund_requests.index')
+                     ->with('success', 'Cập nhật giải ngân thành công.');
+}
+
+// Hoàn tất giải ngân (nếu vẫn muốn giữ riêng)
+public function completeDisbursement($id)
+{
+    $fundRequest = EventFundRequest::findOrFail($id);
+
+    if($fundRequest->amount_disbursed < $fundRequest->approved_amount) {
+        return redirect()->route('admin.event_fund_requests.index')
+                         ->with('error', 'Số tiền giải ngân chưa đủ, không thể hoàn tất.');
+    }
+
+    $fundRequest->status = 'disbursed';
+    $fundRequest->disbursement_date = now();
+    $fundRequest->save();
+
+    return redirect()->route('admin.event_fund_requests.index')
+                     ->with('success', 'Hoàn tất giải ngân thành công.');
+}
+
+
 }

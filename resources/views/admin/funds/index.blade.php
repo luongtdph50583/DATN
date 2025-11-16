@@ -26,7 +26,6 @@
     <div class="card-body">
         <form method="GET" action="{{ route(Auth::user()->role === 'admin' ? 'admin.funds.index' : 'club-manager.funds.index') }}">
             <div class="row g-3 align-items-end">
-                {{-- CLB --}}
                 <div class="col-md-3">
                     <label for="club_id" class="form-label">Câu lạc bộ</label>
                     <select name="club_id" id="club_id" class="form-select form-select-sm select2">
@@ -38,8 +37,6 @@
                         @endforeach
                     </select>
                 </div>
-
-                {{-- Trạng thái --}}
                 <div class="col-md-2">
                     <label for="status" class="form-label">Trạng thái</label>
                     <select name="status" id="status" class="form-select form-select-sm">
@@ -50,20 +47,14 @@
                         <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Từ chối</option>
                     </select>
                 </div>
-
-                {{-- Từ ngày --}}
                 <div class="col-md-2">
                     <label for="date_from" class="form-label">Từ ngày</label>
                     <input type="date" name="date_from" id="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}">
                 </div>
-
-                {{-- Đến ngày --}}
                 <div class="col-md-2">
                     <label for="date_to" class="form-label">Đến ngày</label>
                     <input type="date" name="date_to" id="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}">
                 </div>
-
-                {{-- Nút lọc & reset --}}
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
                     <a href="{{ route(Auth::user()->role === 'admin' ? 'admin.funds.index' : 'club-manager.funds.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
@@ -73,27 +64,37 @@
     </div>
 </div>
 
-{{-- Tính toán dữ liệu tổng chi / chờ giải ngân --}}
+{{-- Tính toán dữ liệu tổng chi / chờ giải ngân / đang giải ngân --}}
 @php
-$totalExpense = $transactions->whereIn('status', ['disbursing','disbursed'])->sum('approved_amount');
+$totalDisbursed = $transactions->whereIn('status', ['disbursing','disbursed'])->sum('amount_disbursed');
 $pendingCount = $transactions->where('status', 'pending_disbursement')->count();
+$disbursingTotal = $transactions->where('status', 'disbursing')->sum('amount_disbursed');
 @endphp
 
-{{-- Tóm tắt quỹ --}}
+{{-- Card tóm tắt --}}
 <div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card border-danger h-100">
-            <div class="card-body">
-                <h6 class="text-danger">Tổng đã giải ngân </h6>
-                <h5>{{ number_format($totalExpense, 0, ',', '.') }} VNĐ</h5>
-            </div>
+  <div class="col-md-3 mb-3">
+    <div class="card border-success h-100">
+        <div class="card-body">
+            <h6 class="text-success">Tổng đã giải ngân</h6>
+            <h5>{{ number_format($totalDisbursedAmount, 0, ',', '.') }} VNĐ</h5>
         </div>
     </div>
+</div>
+
     <div class="col-md-3 mb-3">
         <div class="card border-warning h-100">
             <div class="card-body">
                 <h6 class="text-warning">Chờ giải ngân</h6>
                 <h5>{{ $pendingCount }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card border-info h-100">
+            <div class="card-body">
+                <h6 class="text-info">Đang giải ngân</h6>
+                <h5>{{$disbursingCount }}</h5>
             </div>
         </div>
     </div>
@@ -112,10 +113,10 @@ $pendingCount = $transactions->where('status', 'pending_disbursement')->count();
                     <th>Sự kiện / CLB</th>
                     <th>Số tiền yêu cầu</th>
                     <th>Số tiền duyệt</th>
+                    <th>Số tiền đã giải ngân</th>
                     <th>Mô tả / Ghi chú</th>
                     <th>Trạng thái</th>
                     <th>Người yêu cầu</th>
-                    <th>Người duyệt</th>
                     <th>Ngày tạo</th>
                     <th>Hành động</th>
                 </tr>
@@ -127,6 +128,7 @@ $pendingCount = $transactions->where('status', 'pending_disbursement')->count();
                     <td>{{ $req->event->name ?? '-' }}<br><small class="text-muted">{{ $req->event->club->name ?? '-' }}</small></td>
                     <td class="text-end">{{ number_format($req->amount_requested) }}đ</td>
                     <td class="text-end">{{ number_format($req->approved_amount ?? 0) }}đ</td>
+                    <td class="text-end">{{ number_format($req->amount_disbursed ?? 0) }}đ</td>
                     <td>{{ Str::limit($req->note, 50) }}</td>
                     <td>
                         @if($req->status === 'pending_disbursement')<span class="badge bg-warning text-dark">Chờ giải ngân</span>
@@ -136,52 +138,45 @@ $pendingCount = $transactions->where('status', 'pending_disbursement')->count();
                         @endif
                     </td>
                     <td>{{ $req->requestedBy->name ?? '-' }}</td>
-                    <td>{{ $req->approvedBy->name ?? '-' }}</td>
                     <td>{{ $req->created_at->format('d/m/Y H:i') }}</td>
-                   <td>
-    <!-- Xem -->
-    <a href="{{ route('admin.event_fund_requests.show', $req) }}" 
-       class="btn btn-info btn-sm" title="Xem">
-        <i class="fas fa-eye"></i>
-    </a>
-
-    @if(Auth::user()->role === 'admin')
-        @if($req->status === 'pending_disbursement')
-            <!-- Duyệt -->
-            <a href="{{ route('admin.event_fund_requests.approve', $req->id) }}" 
-               class="btn btn-success btn-sm" title="Duyệt">
-                <i class="fas fa-check"></i>
-            </a>
-
-            <!-- Từ chối -->
-            <a href="{{ route('admin.event_fund_requests.reject', $req->id) }}" 
-               class="btn btn-danger btn-sm" title="Từ chối">
-                <i class="fas fa-times"></i>
-            </a>
-        @elseif($req->status === 'disbursing')
-            <!-- Cập nhật giải ngân -->
-            <a href="{{ route('admin.event_fund_requests.update_disbursement', $req->id) }}" 
-               class="btn btn-info btn-sm" title="Cập nhật giải ngân">
-                <i class="fas fa-file-upload"></i>
-            </a>
-        @endif
-    @endif
-</td>
-
+                    <td>
+                        <a href="{{ route('admin.event_fund_requests.show', $req) }}" 
+                           class="btn btn-info btn-sm" title="Xem">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        @if(Auth::user()->role === 'admin')
+                            @if($req->status === 'pending_disbursement')
+                                <a href="{{ route('admin.event_fund_requests.approve', $req->id) }}" 
+                                   class="btn btn-success btn-sm" title="Duyệt">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <a href="{{ route('admin.event_fund_requests.reject', $req->id) }}" 
+                                   class="btn btn-danger btn-sm" title="Từ chối">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            @elseif($req->status === 'disbursing')
+                                <form action="{{ route('admin.event_fund_requests.disbursing', $req->id) }}" method="GET" style="display:inline-block;">
+                                    <button type="submit" class="btn btn-info btn-sm" title="Cập nhật giải ngân">
+                                        <i class="fas fa-file-upload"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        @endif
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
         </table>
 
-        {{-- Phân trang với filter --}}
+        {{-- Phân trang --}}
         <div class="d-flex justify-content-center">
             {{ $transactions->appends(request()->query())->links() }}
         </div>
     </div>
 </div>
+
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
 $(document).ready(function() {
     $('.select2').select2({
@@ -193,5 +188,3 @@ $(document).ready(function() {
 </script>
 
 @endsection
-
-

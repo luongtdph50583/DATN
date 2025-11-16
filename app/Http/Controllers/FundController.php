@@ -18,22 +18,32 @@ class FundController extends Controller
     /**
      * Display a listing of the resource.
      */
- public function index(Request $request)
+  public function index(Request $request)
 {
+    // Query chính, load quan hệ
     $query = EventFundRequest::with(['event.club', 'requestedBy', 'approvedBy', 'disbursedBy'])
         ->orderBy('created_at', 'desc');
 
+    // Tổng chi: tổng approved_amount của các giao dịch đã duyệt hoặc đang giải ngân
+    $totalExpense = EventFundRequest::whereIn('status', ['disbursing', 'disbursed'])
+        ->sum('approved_amount');
+
+    // Số lượng đang chờ giải ngân
+    $pendingCount = EventFundRequest::where('status', 'pending_disbursement')->count();
+
+    // Số lượng đang giải ngân
+    $disbursingCount = EventFundRequest::where('status', 'disbursing')->count();
+
     // Lọc theo CLB
     if ($request->filled('club_id')) {
-        $query->whereHas('event', function($q) use ($request) {
+        $query->whereHas('event', function ($q) use ($request) {
             $q->where('club_id', $request->club_id);
         });
     }
 
     // Lọc theo trạng thái
     if ($request->filled('status')) {
-        // Chỉ nhận 2 trạng thái: pending_disbursement (Chờ giải ngân) và disbursed (Đã giải ngân)
-        if (in_array($request->status, ['pending_disbursement','disbursed'])) {
+        if (in_array($request->status, ['pending_disbursement', 'disbursing', 'disbursed'])) {
             $query->where('status', $request->status);
         }
     }
@@ -45,14 +55,20 @@ class FundController extends Controller
     if ($request->filled('date_to')) {
         $query->whereDate('created_at', '<=', $request->date_to);
     }
+$totalDisbursedAmount = EventFundRequest::whereIn('status', ['disbursing', 'disbursed'])
+    ->sum('amount_disbursed');
 
     $transactions = $query->paginate(20);
 
-    $clubs = Club::all(); // để hiển thị select filter
+    $clubs = Club::all(); // dùng cho filter
 
     return view('admin.funds.index', [
         'transactions' => $transactions,
         'clubs' => $clubs,
+        'totalExpense' => $totalExpense,
+          'totalDisbursedAmount' => $totalDisbursedAmount, // tổng số tiền đã giải ngân
+        'pendingCount' => $pendingCount,
+        'disbursingCount' => $disbursingCount, // thêm biến này cho card "Đang giải ngân"
     ]);
 }
 

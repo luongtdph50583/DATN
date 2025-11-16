@@ -28,7 +28,6 @@ use App\Http\Controllers\Admin\{
     ClubUpdateLogController,
     ClubRequestUpdateController,
     TrashController
-
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -57,7 +56,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', 'edit')->name('edit');
             Route::patch('/', 'update')->name('update');
             Route::delete('/', 'destroy')->name('destroy');
-
         });
 });
 
@@ -134,25 +132,25 @@ Route::prefix('admin')
             ->prefix('members')
             ->as('members.')
             ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
 
-            // ⚠️ Các route đặc biệt PHẢI đặt trước route có {member}
-            Route::get('/trashed', 'trashed')->name('trashed');
-            Route::post('/{id}/restore', 'restore')->name('restore');
-            Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
+                // ⚠️ Các route đặc biệt PHẢI đặt trước route có {member}
+                Route::get('/trashed', 'trashed')->name('trashed');
+                Route::post('/{id}/restore', 'restore')->name('restore');
+                Route::delete('/{id}/force-delete', 'forceDelete')->name('forceDelete');
 
-            // Các route có {member} đặt sau cùng
-            Route::get('/{member}', 'show')->name('show');
-            Route::get('/{member}/edit', 'edit')->name('edit');
-            Route::put('/{member}', 'update')->name('update');
-            Route::delete('/{member}', 'destroy')->name('destroy');
-            Route::post('/{member}/toggle-status', 'toggleStatus')->name('toggleStatus');
+                // Các route có {member} đặt sau cùng
+                Route::get('/{member}', 'show')->name('show');
+                Route::get('/{member}/edit', 'edit')->name('edit');
+                Route::put('/{member}', 'update')->name('update');
+                Route::delete('/{member}', 'destroy')->name('destroy');
+                Route::post('/{member}/toggle-status', 'toggleStatus')->name('toggleStatus');
 
-            // Export
-            Route::get('/export/excel', 'exportExcel')->name('export.excel');
-        });
+                // Export
+                Route::get('/export/excel', 'exportExcel')->name('export.excel');
+            });
 
 
         // =========================================================
@@ -182,7 +180,7 @@ Route::prefix('admin')
                 // ✅ ⚡ Đặt các route tìm kiếm và filter TRƯỚC route {club}
                 Route::get('/members/search', 'searchMembers')->name('members.search');
                 Route::post('/search', 'searchJson')->name('search');
-        Route::get('/{club}/members/filter', 'filterMembers')->name('members.filter');
+                Route::get('/{club}/members/filter', 'filterMembers')->name('members.filter');
 
                 // ✅ CRUD chính
                 Route::get('/', 'index')->name('index');
@@ -269,24 +267,24 @@ Route::prefix('admin')
             ->prefix('posts')
             ->as('posts.')
             ->group(function () {
-            Route::get('/trash', 'trash')->name('trash');                 // Danh sách bài viết đã xóa
-            Route::get('/', 'index')->name('index');                      // Danh sách bài viết
-            Route::get('/create', 'create')->name('create');              // Form tạo bài viết
-            Route::post('/', 'store')->name('store');                     // Lưu bài viết mới
-            Route::post('/filter', 'filter')->name('filter');             // Lọc bài viết
-            Route::post('/upload-image', 'uploadImage')->name('uploadImage'); // Upload ảnh từ editor
-            Route::post('/upload-file', 'uploadFile')->name('uploadFile');    // Upload file từ editor
+                Route::get('/trash', 'trash')->name('trash');                 // Danh sách bài viết đã xóa
+                Route::get('/', 'index')->name('index');                      // Danh sách bài viết
+                Route::get('/create', 'create')->name('create');              // Form tạo bài viết
+                Route::post('/', 'store')->name('store');                     // Lưu bài viết mới
+                Route::post('/filter', 'filter')->name('filter');             // Lọc bài viết
+                Route::post('/upload-image', 'uploadImage')->name('uploadImage'); // Upload ảnh từ editor
+                Route::post('/upload-file', 'uploadFile')->name('uploadFile');    // Upload file từ editor
 
-            Route::get('/{id}', 'show')->name('show');                    // Xem chi tiết
-            Route::get('/{id}/edit', 'edit')->name('edit');               // Form sửa
-            Route::put('/{id}', 'update')->name('update');                // Cập nhật bài viết
-            Route::delete('/{id}', 'destroy')->name('destroy');           // Xóa mềm bài viết
-            Route::patch('/{id}/toggle', 'toggle')->name('toggle');       // Ẩn/hiện bài viết
-            Route::put('/{id}/approve', 'approve')->name('approve');      // Duyệt bài viết
-            Route::put('/{id}/reject', 'reject')->name('reject');         // Từ chối bài viết
-            Route::patch('/{id}/restore', 'restore')->name('restore');    // Khôi phục bài viết
-            Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // Xóa vĩnh viễn
-        });
+                Route::get('/{id}', 'show')->name('show');                    // Xem chi tiết
+                Route::get('/{id}/edit', 'edit')->name('edit');               // Form sửa
+                Route::put('/{id}', 'update')->name('update');                // Cập nhật bài viết
+                Route::delete('/{id}', 'destroy')->name('destroy');           // Xóa mềm bài viết
+                Route::patch('/{id}/toggle', 'toggle')->name('toggle');       // Ẩn/hiện bài viết
+                Route::put('/{id}/approve', 'approve')->name('approve');      // Duyệt bài viết
+                Route::put('/{id}/reject', 'reject')->name('reject');         // Từ chối bài viết
+                Route::patch('/{id}/restore', 'restore')->name('restore');    // Khôi phục bài viết
+                Route::delete('/{id}/force', 'forceDelete')->name('forceDelete'); // Xóa vĩnh viễn
+            });
 
         // =========================================================
         // 7. DOCUMENT & HISTORY
@@ -295,8 +293,8 @@ Route::prefix('admin')
             ->prefix('history')
             ->as('history.')
             ->group(function () {
-            Route::get('/', 'index')->name('index');
-        });
+                Route::get('/', 'index')->name('index');
+            });
 
 
 
@@ -332,14 +330,14 @@ Route::prefix('admin')
             ->prefix('comments')
             ->as('comments.')
             ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/trashed', 'trashed')->name('trashed'); // danh sách đã xóa
-            Route::get('/{comment}', 'show')->name('show');
-            Route::delete('/{comment}', 'destroy')->name('destroy'); // xóa mềm
-            Route::post('/{comment}/toggle-status', 'toggleStatus')->name('toggleStatus');
-            Route::post('/{comment}/restore', 'restore')->name('restore'); // khôi phục
-            Route::delete('/{comment}/force-delete', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
-        });
+                Route::get('/', 'index')->name('index');
+                Route::get('/trashed', 'trashed')->name('trashed'); // danh sách đã xóa
+                Route::get('/{comment}', 'show')->name('show');
+                Route::delete('/{comment}', 'destroy')->name('destroy'); // xóa mềm
+                Route::post('/{comment}/toggle-status', 'toggleStatus')->name('toggleStatus');
+                Route::post('/{comment}/restore', 'restore')->name('restore'); // khôi phục
+                Route::delete('/{comment}/force-delete', 'forceDelete')->name('forceDelete'); // xóa vĩnh viễn
+            });
 
 
         Route::controller(NotificationController::class)
@@ -366,14 +364,14 @@ Route::prefix('admin')
             ->prefix('stats')
             ->as('stats.')
             ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/events', 'events')->name('events');
-            Route::get('/clubs', 'clubs')->name('clubs');
-            Route::get('/members', 'members')->name('members');
-            Route::get('/accounts', 'accounts')->name('accounts');
-            Route::get('/posts', 'posts')->name('posts');
-            Route::get('/funds', 'fundRequests')->name('funds');
-        });
+                Route::get('/', 'index')->name('index');
+                Route::get('/events', 'events')->name('events');
+                Route::get('/clubs', 'clubs')->name('clubs');
+                Route::get('/members', 'members')->name('members');
+                Route::get('/accounts', 'accounts')->name('accounts');
+                Route::get('/posts', 'posts')->name('posts');
+                Route::get('/funds', 'fundRequests')->name('funds');
+            });
 
         Route::controller(ClubReportController::class)
             ->prefix('clubs/{id}/report')
@@ -408,17 +406,17 @@ Route::prefix('admin')
             ->prefix('funds')
             ->as('funds.')
             ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/create', 'create')->name('create');
-            Route::post('/', 'store')->name('store');
-            Route::get('/{fund}', 'show')->name('show');
-            Route::get('/{fund}/edit', 'edit')->name('edit');
-            Route::put('/{fund}', 'update')->name('update');
-            Route::delete('/{fund}', 'destroy')->name('destroy');
-            Route::post('/{fund}/approve', 'approve')->name('approve');
-            Route::post('/{fund}/reject', 'reject')->name('reject');
-            Route::get('/api/summary', 'summary')->name('summary');
-        });
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{fund}', 'show')->name('show');
+                Route::get('/{fund}/edit', 'edit')->name('edit');
+                Route::put('/{fund}', 'update')->name('update');
+                Route::delete('/{fund}', 'destroy')->name('destroy');
+                Route::post('/{fund}/approve', 'approve')->name('approve');
+                Route::post('/{fund}/reject', 'reject')->name('reject');
+                Route::get('/api/summary', 'summary')->name('summary');
+            });
 
         Route::resource('event_fund_requests', EventFundRequestController::class);
         Route::resource('event_fund_settlements', EventFundSettlementController::class);
@@ -436,6 +434,22 @@ Route::prefix('admin')
         // Xử lý POST từ chối
         Route::post('event_fund_requests/{id}/reject', [EventFundRequestController::class, 'reject'])
             ->name('event_fund_requests.reject.submit');
+        Route::get(
+            '/event-fund-requests/{id}/disbursing',
+            [EventFundRequestController::class, 'disbursing']
+        )
+            ->name('event_fund_requests.disbursing');
+
+        Route::post(
+            '/event-fund-requests/{id}/update-disbursement',
+            [EventFundRequestController::class, 'updateDisbursement']
+        )
+            ->name('event_fund_requests.updateDisbursement');
+
+Route::post('/event-fund-requests/{id}/complete-disbursement', 
+    [EventFundRequestController::class, 'completeDisbursement'])
+    ->name('event_fund_requests.completeDisbursement');
+
 
 
         Route::controller(PlanController::class)
@@ -460,9 +474,9 @@ Route::prefix('admin')
             ->prefix('club-update-logs')
             ->as('club_update_logs.')
             ->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('/{log}', 'show')->name('show');
-        });
+                Route::get('/', 'index')->name('index');
+                Route::get('/{log}', 'show')->name('show');
+            });
 
         // =========================================================
         // 12. TRASH MEDIA
