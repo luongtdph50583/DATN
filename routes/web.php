@@ -65,7 +65,8 @@ Route::prefix('admin')
         // 1. USER MANAGEMENT
         // =========================================================
         // USER MANAGEMENT – ĐÃ FIX 100%
-
+    Route::resource('users', UserController::class);
+    
     Route::get('users/deleted', [UserController::class, 'deleted'])
         ->name('users.deleted');
     Route::delete('users/{user}/force-delete', [UserController::class, 'forceDelete'])
@@ -75,7 +76,7 @@ Route::prefix('admin')
     Route::delete('users/{user}/softdelete', [UserController::class, 'softDelete'])
         ->name('users.softdelete');
 
-    Route::resource('users', UserController::class);
+    
 
     // Toggle status
     Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
