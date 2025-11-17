@@ -47,6 +47,7 @@ public function members()
 }
 
 
+
     /** Bài viết CLB */
     public function posts()
     {

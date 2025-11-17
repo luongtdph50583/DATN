@@ -17,35 +17,73 @@
             </div>
 
             <!-- Sidebar Menu -->
-      <ul class="admin-menu list-unstyled">
-    <li><a href="{{ url('admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-    <li><a href="{{ url('admin/posts') }}"><i class="fas fa-newspaper"></i> Posts</a></li>
-    <li><a href="{{ url('admin/users') }}"><i class="fas fa-users"></i> Users</a></li>
-    <li><a href="{{ url('admin/settings') }}"><i class="fas fa-cogs"></i> Settings</a></li>
+            <ul class="admin-menu list-unstyled">
+                <li><a href="{{ url('/') }}"><i class="fas fa-home"></i> Home</a></li>
 
-    @auth
-        <!-- Logout chỉ hiển thị khi đã đăng nhập -->
-        <li>
-            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">
-                @csrf
-            </form>
-        </li>
-    @endauth
+                @auth
+                    @php
+                        $managedClubs = Auth::user()->getManagedClubs(); // CLB user là chủ nhiệm
+                        $joinedClubs = Auth::user()->getJoinedClubs();   // CLB user tham gia
+                        $memberClubs = $joinedClubs->filter(fn($club) => !$managedClubs->contains('id', $club->id));
+                    @endphp
 
-    @guest
-        <!-- Login chỉ hiển thị khi chưa đăng nhập -->
-        <li>
-            <a href="{{ route('login') }}">
-                <i class="fas fa-sign-in-alt"></i> Login
-            </a>
-        </li>
-    @endguest
-</ul>
+                    {{-- CLB quản lý --}}
+                    @if($managedClubs->count() > 0)
+                        <li class="menu-section">
+                            <a href="#managedClubsSubmenu" data-bs-toggle="collapse" aria-expanded="false"
+                                class="dropdown-toggle">
+                                <i class="fas fa-cog"></i> Quản lý CLB của tôi
+                            </a>
+                            <ul class="collapse list-unstyled" id="managedClubsSubmenu">
+                                @foreach($managedClubs as $club)
+                                    <li>
+                                        {{-- <a href="{{ route('club_manager.dashboard', ['club_id' => $club->id]) }}"> --}}
+                                            <i class="fas fa-circle"></i> {{ $club->name }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @endif
 
+                    {{-- CLB thành viên --}}
+                    @if($memberClubs->count() > 0)
+                        <li class="menu-section">
+                            <a href="#memberClubsSubmenu" data-bs-toggle="collapse" aria-expanded="false"
+                                class="dropdown-toggle">
+                                <i class="fas fa-users"></i> CLB của tôi
+                            </a>
+                            <ul class="collapse list-unstyled" id="memberClubsSubmenu">
+                                @foreach($memberClubs as $club)
+                                    <li>
+                                        <a href="{{ route('club.member.view', ['club_id' => $club->id]) }}">
+                                            <i class="fas fa-circle"></i> {{ $club->name }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @endif
 
+                    {{-- Logout --}}
+                    <li>
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">
+                            @csrf
+                        </form>
+                    </li>
+                @endauth
+
+                @guest
+                    <li>
+                        <a href="{{ route('login') }}">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                @endguest
+            </ul>
 
             <!-- Optional Sidebar Info -->
             <div class="offcanvas__contact mt-4">
