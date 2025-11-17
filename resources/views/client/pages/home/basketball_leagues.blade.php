@@ -12,14 +12,14 @@
                         <h3>Junior League Divisions</h3>
                     </div>
                     <div class="themb">
-                        <img src="assets/img/home-2/feature/feature-01.jpg" alt="img">
+                        <img src="assets1/img/home-2/feature/feature-01.jpg" alt="img">
                     </div>
                 </div>
             </div>
             <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".5s">
                 <div class="basketball-leagues-items">
                     <div class="themb">
-                        <img src="assets/img/home-2/feature/feature-02.jpg" alt="img">
+                        <img src="assets1/img/home-2/feature/feature-02.jpg" alt="img">
                     </div>
                     <div class="content">
                         <h3>State Championship League</h3>
@@ -32,14 +32,14 @@
                         <h3>Citywide Basketball Tournament</h3>
                     </div>
                     <div class="themb">
-                        <img src="assets/img/home-2/feature/feature-03.jpg" alt="img">
+                        <img src="assets1/img/home-2/feature/feature-03.jpg" alt="img">
                     </div>
                 </div>
             </div>
             <div class="col-xl-3 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".9s">
                 <div class="basketball-leagues-items">
                     <div class="themb">
-                        <img src="assets/img/home-2/feature/feature-04.jpg" alt="img">
+                        <img src="assets1/img/home-2/feature/feature-04.jpg" alt="img">
                     </div>
                     <div class="content">
                         <h3>Regional Premier League</h3>

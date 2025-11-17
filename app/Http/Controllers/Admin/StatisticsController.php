@@ -554,119 +554,127 @@ public function accountsPdf(Request $request)
     return $pdf->download('thongke_taikhoan_' . now()->format('Ymd_His') . '.pdf');
 }
 public function fundRequests(Request $request)
-    {
-        // Reset filter
-        if ($request->has('reset')) {
-            return redirect()->route('admin.stats.funds');
-        }
-
-        $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
-        $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
-        $status    = $request->input('status'); // pending_disbursement, disbursing, disbursed, rejected
-        $selectedClub = $request->input('club'); // filter theo CLB
-
-        $allClubs = Club::orderBy('name')->get();
-
-        // Build query
-        $query = EventFundRequest::with(['event.club', 'requestedBy'])
-            ->whereBetween('created_at', [$startDate, $endDate]);
-
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        if ($selectedClub) {
-            $query->whereHas('event', fn($q) => $q->where('club_id', $selectedClub));
-        }
-
-        // Pagination + preserve filters
-        $fundRequests = $query->orderByDesc('created_at')->paginate(10)->appends($request->all());
-
-        // Tổng quan
-        $totalRequests = $query->count();
-        $totalRequestedAmount = $query->sum('amount_requested');
-        $totalApprovedAmount  = $query->sum('approved_amount');
-
-        // Biểu đồ theo tháng
-        $labels = [];
-        $requestsPerMonth = [];
-        $period = CarbonPeriod::create($startDate, '1 month', $endDate);
-
-        foreach ($period as $date) {
-            $labels[] = "Tháng {$date->month}/{$date->year}";
-            $requestsPerMonth[] = EventFundRequest::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->when($status, fn($q) => $q->where('status', $status))
-                ->when($selectedClub, fn($q) => $q->whereHas('event', fn($q2) => $q2->where('club_id', $selectedClub)))
-                ->count();
-        }
-
-        return view('admin.statistics-and-reports.fund-requests', compact(
-            'fundRequests', 'totalRequests', 'totalRequestedAmount', 'totalApprovedAmount',
-            'startDate', 'endDate', 'status', 'allClubs', 'selectedClub', 'labels', 'requestsPerMonth'
-        ));
+{
+    // Reset filter
+    if ($request->has('reset')) {
+        return redirect()->route('admin.stats.funds');
     }
+
+    $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
+    $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
+    $status    = $request->input('status'); // pending_disbursement, disbursing, disbursed, rejected
+    $selectedClub = $request->input('club'); // filter theo CLB
+
+    $allClubs = Club::orderBy('name')->get();
+
+    // Build query
+    $query = EventFundRequest::with(['event.club', 'requestedBy'])
+        ->whereBetween('created_at', [$startDate, $endDate]);
+
+    if ($status) {
+        $query->where('status', $status);
+    }
+
+    if ($selectedClub) {
+        $query->whereHas('event', fn($q) => $q->where('club_id', $selectedClub));
+    }
+
+    // Pagination + preserve filters
+    $fundRequests = $query->orderByDesc('created_at')->paginate(10)->appends($request->all());
+
+    // Tổng quan
+    $totalRequests = $query->count();
+    $totalRequestedAmount = $query->sum('amount_requested');
+    $totalApprovedAmount  = $query->sum('approved_amount');
+    $totalDisbursedAmount = $query->sum('amount_disbursed'); // ✅ Tổng số tiền đã giải ngân
+    $disbursingCount = $query->where('status', 'disbursing')->count(); // ✅ Số lượng đang giải ngân
+
+    // Biểu đồ theo tháng
+    $labels = [];
+    $requestsPerMonth = [];
+    $period = CarbonPeriod::create($startDate, '1 month', $endDate);
+
+    foreach ($period as $date) {
+        $labels[] = "Tháng {$date->month}/{$date->year}";
+        $requestsPerMonth[] = EventFundRequest::whereYear('created_at', $date->year)
+            ->whereMonth('created_at', $date->month)
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($selectedClub, fn($q) => $q->whereHas('event', fn($q2) => $q2->where('club_id', $selectedClub)))
+            ->count();
+    }
+
+    return view('admin.statistics-and-reports.fund-requests', compact(
+        'fundRequests', 'totalRequests', 'totalRequestedAmount', 'totalApprovedAmount',
+        'totalDisbursedAmount', 'disbursingCount', // ✅ truyền sang view
+        'startDate', 'endDate', 'status', 'allClubs', 'selectedClub', 'labels', 'requestsPerMonth'
+    ));
+}
+
 
     /**
      * Xuất PDF
      */
-    public function fundsPdf(Request $request)
-    {
-        $startDate = $request->get('start_date') ?: now()->startOfYear()->toDateString();
-        $endDate   = $request->get('end_date') ?: now()->endOfYear()->toDateString();
-        $status    = $request->get('status');
-        $selectedClub = $request->get('club');
+ public function fundsPdf(Request $request)
+{
+    $startDate = $request->get('start_date') ?: now()->startOfYear()->toDateString();
+    $endDate   = $request->get('end_date') ?: now()->endOfYear()->toDateString();
+    $status    = $request->get('status');
+    $selectedClub = $request->get('club');
 
-        $query = EventFundRequest::with(['event.club', 'requestedBy'])
-            ->whereBetween('created_at', [$startDate, $endDate]);
+    $query = EventFundRequest::with(['event.club', 'requestedBy'])
+        ->whereBetween('created_at', [$startDate, $endDate]);
 
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        if ($selectedClub) {
-            $query->whereHas('event', fn($q) => $q->where('club_id', $selectedClub));
-        }
-
-        // Lấy tất cả dữ liệu, không phân trang
-        $fundRequests = $query->orderByDesc('created_at')->get();
-
-        // Tổng quan
-        $totalRequests = $fundRequests->count();
-        $totalRequestedAmount = $fundRequests->sum('amount_requested');
-        $totalApprovedAmount  = $fundRequests->sum('approved_amount');
-
-        // Biểu đồ theo tháng
-        $start = Carbon::parse($startDate)->startOfMonth();
-        $end   = Carbon::parse($endDate)->endOfMonth();
-        $period = CarbonPeriod::create($start, '1 month', $end);
-
-        $monthlyData = $fundRequests->groupBy(fn($item) => Carbon::parse($item->created_at)->format('Y-m'));
-
-        $labels = [];
-        $requestsPerMonth = [];
-        foreach ($period as $date) {
-            $key = $date->format('Y-m');
-            $labels[] = 'Tháng '.$date->month.'/'.$date->year;
-            $requestsPerMonth[] = isset($monthlyData[$key]) ? count($monthlyData[$key]) : 0;
-        }
-
-        // Xuất PDF
-        $pdf = Pdf::loadView('admin.statistics-and-reports.funds_pdf', [
-            'fundRequests' => $fundRequests,
-            'totalRequests' => $totalRequests,
-            'totalRequestedAmount' => $totalRequestedAmount,
-            'totalApprovedAmount' => $totalApprovedAmount,
-            'labels' => $labels,
-            'requestsPerMonth' => $requestsPerMonth,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'status' => $status,
-            'selectedClub' => $selectedClub
-        ]);
-
-        return $pdf->download('fund_requests.pdf');
+    if ($status) {
+        $query->where('status', $status);
     }
+
+    if ($selectedClub) {
+        $query->whereHas('event', fn($q) => $q->where('club_id', $selectedClub));
+    }
+
+    $fundRequests = $query->orderByDesc('created_at')->get();
+
+    // Tổng quan
+    $totalRequests = $fundRequests->count();
+    $totalRequestedAmount = $fundRequests->sum('amount_requested');
+    $totalApprovedAmount  = $fundRequests->sum('approved_amount');
+    $totalDisbursedAmount = $fundRequests->sum('amount_disbursed'); // ✅ Tổng số tiền đã giải ngân
+    $disbursingCount = $fundRequests->where('status', 'disbursing')->count(); // ✅ Số lượng đang giải ngân
+
+    // Biểu đồ theo tháng
+    $start = Carbon::parse($startDate)->startOfMonth();
+    $end   = Carbon::parse($endDate)->endOfMonth();
+    $period = CarbonPeriod::create($start, '1 month', $end);
+
+    $monthlyData = $fundRequests->groupBy(fn($item) => Carbon::parse($item->created_at)->format('Y-m'));
+
+    $labels = [];
+    $requestsPerMonth = [];
+    foreach ($period as $date) {
+        $key = $date->format('Y-m');
+        $labels[] = 'Tháng '.$date->month.'/'.$date->year;
+        $requestsPerMonth[] = isset($monthlyData[$key]) ? count($monthlyData[$key]) : 0;
+    }
+
+    // Xuất PDF
+    $pdf = Pdf::loadView('admin.statistics-and-reports.funds_pdf', [
+        'fundRequests' => $fundRequests,
+        'totalRequests' => $totalRequests,
+        'totalRequestedAmount' => $totalRequestedAmount,
+        'totalApprovedAmount' => $totalApprovedAmount,
+        'totalDisbursedAmount' => $totalDisbursedAmount, // ✅ thêm
+        'disbursingCount' => $disbursingCount,           // ✅ thêm
+        'labels' => $labels,
+        'requestsPerMonth' => $requestsPerMonth,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'status' => $status,
+        'selectedClub' => $selectedClub
+    ]);
+
+    return $pdf->download('fund_requests.pdf');
+}
+
 
 public function posts(Request $request)
 {

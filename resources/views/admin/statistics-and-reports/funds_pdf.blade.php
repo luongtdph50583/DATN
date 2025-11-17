@@ -20,7 +20,7 @@
     <p>
         Tổng yêu cầu: {{ $totalRequests }} <br>
         Tổng tiền yêu cầu: {{ number_format($totalRequestedAmount) }} VNĐ <br>
-        Tổng tiền giải ngân: {{ number_format($totalApprovedAmount) }} VNĐ
+        Tổng tiền đã giải ngân: {{ number_format($totalDisbursedAmount) }} VNĐ <!-- ✅ sửa -->
     </p>
 
     <table>
@@ -30,7 +30,7 @@
                 <th>Sự kiện</th>
                 <th>Người yêu cầu</th>
                 <th>Số tiền yêu cầu</th>
-                <th>Số tiền giải ngân</th>
+                <th>Số tiền đã giải ngân</th> <!-- ✅ sửa -->
                 <th>Trạng thái</th>
                 <th>Ngày tạo</th>
             </tr>
@@ -42,7 +42,7 @@
                 <td>{{ $f->event->name ?? '-' }}</td>
                 <td>{{ $f->requestedBy->name ?? '-' }}</td>
                 <td>{{ number_format($f->amount_requested) }} VNĐ</td>
-                <td>{{ number_format($f->approved_amount ?? 0) }} VNĐ</td>
+                <td>{{ number_format($f->amount_disbursed ?? 0) }} VNĐ</td> <!-- ✅ hiển thị số tiền thực tế -->
                 <td>
                     @php
                         $statusVN = match($f->status) {

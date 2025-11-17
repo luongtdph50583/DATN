@@ -52,8 +52,8 @@
                 </tr>
             </table>
 
-            <!-- FORM DUYỆT + GIẢI NGÂN -->
-            <form action="{{ route('admin.event_fund_requests.approve', $request->id) }}" method="POST" enctype="multipart/form-data">
+            <!-- FORM DUYỆT -->
+            <form action="{{ route('admin.event_fund_requests.approve', $request->id) }}" method="POST">
                 @csrf
 
                 <div class="mb-3">
@@ -66,54 +66,30 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-
-             <div class="mb-3">
-    <label for="disbursed_by" class="form-label">Người giải ngân</label>
-    <select name="disbursed_by" id="disbursed_by" class="form-select @error('disbursed_by') is-invalid @enderror" 
-        {{ auth()->user()->role !== 'admin' ? 'disabled' : '' }} required>
-        <option value="">-- Chọn người giải ngân --</option>
-        @foreach(\App\Models\User::where('role', 'admin')->get() as $user)
-            <option value="{{ $user->id }}" 
-                {{ old('disbursed_by', $request->disbursed_by) == $user->id ? 'selected' : '' }}>
-                {{ $user->name }}
-            </option>
-        @endforeach
-    </select>
-    @error('disbursed_by')
+          <div class="mb-3">
+    <label for="disbursement_start" class="form-label">Thời gian giải ngân từ ngày</label>
+    <input type="date" name="disbursement_start" id="disbursement_start"
+           class="form-control @error('disbursement_start') is-invalid @enderror"
+           value="{{ old('disbursement_start', $request->disbursement_start ? \Illuminate\Support\Carbon::parse($request->disbursement_start)->format('Y-m-d') : '') }}">
+    @error('disbursement_start')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
 </div>
 
-
-                <div class="mb-3">
-                    <label for="disbursement_date" class="form-label">Ngày giải ngân</label>
-                    <input type="datetime-local" name="disbursement_date" id="disbursement_date"
-                           class="form-control @error('disbursement_date') is-invalid @enderror"
-                           value="{{ old('disbursement_date', $request->disbursement_date ? $request->disbursement_date->format('Y-m-d\TH:i') : '') }}"
-                           required>
-                    @error('disbursement_date')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-               <div class="mb-3">
-    <label for="disbursement_proof" class="form-label">Minh chứng giải ngân</label>
-    <input type="file" name="disbursement_proof[]" id="disbursement_proof" class="form-control" multiple>
-    @if($request->disbursement_proof)
-        <small class="text-muted">Hiện có:
-            @foreach(json_decode($request->disbursement_proof) as $file)
-                <a href="{{ asset('storage/'.$file) }}" target="_blank">Xem</a>@if(!$loop->last), @endif
-            @endforeach
-        </small>
-    @endif
-    @error('disbursement_proof')
+<div class="mb-3">
+    <label for="disbursement_end" class="form-label">Đến ngày</label>
+    <input type="date" name="disbursement_end" id="disbursement_end"
+           class="form-control @error('disbursement_end') is-invalid @enderror"
+           value="{{ old('disbursement_end', $request->disbursement_end ? \Illuminate\Support\Carbon::parse($request->disbursement_end)->format('Y-m-d') : '') }}">
+    @error('disbursement_end')
         <div class="invalid-feedback">{{ $message }}</div>
     @enderror
 </div>
+
 
 
                 <button type="submit" class="btn btn-success">
-                    <i class="fas fa-check me-2"></i>Duyệt và giải ngân
+                    <i class="fas fa-check me-2"></i>Duyệt yêu cầu
                 </button>
                 <a href="{{ route('admin.event_fund_requests.index') }}" class="btn btn-secondary ms-2">
                     <i class="fas fa-arrow-left me-2"></i>Quay lại

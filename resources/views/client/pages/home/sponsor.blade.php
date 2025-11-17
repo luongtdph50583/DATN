@@ -12,47 +12,47 @@
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-right bb-left bb-top bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-1.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-1.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-right bb-top bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-2.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-2.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-right bb-top bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-3.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-3.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-right bb-top bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-4.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-4.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-left bb-right bb-top bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-5.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-5.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-right bb-top bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-6.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-6.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-right bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-7.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-7.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-right bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-8.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-8.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">
                     <div class="sponsor-image bb-right bb-bottom">
-                        <img src="assets/img/home-2/sponsor/s-9.png" alt="img">
+                        <img src="assets1/img/home-2/sponsor/s-9.png" alt="img">
                     </div>
                 </div>
                 <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-6 col-sm-6">

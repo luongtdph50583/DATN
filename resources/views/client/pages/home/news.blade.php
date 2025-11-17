@@ -1,10 +1,10 @@
 <section class="news-section-2 fix section-padding bg-cover"
-    style="background-image: url('assets/img/home-2/news/news-bg.jpg');">
+    style="background-image: url('assets1/img/home-2/news/news-bg.jpg');">
     <div class="vec-dot">
-        <img src="assets/img/home-2/table/vec-dot.png" alt="img">
+        <img src="assets1/img/home-2/table/vec-dot.png" alt="img">
     </div>
     <div class="vec-circle">
-        <img src="assets/img/home-2/table/vec.png" alt="img">
+        <img src="assets1/img/home-2/table/vec.png" alt="img">
     </div>
     <div class="container">
         <div class="row g-4">
@@ -21,7 +21,7 @@
                 </div>
                 <div class="news-box-items-2 wow fadeInUp" data-wow-delay=".3s">
                     <div class="thumb">
-                        <img src="assets/img/home-2/news/news-01.jpg" alt="">
+                        <img src="assets1/img/home-2/news/news-01.jpg" alt="">
                         <span class="post-box">
                             HIGHLIGHTS
                         </span>
@@ -67,7 +67,7 @@
                                 <tr>
                                     <td class="rank">01</td>
                                     <td class="team">
-                                        <img src="assets/img/home-2/table/t-1.png" alt="img">
+                                        <img src="assets1/img/home-2/table/t-1.png" alt="img">
                                         <span class="team-name">ATLANTA</span>
                                     </td>
                                     <td class="stats">24</td>
@@ -77,7 +77,7 @@
                                 <tr>
                                     <td class="rank">02</td>
                                     <td class="team">
-                                        <img src="assets/img/home-2/table/t-2.png" alt="img">
+                                        <img src="assets1/img/home-2/table/t-2.png" alt="img">
                                         <span class="team-name">NETS</span>
                                     </td>
                                     <td class="stats">18</td>
@@ -87,7 +87,7 @@
                                 <tr>
                                     <td class="rank">03</td>
                                     <td class="team">
-                                        <img src="assets/img/home-2/table/t-3.png" alt="img">
+                                        <img src="assets1/img/home-2/table/t-3.png" alt="img">
                                         <span class="team-name">EASTERN</span>
                                     </td>
                                     <td class="stats">18</td>
@@ -97,7 +97,7 @@
                                 <tr>
                                     <td class="rank">04</td>
                                     <td class="team">
-                                        <img src="assets/img/home-2/table/t-4.png" alt="img">
+                                        <img src="assets1/img/home-2/table/t-4.png" alt="img">
                                         <span class="team-name">RAPTORS</span>
                                     </td>
                                     <td class="stats">17</td>
@@ -107,7 +107,7 @@
                                 <tr>
                                     <td class="rank">05</td>
                                     <td class="team">
-                                        <img src="assets/img/home-2/table/t-5.png" alt="img">
+                                        <img src="assets1/img/home-2/table/t-5.png" alt="img">
                                         <span class="team-name">MILWAUK..</span>
                                     </td>
                                     <td class="stats">17</td>
@@ -117,7 +117,7 @@
                                 <tr>
                                     <td class="rank">06</td>
                                     <td class="team">
-                                        <img src="assets/img/home-2/table/t-6.png" alt="img">
+                                        <img src="assets1/img/home-2/table/t-6.png" alt="img">
                                         <span class="team-name">DETROIT</span>
                                     </td>
                                     <td class="stats">16</td>
@@ -135,7 +135,7 @@
             <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".3s">
                 <div class="news-list-items">
                     <div class="thumb">
-                        <img src="assets/img/home-2/news/news-02.jpg" alt="img">
+                        <img src="assets1/img/home-2/news/news-02.jpg" alt="img">
                     </div>
                     <div class="content">
                         <ul>
@@ -164,7 +164,7 @@
             <div class="col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".5s">
                 <div class="news-list-items">
                     <div class="thumb">
-                        <img src="assets/img/home-2/news/news-03.jpg" alt="img">
+                        <img src="assets1/img/home-2/news/news-03.jpg" alt="img">
                     </div>
                     <div class="content">
                         <ul>

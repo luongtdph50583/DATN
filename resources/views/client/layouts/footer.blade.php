@@ -1,52 +1,53 @@
-  <footer class="footer-section-2 fix bg-cover" style="background-image: url('assets/img/home-2/footer-bg.jpg');">
+@php($assetBase = asset('assets1'))
+  <footer class="footer-section-2 fix bg-cover" style="background-image: url('{{ $assetBase }}/img/home-2/footer-bg.jpg');">
             <div class="container">
                 <div class="footer-instagram-wrapper wow fadeInUp" data-wow-delay=".3s">
                     <div class="swiper footer-instagram-slider">
                         <div class="swiper-wrapper">
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
-                                    <img src="assets/img/home-2/instagram/insta-1.jpg" alt="img">
-                                    <a href="index.html" class="gt-icon">
+                                    <img src="{{ $assetBase }}/img/home-2/instagram/insta-1.jpg" alt="Instagram 1">
+                                    <a href="{{ route('client.home') }}" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
                             </div>
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
-                                    <img src="assets/img/home-2/instagram/insta-2.jpg" alt="img">
-                                    <a href="index.html" class="gt-icon">
+                                    <img src="{{ $assetBase }}/img/home-2/instagram/insta-2.jpg" alt="Instagram 2">
+                                    <a href="{{ route('client.home') }}" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
                             </div>
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
-                                    <img src="assets/img/home-2/instagram/insta-3.jpg" alt="img">
-                                    <a href="index.html" class="gt-icon">
+                                    <img src="{{ $assetBase }}/img/home-2/instagram/insta-3.jpg" alt="Instagram 3">
+                                    <a href="{{ route('client.home') }}" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
                             </div>
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
-                                    <img src="assets/img/home-2/instagram/insta-4.jpg" alt="img">
-                                    <a href="index.html" class="gt-icon">
+                                    <img src="{{ $assetBase }}/img/home-2/instagram/insta-4.jpg" alt="Instagram 4">
+                                    <a href="{{ route('client.home') }}" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
                             </div>
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
-                                    <img src="assets/img/home-2/instagram/insta-5.jpg" alt="img">
-                                    <a href="index.html" class="gt-icon">
+                                    <img src="{{ $assetBase }}/img/home-2/instagram/insta-5.jpg" alt="Instagram 5">
+                                    <a href="{{ route('client.home') }}" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
                             </div>
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
-                                    <img src="assets/img/home-2/instagram/insta-6.jpg" alt="img">
-                                    <a href="index.html" class="gt-icon">
+                                    <img src="{{ $assetBase }}/img/home-2/instagram/insta-6.jpg" alt="Instagram 6">
+                                    <a href="{{ route('client.home') }}" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
@@ -55,11 +56,11 @@
                     </div>
                 </div>
                 <div class="footer-logo-item wow fadeInUp" data-wow-delay=".5s">
-                    <img src="assets/img/home-2/left-gradient.png" alt="img" class="border-img">
-                    <a href="index.html">
-                        <img src="assets/img/home-2/logo.svg" alt="img">
+                    <img src="{{ $assetBase }}/img/home-2/left-gradient.png" alt="Gradient" class="border-img">
+                    <a href="{{ route('client.home') }}">
+                        <img src="{{ $assetBase }}/img/home-2/logo.svg" alt="{{ config('app.name') }}">
                     </a>
-                    <img src="assets/img/home-2/right-gradient.png" alt="img" class="border-img">
+                    <img src="{{ $assetBase }}/img/home-2/right-gradient.png" alt="Gradient" class="border-img">
                 </div>
                 <div class="footer-widget-wrapper">
                     <div class="row justify-content-between">
