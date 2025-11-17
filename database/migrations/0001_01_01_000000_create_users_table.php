@@ -13,7 +13,7 @@ class CreateUsersTable extends Migration
             $table->string('name')->comment('Họ tên');
             $table->string('email')->unique()->comment('Email đăng nhập');
             $table->string('password')->comment('Mật khẩu');
-            $table->enum('role', ['admin', 'member'])->default('member')->comment('Vai trò');
+            $table->enum('role', ['admin','manager', 'member'])->default('member')->comment('Vai trò');
             $table->enum('status', ['active', 'inactive'])->default('active')->comment('Trạng thái');
             $table->string('avatar')->nullable()->comment('Ảnh đại diện');
             $table->rememberToken()->comment('Token ghi nhớ đăng nhập');

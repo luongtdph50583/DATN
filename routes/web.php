@@ -34,6 +34,9 @@ use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
 use App\Http\Controllers\HomeController as AdminHomeController;
 use App\Http\Controllers\Client\HomeController as ClientHomeController;
+use App\Http\Controllers\Manager\DocumentController as ManagerDocumentController;
+use App\Http\Controllers\Admin\DocumentController as AdminDocumentController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -484,3 +487,20 @@ Route::prefix('admin')
 
 // === AUTH ROUTES ===
 require __DIR__ . '/auth.php';
+Route::prefix('manager/document')
+    ->name('manager.document.')
+    ->middleware(['auth', 'role:club_manager'])
+    ->group(function () {
+        Route::get('/', [ManagerDocumentController::class, 'index'])->name('index');
+        Route::get('/create', [ManagerDocumentController::class, 'create'])->name('create');
+        Route::post('/store', [ManagerDocumentController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [ManagerDocumentController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [ManagerDocumentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ManagerDocumentController::class, 'destroy'])->name('destroy');
+        Route::get('/trash', [ManagerDocumentController::class, 'trash'])->name('trash');
+        Route::patch('/{id}/restore', [ManagerDocumentController::class, 'restore'])->name('restore');
+        Route::get('/{id}/download', [ManagerDocumentController::class, 'download'])->name('download');
+        Route::get('/{id}', [ManagerDocumentController::class, 'show'])->name('show');
+        Route::get('/search/ajax', [ManagerDocumentController::class, 'search'])->name('search.ajax');
+    });
+

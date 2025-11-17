@@ -239,7 +239,7 @@ class ClubController extends Controller
             return redirect()->back()->withErrors(['error' => 'Chỉ có thể xóa CLB không hoạt động.']);
         }
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
 
         try {
             // ✅ Xóa bài viết và media liên quan
@@ -274,7 +274,7 @@ class ClubController extends Controller
             }
 
             // ✅ Lấy thông tin chủ nhiệm
-            $manager = \DB::table('club_members as cm')
+            $manager = DB::table('club_members as cm')
                 ->join('members as m', 'cm.member_id', '=', 'm.id')
                 ->join('users as u', 'm.user_id', '=', 'u.id')
                 ->where('cm.club_id', $club->id)
@@ -283,7 +283,7 @@ class ClubController extends Controller
                 ->first();
 
             if ($manager) {
-                \Log::info("Debug manager before delete: ID={$manager->user_id}, Name={$manager->name}, Email={$manager->email}");
+                Log::info("Debug manager before delete: ID={$manager->user_id}, Name={$manager->name}, Email={$manager->email}");
 
                 $batchId = uniqid('club_deleted_');
 
@@ -296,21 +296,21 @@ class ClubController extends Controller
                     true
                 );
             } else {
-                \Log::warning("Club ID {$club->id} không có chủ nhiệm khi xóa!");
+                Log::warning("Club ID {$club->id} không có chủ nhiệm khi xóa!");
             }
 
             // ✅ Xóa thành viên CLB
-            \DB::table('club_members')->where('club_id', $club->id)->delete();
+            DB::table('club_members')->where('club_id', $club->id)->delete();
 
             // ✅ Xóa chính CLB
             $club->delete();
 
-            \DB::commit();
+            DB::commit();
 
             return redirect()->route('admin.clubs.index')->with('success', 'CLB đã được xóa thành công!');
         } catch (\Throwable $e) {
-            \DB::rollBack();
-            \Log::error("Lỗi khi xóa CLB", [
+            DB::rollBack();
+            Log::error("Lỗi khi xóa CLB", [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile()
@@ -579,7 +579,7 @@ class ClubController extends Controller
     // ✅ Xử lý thêm CLB
     public function store(Request $request)
     {
-        \DB::beginTransaction();
+        DB::beginTransaction();
 
         try {
             // ✅ Validate dữ liệu
@@ -645,7 +645,7 @@ class ClubController extends Controller
                 if ($memberId) {
                     $member = Member::with('user')->find($memberId);
                     if (!$member || !$member->user) {
-                        \DB::rollBack();
+                        DB::rollBack();
                         return redirect()->back()
                             ->withErrors(['managers' => "Thành viên ID {$memberId} không hợp lệ hoặc chưa liên kết user."])
                             ->withInput();
@@ -657,7 +657,7 @@ class ClubController extends Controller
                         ->exists();
 
                     if ($conflict) {
-                        \DB::rollBack();
+                        DB::rollBack();
                         return redirect()->back()
                             ->withErrors(['managers' => "Thành viên {$member->user->name} đang giữ chức vụ quản lý ở CLB khác."])
                             ->withInput();
@@ -681,14 +681,14 @@ class ClubController extends Controller
                 }
             }
 
-            \DB::commit();
+            DB::commit();
 
             return redirect()->route('admin.clubs.index')
                 ->with('success', 'Thêm câu lạc bộ thành công!');
         } catch (\Throwable $e) {
-            \DB::rollBack();
+            DB::rollBack();
 
-            \Log::error('Lỗi khi thêm CLB', [
+            Log::error('Lỗi khi thêm CLB', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
