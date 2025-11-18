@@ -536,15 +536,16 @@ class PostController extends Controller
      */
     public function uploadImage(Request $request)
     {
-        if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $path = $file->store('images', 'public');
-            $url = asset('storage/' . $path);
+        $file = $request->file('image') ?? $request->file('upload');
 
-            return response()->json(['url' => $url]);
+        if (!$file) {
+            return response()->json(['error' => 'Không có ảnh'], 400);
         }
 
-        return response()->json(['error' => 'Không có ảnh'], 400);
+        $path = $file->store('images', 'public');
+        $url = asset('storage/' . $path);
+
+        return response()->json(['url' => $url]);
     }
 
     /**

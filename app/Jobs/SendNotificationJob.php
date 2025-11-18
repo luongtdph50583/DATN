@@ -26,6 +26,7 @@ class SendNotificationJob implements ShouldQueue
     public string $sendVia;
     public string $batchId;
     public bool $force;
+    public array $context;
 
     public function __construct(
         int $userId,
@@ -34,7 +35,8 @@ class SendNotificationJob implements ShouldQueue
         string $sendVia,
         string $batchId,
         bool $force = false,
-        ?string $contentText = null
+        ?string $contentText = null,
+        array $context = []
     ) {
         $this->userId = $userId;
         $this->title = $title;
@@ -43,6 +45,7 @@ class SendNotificationJob implements ShouldQueue
         $this->batchId = $batchId;
         $this->force = $force;
         $this->contentText = $contentText ?? $this->fallbackPlain($content);
+        $this->context = $context;
     }
 
     protected function fallbackPlain(string $html): string
@@ -88,7 +91,8 @@ class SendNotificationJob implements ShouldQueue
                         $this->title,
                         $this->contentHtml,
                         $this->contentText,
-                        $this->batchId
+                        $this->batchId,
+                        $this->context
                     ));
 
                     // Cập nhật record cũ hoặc lấy bản ghi mới nhất vừa tạo

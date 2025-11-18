@@ -9,6 +9,8 @@ use App\Observers\DatabaseNotificationObserver; // nhớ import observer
 use Illuminate\Database\Eloquent\Relations\Relation;
 use App\Models\FundTransaction;
 use App\Observers\FundTransactionObserver;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -35,5 +37,24 @@ class AppServiceProvider extends ServiceProvider
 
         // ✅ Gắn observer vào trong boot()
         DatabaseNotification::observe(DatabaseNotificationObserver::class);
+
+        View::composer('admin.layouts.header', function ($view) {
+            $user = Auth::user();
+            $notifications = collect();
+            $unreadCount = 0;
+
+            if ($user) {
+                $notifications = $user->notifications()
+                    ->latest()
+                    ->limit(10)
+                    ->get();
+                $unreadCount = $user->unreadNotifications()->count();
+            }
+
+            $view->with([
+                'headerNotifications' => $notifications,
+                'headerUnreadCount' => $unreadCount,
+            ]);
+        });
     }
 }

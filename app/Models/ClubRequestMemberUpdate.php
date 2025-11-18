@@ -10,6 +10,8 @@ class ClubRequestMemberUpdate extends Model
         'club_request_update_id',
         'user_id',
         'role',
+        'status',
+        'note',
     ];
 
     public function requestUpdate()

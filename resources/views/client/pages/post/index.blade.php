@@ -2,7 +2,6 @@
 @section('title', 'Quản lý bài viết - ' . $club->name)
 
 @section('content')
-    @include('client.pages.post.banner')
 
     <div class="container mt-4 mb-5">
         @if (session('success'))
@@ -55,17 +54,17 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('club_manager.posts.show', ['club_id' => $club->id, 'post' => $post->id]) }}" 
+                                <a href="{{ route('club_manager.posts.show', ['club_id' => $club->id, 'post' => $post->id]) }}"
                                    class="btn btn-sm btn-info me-1" title="Xem">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 @if($post->status === 'pending')
-                                    <a href="{{ route('club_manager.posts.edit', ['club_id' => $club->id, 'post' => $post->id]) }}" 
+                                    <a href="{{ route('club_manager.posts.edit', ['club_id' => $club->id, 'post' => $post->id]) }}"
                                        class="btn btn-sm btn-primary me-1" title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                 @endif
-                                <form action="{{ route('club_manager.posts.destroy', ['club_id' => $club->id, 'post' => $post->id]) }}" 
+                                <form action="{{ route('club_manager.posts.destroy', ['club_id' => $club->id, 'post' => $post->id]) }}"
                                       method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?');">
                                     @csrf
                                     @method('DELETE')

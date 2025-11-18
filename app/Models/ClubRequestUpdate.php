@@ -23,6 +23,8 @@ class ClubRequestUpdate extends Model
         'advisor_status',
         'reason',
         'user_id',
+        'status',
+        'note',
     ];
 
     // 🔹 CLB gốc (để lấy thông tin hiện tại)

@@ -229,6 +229,8 @@ Route::prefix('admin')
             ->group(function () {
                 Route::get('/filter', 'filterRequests')->name('filter');
                 Route::get('/', 'indexRequests')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
                 Route::get('/{id}', 'showRequest')->name('show');
                 Route::get('/{id}/show2', 'show2')->name('show2');
                 Route::post('/{id}/handle', 'handleUpdateRequest')->name('handleUpdateRequest');

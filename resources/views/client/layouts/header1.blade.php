@@ -136,14 +136,14 @@
                     </div>
                 </div>
                 <div class="header-right d-flex justify-content-end align-items-center gap-3">
-                    <div class="header-btn">
+                    {{-- <div class="header-btn">
                         <a href="ticket.html" class="theme-btn border-btn">
                             get tickets <i class="fa-solid fa-arrow-up-right"></i>
                         </a>
                         <a href="club-ranking.html" class="theme-btn d-none d-xxl-block">
                             JOIN NOW <i class="fa-solid fa-arrow-up-right"></i>
                         </a>
-                    </div>
+                    </div> --}}
 
                     @auth
                         <div class="dropdown header-notification">

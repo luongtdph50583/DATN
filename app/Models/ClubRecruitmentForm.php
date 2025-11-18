@@ -6,27 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ClubJoinFormQuestion extends Model
+class ClubRecruitmentForm extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'club_id',
-        'form_id',
-        'question',
+        'name',
         'description',
-        'type',
-        'options',
-        'order',
-        'is_required',
         'is_active',
-        'validation_rules',
+        'is_default',
+        'order',
     ];
 
     protected $casts = [
-        'options' => 'array',
-        'is_required' => 'boolean',
         'is_active' => 'boolean',
+        'is_default' => 'boolean',
         'order' => 'integer',
     ];
 
@@ -39,18 +34,20 @@ class ClubJoinFormQuestion extends Model
     }
 
     /**
-     * Form tuyển thành viên
+     * Các câu hỏi trong form
      */
-    public function form()
+    public function questions()
     {
-        return $this->belongsTo(ClubRecruitmentForm::class, 'form_id');
+        return $this->hasMany(ClubJoinFormQuestion::class, 'form_id')->orderBy('order');
     }
 
     /**
-     * Các câu trả lời cho câu hỏi này
+     * Các câu hỏi đang hoạt động
      */
-    public function answers()
+    public function activeQuestions()
     {
-        return $this->hasMany(ClubJoinFormAnswer::class, 'question_id');
+        return $this->hasMany(ClubJoinFormQuestion::class, 'form_id')
+            ->where('is_active', true)
+            ->orderBy('order');
     }
 }

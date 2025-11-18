@@ -21,14 +21,9 @@
             @error('title') <div class="text-danger small">{{ $message }}</div> @enderror
         </div>
 
-        {{-- Quill Editor --}}
         <div class="mb-3">
-            <label for="editor" class="form-label">Nội dung</label>
-            <div id="editor"
-                style="min-height: 300px; max-height: 600px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px; background-color: #fff;">
-                {!! old('content_html') !!}
-            </div>
-            <input type="hidden" name="content_html" id="contentHtmlInput">
+            <label for="notificationContentEditor" class="form-label">Nội dung</label>
+            <textarea name="content_html" id="notificationContentEditor" class="form-control" rows="8">{{ old('content_html') }}</textarea>
             @error('content_html') <div class="text-danger small">{{ $message }}</div> @enderror
         </div>
 
@@ -68,24 +63,16 @@
         }
 
         $(function () {
-            // ==========================
-            // CKEditor 5 - lưu plain text
-            // CKEditor đã được load trong app.blade.php
-            // ==========================
             let ckEditorInstance = null;
-            const $contentHtmlInput = $('#contentHtmlInput');
-            const initialContent = @json(old('content_html', ''));
 
-            // Kiểm tra xem ClassicEditor có sẵn không
             if (typeof ClassicEditor === 'undefined') {
                 console.error('CKEditor ClassicEditor is not loaded');
                 return;
             }
 
-            // Kiểm tra element editor có tồn tại không
-            const editorElement = document.querySelector('#editor');
+            const editorElement = document.querySelector('#notificationContentEditor');
             if (!editorElement) {
-                console.error('Editor element #editor not found');
+                console.error('Editor element #notificationContentEditor not found');
                 return;
             }
 
@@ -101,17 +88,10 @@
                 ]
             }).then(editor => {
                 ckEditorInstance = editor;
-                if (initialContent) {
-                    editor.setData(initialContent);
-                }
-                $contentHtmlInput.val(editor.getData());
+                $('form').on('submit', function () {
+                    editor.updateSourceElement();
+                });
             }).catch(error => console.error(error));
-
-            $('form').on('submit', function () {
-                if (!ckEditorInstance) return;
-                const html = ckEditorInstance.getData();
-                $contentHtmlInput.val(html);
-            });
 
             // ==========================
             // Select2 helpers

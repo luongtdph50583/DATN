@@ -14,13 +14,15 @@ class CustomNotification extends Notification
     public string $contentHtml;
     public string $contentText;
     public string $batchId;
+    public array $context;
 
-    public function __construct(string $title, string $contentHtml, string $contentText, string $batchId)
+    public function __construct(string $title, string $contentHtml, string $contentText, string $batchId, array $context = [])
     {
         $this->title = $title;
         $this->contentHtml = $contentHtml;
         $this->contentText = $contentText;
         $this->batchId = $batchId;
+        $this->context = $context;
     }
 
     public function via($notifiable)
@@ -36,6 +38,7 @@ class CustomNotification extends Notification
             'message_html' => $this->contentHtml,
             'status' => 'sent',
             'batch_id' => $this->batchId,
+            'context' => $this->context,
         ];
     }
 

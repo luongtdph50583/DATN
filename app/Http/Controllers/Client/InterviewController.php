@@ -14,17 +14,41 @@ class InterviewController extends Controller
     /**
      * Hiển thị danh sách phỏng vấn và điểm danh
      */
-    public function index($club_id)
+    public function index(Request $request, $club_id)
     {
         $club = Club::findOrFail($club_id);
         $this->authorizeClubManager($club);
 
         // Lấy danh sách yêu cầu tham gia CLB có trạng thái cần phỏng vấn
-        $requests = ClubJoinRequest::where('club_id', $club_id)
-            ->whereIn('status', ['pending', 'scheduling_interview', 'interview'])
-            ->with(['user.member'])
-            ->orderBy('requested_at', 'desc')
-            ->get();
+        $query = ClubJoinRequest::where('club_id', $club_id)
+            ->whereIn('status', ['pending_interview', 'waiting_attendance'])
+            ->with(['user.member', 'interviewer', 'formAnswers.question']);
+
+        // Filter theo search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($q2) use ($search) {
+                    $q2->where('name', 'like', "%{$search}%")
+                       ->orWhere('email', 'like', "%{$search}%");
+                })->orWhereHas('user.member', function($q2) use ($search) {
+                    $q2->where('student_code', 'like', "%{$search}%")
+                       ->orWhere('phone', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Filter theo status
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Filter theo interviewer
+        if ($request->filled('interviewer_id')) {
+            $query->where('interviewer_id', $request->input('interviewer_id'));
+        }
+
+        $requests = $query->orderBy('requested_at', 'desc')->get();
 
         // Lấy danh sách người phỏng vấn (có thể là thành viên ban quản lý)
         $interviewers = User::whereHas('member.clubMembers', function($q) use ($club_id) {
@@ -53,10 +77,10 @@ class InterviewController extends Controller
 
         $joinRequest = ClubJoinRequest::where('club_id', $club_id)
             ->where('id', $validated['request_id'])
-            ->whereIn('status', ['pending', 'scheduling_interview'])
+            ->where('status', 'pending_interview')
             ->firstOrFail();
 
-        $joinRequest->status = 'interview';
+        $joinRequest->status = 'waiting_attendance';
         $joinRequest->interview_scheduled_at = $validated['scheduled_at'];
         $joinRequest->interview_location = $validated['location'] ?? null;
         $joinRequest->interview_note = $validated['note'] ?? null;
@@ -96,12 +120,12 @@ class InterviewController extends Controller
 
         $joinRequest = ClubJoinRequest::where('club_id', $club_id)
             ->where('id', $validated['request_id'])
-            ->where('status', 'interview')
+            ->where('status', 'waiting_attendance')
             ->firstOrFail();
 
-        $joinRequest->status = 'interview_completed';
+        $joinRequest->status = 'waiting_approval';
         if ($validated['attendance_status'] === 'completed') {
-            $joinRequest->interview_result = 'completed';
+            $joinRequest->interview_result = 'pass';
         } else {
             $joinRequest->interview_result = 'no_show';
         }
@@ -143,10 +167,10 @@ class InterviewController extends Controller
 
         $joinRequest = ClubJoinRequest::where('club_id', $club_id)
             ->where('id', $data['request_id'])
-            ->where('status', 'pending')
+            ->where('status', 'pending_interview')
             ->firstOrFail();
 
-        $joinRequest->status = 'scheduling_interview';
+        $joinRequest->status = 'pending_interview'; // Giữ nguyên, chỉ thêm note
         $joinRequest->handled_by = Auth::id();
         $joinRequest->note = $data['note'] ?? $joinRequest->note;
         $joinRequest->save();

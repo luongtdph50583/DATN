@@ -31,16 +31,17 @@
                     @if ($managedClubs->count() > 0)
                         <li class="menu-section">
                             <a href="#managedClubsSubmenu" data-bs-toggle="collapse" aria-expanded="false"
-                                class="dropdown-toggle">
+                                class="dropdown-toggle" onclick="event.preventDefault(); this.classList.toggle('active');">
                                 <i class="fas fa-cog"></i> Quản lý CLB của tôi
                             </a>
                             <ul class="collapse list-unstyled" id="managedClubsSubmenu">
                                 @foreach ($managedClubs as $club)
-                                    <li class="submenu-item">
-                                        <a href="{{ route('club_manager.posts.index', ['club_id' => $club->id]) }}">
+                                    <li class="submenu-item" style="position: relative;">
+                                        <a href="javascript:void(0)" class="club-toggle" onclick="event.preventDefault(); toggleClubSubmenu(this);">
                                             <i class="fas fa-circle"></i> {{ $club->name }}
+                                            <i class="fas fa-chevron-down ms-auto" style="float: right;"></i>
                                         </a>
-                                        <ul class="submenu list-unstyled ms-3">
+                                        <ul class="submenu list-unstyled ms-3" style="display: none;">
                                             <li><a href="{{ route('club_manager.posts.index', ['club_id' => $club->id]) }}">
                                                     <i class="fas fa-file-alt"></i> Bài viết
                                                 </a></li>
@@ -65,7 +66,6 @@
                                                     <i class="fas fa-coins"></i> Quỹ CLB
                                                 </a>
                                             </li>
-
                                             <li><a
                                                     href="{{ route('club_manager.notifications.create', ['club_id' => $club->id]) }}">
                                                     <i class="fas fa-bell"></i> Thông báo CLB
@@ -133,3 +133,43 @@
 </div>
 
 <div class="offcanvas__overlay"></div>
+
+<style>
+    /* Sửa CSS để submenu không bị ẩn khi hover */
+    .admin-menu .submenu-item {
+        position: relative;
+    }
+    
+    .admin-menu .submenu-item .submenu {
+        display: none;
+        position: relative;
+        left: 0;
+        top: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+        visibility: visible;
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+    
+    .admin-menu .submenu-item:hover .submenu,
+    .admin-menu .submenu-item .submenu.show {
+        display: block !important;
+    }
+    
+    .admin-menu .submenu-item .club-toggle {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .admin-menu .submenu-item .submenu li a {
+        padding-left: 20px;
+        font-size: 14px;
+    }
+</style>

@@ -13,6 +13,7 @@ use App\Jobs\SendNotificationJob;
 use App\Models\ClubRequestUpdate;
 use App\Http\Controllers\Controller;
 use App\Services\ClubUpdateLogService;
+use Illuminate\Support\Facades\Auth;
 
 class ClubRequestUpdateController extends Controller
 {
@@ -34,6 +35,87 @@ class ClubRequestUpdateController extends Controller
             ->get();
 
         return view('admin.club_update_requests.index', compact('requests'));
+    }
+
+    public function create()
+    {
+        $clubs = Club::orderBy('name')->get(['id', 'name']);
+        $users = User::orderBy('name')->get(['id', 'name', 'email']);
+        $facultyMembers = FacultyMember::with('user')
+            ->orderBy('employee_code')
+            ->get();
+        $roles = [
+            'club_manager' => 'Chủ nhiệm CLB',
+            'deputy_manager' => 'Phó chủ nhiệm',
+            'event_manager' => 'Quản lý sự kiện',
+            'communication' => 'Truyền thông',
+            'secretary' => 'Thư ký',
+            'treasurer' => 'Thủ quỹ',
+            'member' => 'Thành viên thường',
+        ];
+
+        return view('admin.club_update_requests.create', compact('clubs', 'users', 'facultyMembers', 'roles'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'club_id' => 'required|exists:clubs,id',
+            'name' => 'nullable|string|max:255',
+            'slogan' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'field' => 'nullable|string|max:255',
+            'member_limit' => 'nullable|integer|min:1',
+            'manager_id' => 'nullable|exists:users,id',
+            'advisor_id' => 'nullable|exists:faculty_members,id',
+            'email' => 'nullable|email',
+            'phone' => 'nullable|string|max:50',
+            'location' => 'nullable|string|max:255',
+            'rules' => 'nullable|string',
+            'reason' => 'required|string|max:1000',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'management_updates' => 'array',
+            'management_updates.*.user_id' => 'nullable|exists:users,id',
+            'management_updates.*.role' => 'nullable|in:club_manager,deputy_manager,event_manager,communication,secretary,treasurer,member',
+        ]);
+
+        if ($request->hasFile('logo')) {
+            $validated['logo'] = $request->file('logo')->store('club-update-logos', 'public');
+        }
+
+        $update = ClubRequestUpdate::create([
+            'club_id' => $validated['club_id'],
+            'user_id' => Auth::id(),
+            'name' => $validated['name'] ?? null,
+            'slogan' => $validated['slogan'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'field' => $validated['field'] ?? null,
+            'member_limit' => $validated['member_limit'] ?? null,
+            'manager_id' => $validated['manager_id'] ?? null,
+            'advisor_id' => $validated['advisor_id'] ?? null,
+            'email' => $validated['email'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'logo' => $validated['logo'] ?? null,
+            'rules' => $validated['rules'] ?? null,
+            'location' => $validated['location'] ?? null,
+            'reason' => $validated['reason'],
+            'status' => 'pending',
+            'advisor_status' => 'pending',
+        ]);
+
+        $managementUpdates = collect($request->input('management_updates', []))
+            ->filter(fn ($item) => !empty($item['user_id']) && !empty($item['role']));
+
+        foreach ($managementUpdates as $entry) {
+            $update->memberUpdates()->create([
+                'user_id' => $entry['user_id'],
+                'role' => $entry['role'],
+                'status' => 'pending',
+            ]);
+        }
+
+        return redirect()->route('admin.club_requests_update.index')
+            ->with('success', 'Đã tạo đề xuất cập nhật CLB. Yêu cầu đang chờ duyệt.');
     }
 
 

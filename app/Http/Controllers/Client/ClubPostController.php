@@ -74,6 +74,12 @@ class ClubPostController extends Controller
 
         $post->save();
 
+        // Cập nhật post_id cho media đã upload trước đó
+        Media::where('uploaded_by', Auth::id())
+            ->where('related_id', 0)
+            ->where('related_type', 'post')
+            ->update(['related_id' => $post->id]);
+
         // Xử lý media từ editor
         $this->processMediaFromContent($post, $validated['content']);
 
@@ -166,6 +172,12 @@ class ClubPostController extends Controller
 
         $post->save();
 
+        // Cập nhật post_id cho media đã upload trước đó
+        Media::where('uploaded_by', Auth::id())
+            ->where('related_id', 0)
+            ->where('related_type', 'post')
+            ->update(['related_id' => $post->id]);
+
         // Xử lý media từ editor
         $this->processMediaFromContent($post, $validated['content']);
 
@@ -240,6 +252,123 @@ class ClubPostController extends Controller
             ->where('related_id', 0)
             ->where('related_type', 'post')
             ->update(['related_id' => $post->id]);
+    }
+
+    /**
+     * Upload image cho CKEditor
+     */
+    public function uploadImage(Request $request, $club_id)
+    {
+        $club = Club::findOrFail($club_id);
+        $this->authorizeClubManager($club);
+
+        $file = $request->file('upload') ?? $request->file('image');
+
+        if (!$file) {
+            return response()->json(['error' => ['message' => 'Không có file nào được gửi.']], 400);
+        }
+
+        try {
+            $folder = storage_path('app/public/uploads/posts/images');
+            if (!file_exists($folder)) {
+                mkdir($folder, 0755, true);
+            }
+
+            $originalName = $file->getClientOriginalName();
+            $i = 1;
+            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+            $ext = $file->getClientOriginalExtension();
+            $finalName = $originalName;
+            while (file_exists($folder . '/' . $finalName)) {
+                $finalName = $baseName . "($i)." . $ext;
+                $i++;
+            }
+
+            $file->move($folder, $finalName);
+            $path = 'uploads/posts/images/' . $finalName;
+            $url = asset('storage/' . $path);
+
+            // Tạo media record
+            $postId = $request->input('post_id', 0);
+            Media::create([
+                'file_name' => $finalName,
+                'file_path' => $path,
+                'file_type' => $file->getMimeType(),
+                'related_id' => $postId,
+                'related_type' => 'post',
+                'uploaded_by' => Auth::id(),
+            ]);
+
+            return response()->json(['url' => $url]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => ['message' => $e->getMessage()]], 500);
+        }
+    }
+
+    /**
+     * Upload file cho CKEditor
+     */
+    public function uploadFile(Request $request, $club_id)
+    {
+        $club = Club::findOrFail($club_id);
+        $this->authorizeClubManager($club);
+
+        $file = $request->file('upload') ?? $request->file('file');
+
+        if (!$file) {
+            return response()->json(['error' => ['message' => 'Không có file nào được gửi.']], 400);
+        }
+
+        try {
+            $mimeType = $file->getMimeType();
+            $fileType = explode('/', $mimeType)[0];
+            
+            $folderMap = [
+                'image' => 'images',
+                'video' => 'videos',
+                'audio' => 'audios',
+            ];
+            
+            $subfolder = $folderMap[$fileType] ?? 'documents';
+            $folder = storage_path("app/public/uploads/posts/{$subfolder}");
+            
+            if (!file_exists($folder)) {
+                mkdir($folder, 0755, true);
+            }
+
+            $originalName = $file->getClientOriginalName();
+            $i = 1;
+            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+            $ext = $file->getClientOriginalExtension();
+            $finalName = $originalName;
+            while (file_exists($folder . '/' . $finalName)) {
+                $finalName = $baseName . "($i)." . $ext;
+                $i++;
+            }
+
+            $file->move($folder, $finalName);
+            $path = "uploads/posts/{$subfolder}/{$finalName}";
+            $url = asset('storage/' . $path);
+
+            // Tạo media record (related_id = 0 nếu chưa có post, sẽ update sau khi save post)
+            $postId = $request->input('post_id', 0);
+            Media::create([
+                'file_name' => $finalName,
+                'file_path' => $path,
+                'file_type' => $mimeType,
+                'related_id' => $postId,
+                'related_type' => 'post',
+                'uploaded_by' => Auth::id(),
+            ]);
+
+            return response()->json([
+                'url' => $url,
+                'name' => $finalName,
+                'type' => $mimeType,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => ['message' => $e->getMessage()]], 500);
+        }
     }
 
     /**

@@ -24,8 +24,12 @@ Danh sách
             <select id="filterStatus" class="form-select">
                 <option value="">Tất cả trạng thái</option>
                 <option value="pending">Chờ duyệt</option>
+                <option value="scheduling_interview">Đang lên lịch phỏng vấn</option>
+                <option value="interview">Đã có lịch phỏng vấn</option>
+                <option value="interview_completed">Phỏng vấn xong, chờ duyệt</option>
                 <option value="approved">Đã duyệt</option>
                 <option value="rejected">Từ chối</option>
+                <option value="cancelled">Đã hủy</option>
             </select>
         </div>
     </div>
@@ -78,12 +82,17 @@ Danh sách
 </td>
 
                     <td class="text-center">
-
-                    @if($request->status === 'pending')
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="offcanvas"
-                            data-bs-target="#clubRequestDetail{{ $request->id }}">
-                            Xử lý yêu cầu
-                        </button>
+                        @if(!in_array($request->status, ['approved', 'rejected', 'cancelled']))
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="offcanvas"
+                                data-bs-target="#clubRequestDetail{{ $request->id }}">
+                                Xử lý yêu cầu
+                            </button>
+                        @else
+                            <a href="{{ route('admin.club_join_requests.show2', $request->id) }}"
+                                class="btn btn-sm btn-secondary">
+                                Xem chi tiết
+                            </a>
+                        @endif
                         {{-- Offcanvas --}}
                         <div class="offcanvas offcanvas-end border-0 shadow-lg rounded-4" tabindex="-1"
                             id="clubRequestDetail{{ $request->id }}" style="width: 80%; background-color: #f8f9fa;">
@@ -100,12 +109,6 @@ Danh sách
                                 </div>
                             </div>
                         </div>
-                    @else
-                        <a href="{{ route('admin.club_join_requests.show2', $request->id) }}"
-                            class="btn btn-sm btn-secondary">
-                            Xem chi tiết
-                        </a>
-                    @endif
 
                         <form action="{{ route('admin.club_join_requests.destroy', $request->id) }}" method="POST"
                             class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa yêu cầu này không?');">
@@ -154,6 +157,9 @@ Danh sách
                         .then(res => res.text())
                         .then(html => {
                             contentDiv.innerHTML = html;
+                            
+                            // Khởi tạo lại các form AJAX sau khi load
+                            initAjaxForms(contentDiv, targetId);
                         })
                         .catch(err => {
                             contentDiv.innerHTML = `
@@ -173,8 +179,12 @@ Danh sách
 
             const statusBadges = {
                 pending: '<span class="badge bg-warning text-dark">Chờ duyệt</span>',
+                scheduling_interview: '<span class="badge bg-info text-dark">Đang lên lịch phỏng vấn</span>',
+                interview: '<span class="badge bg-primary">Đã có lịch phỏng vấn</span>',
+                interview_completed: '<span class="badge bg-secondary">Phỏng vấn xong, chờ duyệt</span>',
                 approved: '<span class="badge bg-success">Đã duyệt</span>',
-                rejected: '<span class="badge bg-danger">Từ chối</span>'
+                rejected: '<span class="badge bg-danger">Từ chối</span>',
+                cancelled: '<span class="badge bg-dark">Đã hủy</span>'
             };
 
             function renderTable(requests) {
@@ -197,7 +207,7 @@ Danh sách
                         <td>${r.requested_at}</td>
                         <td>${statusBadges[r.status] ?? ''}</td>
                         <td class="text-center">
-                            ${r.status === 'pending'
+                            ${!['approved', 'rejected', 'cancelled'].includes(r.status)
                         ? `
                                     <button class="btn btn-sm btn-primary"
                                         data-bs-toggle="offcanvas"
@@ -249,6 +259,9 @@ Danh sách
                             .then(res => res.text())
                             .then(html => {
                                 contentDiv.innerHTML = html;
+                                
+                                // Khởi tạo lại các form AJAX sau khi load
+                                initAjaxForms(contentDiv, targetId);
                             })
                             .catch(err => {
                                 contentDiv.innerHTML = `
@@ -297,6 +310,100 @@ Danh sách
 
             // 🎚️ Thay đổi filter
             filterSelect.addEventListener('change', fetchRequests);
+            
+            // 🔄 Hàm khởi tạo AJAX forms
+            function initAjaxForms(container, offcanvasId) {
+                const forms = container.querySelectorAll('.ajax-form');
+                forms.forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        const formData = new FormData(this);
+                        const submitBtn = this.querySelector('button[type="submit"]');
+                        const originalText = submitBtn.innerHTML;
+                        const shouldReload = this.dataset.reload === 'true';
+                        
+                        // Disable button và hiển thị loading
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...';
+                        
+                        fetch(this.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': formData.get('_token') || '{{ csrf_token() }}'
+                            }
+                        })
+                        .then(async res => {
+                            const contentType = res.headers.get('content-type');
+                            
+                            if (contentType && contentType.includes('application/json')) {
+                                const data = await res.json();
+                                if (data.success) {
+                                    // Hiển thị thông báo thành công
+                                    const alertDiv = document.createElement('div');
+                                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                                    alertDiv.innerHTML = `
+                                        <i class="fas fa-check-circle me-2"></i>${data.message || 'Xử lý thành công!'}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    `;
+                                    container.insertBefore(alertDiv, container.firstChild);
+                                    
+                                    // Reload lại nội dung nếu cần
+                                    if (shouldReload) {
+                                        setTimeout(() => {
+                                            const requestId = offcanvasId.replace('clubRequestDetail', '');
+                                            const url = "{{ url('admin/club-join-requests') }}/" + requestId;
+                                            fetch(url)
+                                                .then(r => r.text())
+                                                .then(html => {
+                                                    container.innerHTML = html;
+                                                    initAjaxForms(container, offcanvasId);
+                                                });
+                                        }, 1000);
+                                    }
+                                } else {
+                                    // Hiển thị lỗi
+                                    let errorMsg = data.message || 'Có lỗi xảy ra';
+                                    if (data.errors) {
+                                        const errorList = Object.values(data.errors).flat().join('<br>');
+                                        errorMsg += '<br>' + errorList;
+                                    }
+                                    throw new Error(errorMsg);
+                                }
+                            } else {
+                                // Nếu không phải JSON, có thể là redirect hoặc HTML
+                                const text = await res.text();
+                                if (shouldReload) {
+                                    const requestId = offcanvasId.replace('clubRequestDetail', '');
+                                    const url = "{{ url('admin/club-join-requests') }}/" + requestId;
+                                    fetch(url)
+                                        .then(r => r.text())
+                                        .then(html => {
+                                            container.innerHTML = html;
+                                            initAjaxForms(container, offcanvasId);
+                                        });
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            const alertDiv = document.createElement('div');
+                            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                            alertDiv.innerHTML = `
+                                Lỗi: ${err.message || 'Không thể xử lý yêu cầu'}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            `;
+                            container.insertBefore(alertDiv, container.firstChild);
+                        })
+                        .finally(() => {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        });
+                    });
+                });
+            }
         });
     </script>
 

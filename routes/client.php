@@ -21,6 +21,8 @@ Route::name('client.')->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::prefix('club')->name('club.member.')->group(function () {
         Route::get('/{club_id}/view', [ClubMemberController::class, 'view'])->name('view');
+        Route::get('/{club_id}/join', [ClubMemberController::class, 'showJoinForm'])->name('join');
+        Route::post('/{club_id}/join', [ClubMemberController::class, 'submitJoinRequest'])->name('join.submit');
     });
 
     Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
@@ -34,6 +36,8 @@ Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_
 
     // Bài viết CLB
     Route::resource('/{club_id}/posts', ClubPostController::class);
+    Route::post('/{club_id}/posts/upload-image', [ClubPostController::class, 'uploadImage'])->name('posts.upload_image');
+    Route::post('/{club_id}/posts/upload-file', [ClubPostController::class, 'uploadFile'])->name('posts.upload_file');
 
     // Đề xuất sửa thông tin CLB
     Route::prefix('{club_id}/edit-request')->group(function () {
@@ -43,8 +47,12 @@ Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_
 
     Route::prefix('{club_id}/requests')->group(function () {
         Route::get('/', [ClubMemberRequestController::class, 'index'])->name('member_requests.index');
-        Route::post('/approve/{member_id}', [ClubMemberRequestController::class, 'approve'])->name('member_requests.approve');
+        Route::get('/{request_id}', [ClubMemberRequestController::class, 'show'])->name('member_requests.show');
+        Route::post('/approve/{request_id}', [ClubMemberRequestController::class, 'approve'])->name('member_requests.approve');
         Route::post('/reject/{request_id}', [ClubMemberRequestController::class, 'reject'])->name('member_requests.reject');
+        Route::post('/handle/{request_id}', [ClubMemberRequestController::class, 'handle'])->name('member_requests.handle');
+        Route::post('/batch-schedule', [ClubMemberRequestController::class, 'batchSchedule'])->name('member_requests.batch_schedule');
+        Route::post('/batch-complete', [ClubMemberRequestController::class, 'batchComplete'])->name('member_requests.batch_complete');
     });
 
     // Phỏng vấn / điểm danh
@@ -57,9 +65,19 @@ Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_
 
     // Form tuyển thành viên
     Route::prefix('{club_id}/recruit')->group(function () {
-        Route::get('/form/create', [RecruitFormController::class, 'create'])->name('recruit_form.create');
+        // Quản lý forms
+        Route::get('/forms', [RecruitFormController::class, 'listForms'])->name('recruit_forms.list');
+        Route::get('/forms/create', [RecruitFormController::class, 'createForm'])->name('recruit_forms.create');
+        Route::post('/forms', [RecruitFormController::class, 'storeForm'])->name('recruit_forms.store');
+        Route::delete('/forms/{form_id}', [RecruitFormController::class, 'destroyForm'])->name('recruit_forms.destroy');
+        Route::post('/forms/{form_id}/set-default', [RecruitFormController::class, 'setDefault'])->name('recruit_forms.set_default');
+        
+        // Quản lý câu hỏi trong form
+        Route::get('/form/{form_id?}', [RecruitFormController::class, 'create'])->name('recruit_form.create');
         Route::post('/form', [RecruitFormController::class, 'store'])->name('recruit_form.store');
         Route::post('/form/question/{question}/toggle', [RecruitFormController::class, 'toggle'])->name('recruit_form.toggle');
+        
+        // Yêu cầu tham gia
         Route::get('/', [RecruitFormController::class, 'index'])->name('recruit.index');
         Route::post('/reject/{request_id}', [RecruitFormController::class, 'reject'])->name('recruit.reject');
         Route::post('/approve/{member_id}', [RecruitFormController::class, 'approve'])->name('recruit.approve');

@@ -57,7 +57,7 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Kênh gửi <span class="text-danger">*</span></label>
-                                    <select name="send_via" class="form-select" required>
+                                    <select name="send_via" class="form-select" data-select2="true" required>
                                         <option value="database" {{ old('send_via') === 'database' ? 'selected' : '' }}>In-app (hiện ở chuông thông báo)</option>
                                         <option value="mail" {{ old('send_via') === 'mail' ? 'selected' : '' }}>Email</option>
                                         <option value="both" {{ old('send_via') === 'both' ? 'selected' : '' }}>Cả hai kênh</option>
@@ -65,7 +65,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Đối tượng nhận <span class="text-danger">*</span></label>
-                                    <select name="target" id="targetSelect" class="form-select" required>
+                                    <select name="target" id="targetSelect" class="form-select" data-select2="true" required>
                                         <option value="all" {{ old('target') === 'all' ? 'selected' : '' }}>Tất cả thành viên CLB</option>
                                         <option value="role" {{ old('target') === 'role' ? 'selected' : '' }}>Theo chức vụ</option>
                                         <option value="custom" {{ old('target') === 'custom' ? 'selected' : '' }}>Chọn thành viên cụ thể</option>
@@ -75,7 +75,7 @@
 
                             <div class="mt-3" id="roleWrapper" style="display: none;">
                                 <label class="form-label">Chức vụ trong CLB</label>
-                                <select name="role" class="form-select">
+                                <select name="role" class="form-select" data-select2="true">
                                     <option value="">-- Chọn chức vụ --</option>
                                     @foreach($memberRoles as $roleKey => $label)
                                         <option value="{{ $roleKey }}" {{ old('role') === $roleKey ? 'selected' : '' }}>
@@ -87,7 +87,7 @@
 
                             <div class="mt-3" id="customWrapper" style="display: none;">
                                 <label class="form-label">Chọn thành viên</label>
-                                <select name="user_ids[]" class="form-select" multiple size="6">
+                                <select name="user_ids[]" class="form-select" data-select2="true" multiple>
                                     @foreach($members as $member)
                                         <option value="{{ $member['id'] }}"
                                             {{ collect(old('user_ids', []))->contains($member['id']) ? 'selected' : '' }}>

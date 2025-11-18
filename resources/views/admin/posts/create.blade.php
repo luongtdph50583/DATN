@@ -96,23 +96,19 @@
         </div>
 
 
-        {{-- Quill Editor --}}
         <div class="mb-3">
-            <label for="editor" class="form-label">Nội dung</label>
-            <div id="editor"
-                style="min-height: 300px; max-height: 600px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px; background-color: #fff;">
-                {!! old('content') !!}
-            </div>
-            <input type="hidden" name="content" id="contentInput">
+            <label for="postContentEditor" class="form-label">Nội dung</label>
+            <textarea name="content" id="postContentEditor" class="form-control" rows="10">{{ old('content') }}</textarea>
             @error('content') <div class="text-danger small">{{ $message }}</div> @enderror
         </div>
 
         {{-- Upload file và chèn vào nội dung --}}
         <div class="mb-3">
-            <label for="fileUpload" class="form-label">Đính kèm file</label>
-            <input type="file" id="fileUpload" class="form-control">
-            <button type="button" class="btn btn-secondary mt-2" onclick="uploadAndInsertFile()">Tải lên & chèn vào nội
-                dung</button>
+            <label for="fileUpload" class="form-label">Đính kèm file (hỗ trợ: ảnh, video, audio, PDF, Word, Excel...)</label>
+            <input type="file" id="fileUpload" class="form-control" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv">
+            <button type="button" class="btn btn-secondary mt-2" onclick="uploadAndInsertFile()">
+                <i class="fas fa-upload me-1"></i> Tải lên & chèn vào nội dung
+            </button>
             <div id="uploadStatus" class="text-muted small mt-1"></div>
         </div>
 
@@ -153,92 +149,46 @@ $(document).ready(function() {
 @endsection
 
 @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const ImageResize = window.ImageResize?.default || window.ImageResize;
+    <script>
+        let postContentEditorInstance = null;
 
-                window.quill = new Quill('#editor', {
-                    theme: 'snow',
-                    placeholder: 'Nhập nội dung bài viết...',
-                    modules: {
-                        toolbar: [
-                            ['bold', 'italic', 'underline', 'strike'],
-                            ['link', 'image', 'code-block'],
-                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                            [{ 'header': [1, 2, 3, false] }],
-                            [{ 'align': [] }],
-                            ['clean']
-                        ],
-                        imageResize: {
-                            modules: ['Resize', 'DisplaySize', 'Toolbar']
-                        }
-                    }
-                });
-
-                quill.getModule('toolbar').addHandler('image', () => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.click();
-                    input.onchange = () => {
-                        const file = input.files[0];
-                        if (file && /^image\//.test(file.type)) {
-                            uploadImage(file);
-                        } else {
-                            alert('Vui lòng chọn file ảnh hợp lệ.');
-                        }
-                    };
-                });
-
-                quill.root.addEventListener('paste', function (e) {
-                    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                    for (let i = 0; i < items.length; i++) {
-                        if (items[i].type.indexOf('image') !== -1) {
-                            e.preventDefault();
-                            const file = items[i].getAsFile();
-                            uploadImage(file);
-                        }
-                    }
-                });
-
-                document.getElementById('postForm').addEventListener('submit', function (e) {
-                    const html = quill.root.innerHTML.trim();
-                    if (html === '' || html === '<p><br></p>') {
-                        e.preventDefault();
-                        alert('Vui lòng nhập nội dung bài viết!');
-                        return;
-                    }
-                    document.getElementById('contentInput').value = html;
-                });
-            });
-
-            async function uploadImage(file) {
-                const formData = new FormData();
-                formData.append('image', file);
-
-                try {
-                    const res = await fetch("{{ route('admin.posts.uploadImage') }}", {
-                        method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        body: formData
-                    });
-                    const data = await res.json();
-                    if (data.url) {
-                        const range = quill.getSelection(true);
-                        const imgTag = `<img src="${data.url}" style="width:150px; height:auto; display:inline-block; margin-right:10px;" />`;
-                        quill.clipboard.dangerouslyPasteHTML(range.index, imgTag);
-                        quill.setSelection(range.index + 1);
-                    } else {
-                        throw new Error('Không nhận được URL ảnh');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert('Không thể upload ảnh. Vui lòng thử lại.');
-                }
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof ClassicEditor === 'undefined') {
+                console.error('CKEditor chưa được tải.');
+                return;
             }
 
-                async function uploadAndInsertFile() {
+            ClassicEditor.create(document.querySelector('#postContentEditor'), {
+                toolbar: {
+                    items: [
+                        'heading', '|',
+                        'bold', 'italic', 'link',
+                        '|', 'bulletedList', 'numberedList',
+                        '|', 'blockQuote', 'insertImage', 'insertTable',
+                        '|', 'undo', 'redo'
+                    ]
+                },
+                simpleUpload: {
+                    uploadUrl: "{{ route('admin.posts.uploadImage') }}",
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    withCredentials: true
+                }
+            }).then(editor => {
+                postContentEditorInstance = editor;
+                const form = document.getElementById('postForm');
+                form.addEventListener('submit', function () {
+                    editor.updateSourceElement();
+                });
+            }).catch(error => console.error(error));
+        });
+
+        async function uploadAndInsertFile() {
+            if (!postContentEditorInstance) {
+                alert('Trình soạn thảo chưa sẵn sàng.');
+                return;
+            }
         const fileInput = document.getElementById('fileUpload');
                 const file = fileInput.files[0];
                 const status = document.getElementById('uploadStatus');
@@ -270,16 +220,20 @@ $(document).ready(function() {
                 const data = await res.json();
 
                 if (data.success && data.url) {
-                const range = quill.getSelection(true);
-                const fileType = data.type.startsWith('image')
-                ? `<img src="${data.url}" alt="${data.name}" class="rounded shadow mb-2" style="max-width: 100%;">`
-                    : `<p><a href="${data.url}" target="_blank">📎 ${data.name}</a></p>`;
+                    const html = data.type.startsWith('image')
+                        ? `<img src="${data.url}" alt="${data.name}" class="rounded shadow mb-2" style="max-width: 100%;">`
+                        : `<p><a href="${data.url}" target="_blank">📎 ${data.name}</a></p>`;
 
-                quill.clipboard.dangerouslyPasteHTML(range.index, fileType);
-                quill.setSelection(range.index + 1);
-                status.textContent = '✅ Đã chèn file vào nội dung.';
-                fileInput.value = '';
-            } else {
+                    postContentEditorInstance.model.change(writer => {
+                        const insertPosition = postContentEditorInstance.model.document.selection.getFirstPosition();
+                        const viewFragment = postContentEditorInstance.data.processor.toView(html);
+                        const modelFragment = postContentEditorInstance.data.toModel(viewFragment);
+                        postContentEditorInstance.model.insertContent(modelFragment, insertPosition);
+                    });
+
+                    status.textContent = '✅ Đã chèn file vào nội dung.';
+                    fileInput.value = '';
+                } else {
                 status.textContent = '❌ ' + (data.message || 'Không thể upload file.');
             }
         } catch (err) {

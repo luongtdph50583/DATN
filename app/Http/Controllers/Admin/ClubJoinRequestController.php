@@ -1,16 +1,18 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
-use Illuminate\Support\Facades\Auth;
 
-use App\Models\ClubMember;
-use Illuminate\Http\Request;
-use App\Models\ClubJoinRequest;
-use App\Jobs\SendNotificationJob;
-use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\User;
+use App\Jobs\SendNotificationJob;
 use App\Models\ClubInterviewSchedule;
+use App\Models\ClubJoinRequest;
+use App\Models\ClubMember;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ClubJoinRequestController extends Controller
 {
@@ -20,14 +22,13 @@ class ClubJoinRequestController extends Controller
             ->orderByDesc('requested_at')
             ->get();
 
-        return view('admin.club_join_requests.show2', compact('requests'));
+        return view('admin.club_join_requests.index', compact('requests'));
     }
     public function showRequest($id)
     {
-        $request = ClubJoinRequest::with(['user.member', 'club.manager'])->findOrFail($id);
-        $interviewers = User::select('id', 'name')->get(); // hoặc where('role', 'manager')
+        $data = $this->loadRequestDetail($id);
 
-        return view('admin.club_join_requests.show', compact('request', 'interviewers'));
+        return view('admin.club_join_requests.partials.detail', $data);
     }
 
 
@@ -43,152 +44,90 @@ class ClubJoinRequestController extends Controller
 
     public function handle(Request $req, $id)
     {
-        $request = ClubJoinRequest::with(['user.member', 'club'])->findOrFail($id);
-
-        // // ✅ Nếu đã xử lý rồi thì không cho xử lý lại
-        // if (in_array($request->status, ['approved', 'rejected', 'cancelled'])) {
-        //     return back()->with('error', 'Yêu cầu này đã được xử lý.');
-        // }
-
+        $isAjax = $req->ajax() || $req->wantsJson() || $req->header('X-Requested-With') === 'XMLHttpRequest';
+        
+        $requestModel = ClubJoinRequest::with(['user.member', 'club'])->findOrFail($id);
         $action = $req->input('action');
-        $note = $req->input('note');
-        // $user = $request->user;
-        // $club = $request->club;
-        // $member = $user->member;
 
-        // // 🔒 Kiểm tra CLB và người dùng
-        // if ($club->status !== 'active') {
-        //     return back()->with('error', 'Chỉ có thể xử lý yêu cầu của CLB đang hoạt động.');
-        // }
-        // if (!$member) {
-        //     return back()->with('error', 'Người dùng chưa có thông tin thành viên.');
-        // }
-
-        // switch ($action) {
-
-        //     // 🔹 Lên lịch phỏng vấn
-        //     case 'schedule':
-        //         $interviewer_id = $req->input('interviewer_id');
-        //         $scheduled_at = $req->input('scheduled_at');
-        //         $location = $req->input('location');
-        //         $status = $req->input('status') ?? 'scheduled';
-        //         $interview_note = $req->input('interview_note');
-
-        //         // Validate đơn giản
-        //         if (!$interviewer_id || !$scheduled_at) {
-        //             return back()->with('error', 'Vui lòng chọn người phỏng vấn và thời gian.');
-        //         }
-
-        //         // Tạo bản ghi lịch phỏng vấn
-        //         ClubInterviewSchedule::create([
-        //             'request_id' => $request->id,
-        //             'interviewer_id' => $interviewer_id,
-        //             'scheduled_at' => $scheduled_at,
-        //             'location' => $location,
-        //             'status' => $status,
-        //             'note' => $interview_note,
-        //         ]);
-
-        //         // Cập nhật trạng thái yêu cầu
-        //         $request->update([
-        //             'status' => 'scheduling_interview',
-        //             'note' => $note,
-        //             'handled_by' => auth()->id(),
-        //         ]);
-
-        //         return back()->with('success', 'Yêu cầu đã được lên lịch phỏng vấn.');
-
-        //     // 🔹 Đánh dấu phỏng vấn hoàn tất
-        //     case 'complete_interview':
-        //         $request->update([
-        //             'status' => 'interview_completed',
-        //             'note' => $note,
-        //             'handled_by' => auth()->id(),
-        //         ]);
-        //         return back()->with('success', 'Đã đánh dấu phỏng vấn hoàn tất, chờ duyệt.');
-
-        //     // 🔹 Duyệt đơn
-        //     case 'approve':
-        //         $alreadyMember = ClubMember::where('club_id', $club->id)
-        //             ->where('member_id', $member->id)
-        //             ->exists();
-        //         if ($alreadyMember) {
-        //             return back()->with('error', 'Người này đã là thành viên của CLB.');
-        //         }
-
-        //         ClubMember::create([
-        //             'club_id' => $club->id,
-        //             'member_id' => $member->id,
-        //             'status' => 'active',
-        //             'joined_at' => now(),
-        //             'role' => 'member',
-        //             'note' => $note,
-        //         ]);
-
-        //         $request->update([
-        //             'status' => 'approved',
-        //             'note' => $note,
-        //             'handled_by' => auth()->id(),
-        //             'handled_at' => now(),
-        //         ]);
-            $request->status = 'approved';
-            $request->note = $note;
-            $request->handled_by = Auth::id();
-
-            $request->save();
-
-        //         return redirect()->route('admin.club_join_requests.index')
-        //             ->with('success', 'Yêu cầu đã được duyệt.');
-
-        //     // 🔹 Từ chối đơn
-        //     case 'reject':
-        //         $request->update([
-        //             'status' => 'rejected',
-        //             'note' => $note,
-        //             'handled_by' => auth()->id(),
-        //             'handled_at' => now(),
-        //         ]);
-
-        //         return redirect()->route('admin.club_join_requests.index')
-        //             ->with('success', 'Yêu cầu đã bị từ chối.');
-
-        //     // 🔹 Hủy đơn
-        //     case 'cancel':
-        //         $request->update([
-        //             'status' => 'cancelled',
-        //             'note' => $note,
-        //             'handled_by' => auth()->id(),
-        //             'handled_at' => now(),
-        //         ]);
-        //         return back()->with('success', 'Yêu cầu đã được hủy.');
-
-        //     default:
-        //         return back()->with('error', 'Hành động không hợp lệ.');
-        // }
-        if ($action === 'reject') {
-            $request->status = 'rejected';
-            $request->note = $note;
-           $request->handled_by = Auth::id();
-
-            $request->save();
-
-
-            return redirect()->route('admin.club_join_requests.index')->with('success', 'Yêu cầu đã bị từ chối.');
+        if (!$action) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Hành động không hợp lệ.'], 400);
+            }
+            return back()->with('error', 'Hành động không hợp lệ.');
         }
 
-        return back()->with('error', 'Hành động không hợp lệ.');
+        if (in_array($requestModel->status, ['approved', 'rejected', 'cancelled'])) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Yêu cầu này đã được xử lý.'], 400);
+            }
+            return back()->with('error', 'Yêu cầu này đã được xử lý.');
+        }
+
+        try {
+            DB::transaction(function () use ($action, $requestModel, $req) {
+                switch ($action) {
+                    case 'schedule':
+                        $this->scheduleInterview($requestModel, $req);
+                        break;
+                    case 'complete_interview':
+                        $this->completeInterview($requestModel, $req);
+                        break;
+                    case 'approve':
+                        $this->approveRequest($requestModel, $req);
+                        break;
+                    case 'reject':
+                        $this->rejectRequest($requestModel, $req);
+                        break;
+                    case 'cancel':
+                        $this->cancelRequest($requestModel, $req);
+                        break;
+                    default:
+                        throw new \InvalidArgumentException('Hành động không hợp lệ.');
+                }
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dữ liệu không hợp lệ.',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Throwable $th) {
+            Log::error('Handle club join request failed', [
+                'request_id' => $requestModel->id,
+                'action' => $action,
+                'error' => $th->getMessage(),
+            ]);
+
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể xử lý yêu cầu: ' . $th->getMessage()
+                ], 500);
+            }
+            return back()->with('error', 'Không thể xử lý yêu cầu: ' . $th->getMessage());
+        }
+
+        // Nếu là AJAX request, trả về JSON
+        if ($isAjax) {
+            return response()->json([
+                'success' => true,
+                'message' => $this->getSuccessMessage($action),
+                'status' => $requestModel->fresh()->status
+            ]);
+        }
+        
+        return back()->with('success', $this->getSuccessMessage($action));
     }
 
 
     public function show2($id)
     {
-        $request = ClubJoinRequest::with([
-            'user.member',
-            'club.manager',
-            'club.members'
-        ])->findOrFail($id);
+        $data = $this->loadRequestDetail($id);
 
-        return view('admin.club_join_requests.show2', compact('request'));
+        return view('admin.club_join_requests.show2', $data);
     }
     public function filter(Request $request)
     {
@@ -221,5 +160,337 @@ class ClubJoinRequestController extends Controller
         ]);
     }
 
+    private function scheduleInterview(ClubJoinRequest $request, Request $req): void
+    {
+        $data = $req->validate([
+            'interviewer_id' => 'required|exists:users,id',
+            'scheduled_at' => 'required|date',
+            'location' => 'required|string|max:255',
+            'interview_note' => 'nullable|string|max:1000',
+            'note' => 'nullable|string|max:1000',
+        ]);
 
+        $scheduledAt = Carbon::parse($data['scheduled_at']);
+
+        ClubInterviewSchedule::updateOrCreate(
+            ['request_id' => $request->id],
+            [
+                'club_id' => $request->club_id,
+                'interviewer_id' => $data['interviewer_id'],
+                'scheduled_at' => $scheduledAt,
+                'location' => $data['location'],
+                'status' => 'scheduled',
+                'note' => $data['interview_note'] ?? null,
+            ]
+        );
+
+        $request->status = 'interview';
+        $request->interviewer_id = $data['interviewer_id'];
+        $request->interview_scheduled_at = $scheduledAt;
+        $request->interview_location = $data['location'];
+        $request->interview_note = $data['interview_note'] ?? $request->interview_note;
+        $request->note = $req->input('note');
+        $request->handled_by = Auth::id();
+        $request->save();
+
+        $message = "CLB {$request->club->name} đã lên lịch phỏng vấn cho bạn vào {$scheduledAt->format('d/m/Y H:i')} tại {$data['location']}.";
+        if (!empty($data['interview_note'])) {
+            $message .= ' Ghi chú: ' . $data['interview_note'];
+        }
+
+        $this->notifyCandidate(
+            $request,
+            'Thông báo lịch phỏng vấn',
+            $message,
+            'schedule',
+            [
+                'scheduled_at' => $scheduledAt->toIso8601String(),
+                'interviewer_id' => $data['interviewer_id'],
+            ]
+        );
+    }
+
+    private function completeInterview(ClubJoinRequest $request, Request $req): void
+    {
+        $data = $req->validate([
+            'interview_result' => 'required|in:completed,no_show,cancelled',
+            'interview_score' => 'nullable|integer|min:0|max:100',
+            'interview_feedback' => 'nullable|string|max:1000',
+        ]);
+
+        $request->status = 'interview_completed';
+        $request->interview_result = $data['interview_result'];
+        $request->interview_score = $data['interview_score'];
+        $request->interview_note = $data['interview_feedback'] ?? $request->interview_note;
+        $request->interview_completed_at = now();
+        $request->note = $req->input('note');
+        $request->handled_by = Auth::id();
+        $request->save();
+
+        $schedule = $request->interviewSchedules()->latest('scheduled_at')->first();
+        if ($schedule) {
+            $schedule->update([
+                'status' => $data['interview_result'],
+                'score' => $data['interview_score'],
+                'note' => $data['interview_feedback'] ?? $schedule->note,
+                'completed_at' => now(),
+            ]);
+        }
+
+        $resultLabel = match ($data['interview_result']) {
+            'completed' => 'Hoàn thành phỏng vấn',
+            'no_show' => 'Không tham dự phỏng vấn',
+            'cancelled' => 'Buổi phỏng vấn đã bị hủy',
+            default => 'Phỏng vấn'
+        };
+
+        $message = "{$resultLabel}.";
+        if (!is_null($data['interview_score'])) {
+            $message .= ' Điểm phỏng vấn: ' . $data['interview_score'];
+        }
+        if (!empty($data['interview_feedback'])) {
+            $message .= ' Nhận xét: ' . $data['interview_feedback'];
+        }
+
+        $this->notifyCandidate(
+            $request,
+            'Cập nhật kết quả phỏng vấn',
+            $message,
+            'interview_result',
+            [
+                'interview_result' => $data['interview_result'],
+                'interview_score' => $data['interview_score'],
+            ]
+        );
+    }
+
+    private function approveRequest(ClubJoinRequest $request, Request $req): void
+    {
+        $memberProfile = $request->user->member;
+        if (!$memberProfile) {
+            throw new \InvalidArgumentException('Người dùng chưa có hồ sơ thành viên.');
+        }
+
+        $exists = ClubMember::where('club_id', $request->club_id)
+            ->where('member_id', $memberProfile->id)
+            ->exists();
+
+        if ($exists) {
+            throw new \InvalidArgumentException('Người này đã là thành viên của CLB.');
+        }
+
+        ClubMember::create([
+            'club_id' => $request->club_id,
+            'member_id' => $memberProfile->id,
+            'role' => 'member',
+            'status' => 'active',
+            'joined_at' => now(),
+            'note' => $req->input('note'),
+        ]);
+
+        $request->status = 'approved';
+        $request->handled_by = Auth::id();
+        $request->handled_at = now();
+        $request->note = $req->input('note');
+        $request->save();
+
+        $message = "Chúc mừng! Bạn đã trở thành thành viên của CLB {$request->club->name}.";
+        $this->notifyCandidate(
+            $request,
+            'Yêu cầu tham gia được duyệt',
+            $message,
+            'approved',
+            ['membership_created' => true]
+        );
+    }
+
+    private function rejectRequest(ClubJoinRequest $request, Request $req): void
+    {
+        $request->status = 'rejected';
+        $request->handled_by = Auth::id();
+        $request->handled_at = now();
+        $request->note = $req->input('note');
+        $request->save();
+
+        $message = "Rất tiếc, yêu cầu tham gia CLB {$request->club->name} của bạn đã bị từ chối.";
+        if ($request->note) {
+            $message .= ' Lý do: ' . $request->note;
+        }
+
+        $this->notifyCandidate(
+            $request,
+            'Yêu cầu tham gia bị từ chối',
+            $message,
+            'rejected'
+        );
+    }
+
+    private function cancelRequest(ClubJoinRequest $request, Request $req): void
+    {
+        $request->status = 'cancelled';
+        $request->handled_by = Auth::id();
+        $request->handled_at = now();
+        $request->note = $req->input('note');
+        $request->save();
+
+        $message = "Yêu cầu tham gia CLB {$request->club->name} đã bị hủy.";
+
+        $this->notifyCandidate(
+            $request,
+            'Yêu cầu tham gia bị hủy',
+            $message,
+            'cancelled'
+        );
+    }
+
+    private function getSuccessMessage(string $action): string
+    {
+        return match ($action) {
+            'schedule' => 'Đã cập nhật lịch phỏng vấn.',
+            'complete_interview' => 'Đã lưu kết quả phỏng vấn.',
+            'approve' => 'Đã duyệt yêu cầu và thêm thành viên vào CLB.',
+            'reject' => 'Đã từ chối yêu cầu tham gia.',
+            'cancel' => 'Đã hủy yêu cầu tham gia.',
+            default => 'Đã xử lý yêu cầu.',
+        };
+    }
+
+    private function notifyCandidate(ClubJoinRequest $request, string $title, string $message, string $batchSuffix, array $context = []): void
+    {
+        $html = '<p>' . nl2br(e($message)) . '</p>';
+
+        SendNotificationJob::dispatch(
+            $request->user_id,
+            $title,
+            $html,
+            'database',
+            'club_join_request_' . $request->id . '_' . $batchSuffix . '_' . now()->timestamp,
+            false,
+            $message,
+            $this->buildNotificationContext($request, $context)
+        );
+    }
+
+    private function buildNotificationContext(ClubJoinRequest $request, array $extra = []): array
+    {
+        $sender = Auth::user();
+
+        return array_merge([
+            'sender' => [
+                'id' => $sender->id ?? null,
+                'name' => $sender->name ?? 'Hệ thống',
+                'email' => $sender->email ?? null,
+            ],
+            'club' => [
+                'id' => $request->club->id,
+                'name' => $request->club->name,
+            ],
+            'request_id' => $request->id,
+            'type' => 'club_join_request',
+            'link' => route('admin.club_join_requests.show2', $request->id),
+            'status' => $request->status,
+        ], $extra);
+    }
+
+    private function loadRequestDetail(int $id): array
+    {
+        $request = ClubJoinRequest::with([
+            'user.member',
+            'club.manager',
+            'club.clubMembers.member.user',
+            'interviewSchedules.interviewer',
+            'formAnswers.question',
+        ])->findOrFail($id);
+
+        $interviewers = User::select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        $memberProfile = $request->user->member;
+        $membership = null;
+
+        if ($memberProfile) {
+            $membership = ClubMember::with(['member.user'])
+                ->where('club_id', $request->club_id)
+                ->where('member_id', $memberProfile->id)
+                ->first();
+        }
+
+        return [
+            'request' => $request,
+            'interviewers' => $interviewers,
+            'membership' => $membership,
+            'timeline' => $this->buildTimeline($request, $membership),
+        ];
+    }
+
+    private function buildTimeline(ClubJoinRequest $request, ?ClubMember $membership): array
+    {
+        $hasManagerAction = !is_null($request->handled_by) || in_array($request->status, [
+            'scheduling_interview',
+            'interview',
+            'interview_completed',
+            'approved',
+            'rejected',
+        ]);
+        $hasSchedule = !is_null($request->interview_scheduled_at);
+        $hasInterviewResult = $request->interview_result && $request->interview_result !== 'pending';
+        $hasDecision = in_array($request->status, ['approved', 'rejected']);
+        $hasMembership = !is_null($membership);
+
+        return [
+            [
+                'step' => 1,
+                'title' => 'Thành viên gửi yêu cầu',
+                'completed' => true,
+                'timestamp' => $request->requested_at,
+                'description' => 'Sinh viên đã hoàn tất biểu mẫu đăng ký tham gia.',
+            ],
+            [
+                'step' => 2,
+                'title' => 'Quản lý xử lý yêu cầu',
+                'completed' => $hasManagerAction,
+                'timestamp' => $hasManagerAction ? ($request->handled_at ?? $request->updated_at) : null,
+                'description' => $hasManagerAction
+                    ? 'Ban quản lý đã tiếp nhận yêu cầu.'
+                    : 'Chờ ban quản lý phản hồi.',
+            ],
+            [
+                'step' => 3,
+                'title' => 'Sắp lịch phỏng vấn',
+                'completed' => $hasSchedule,
+                'timestamp' => $request->interview_scheduled_at,
+                'description' => $hasSchedule
+                    ? 'Đã có lịch phỏng vấn cụ thể.'
+                    : 'Chưa lên lịch phỏng vấn.',
+            ],
+            [
+                'step' => 4,
+                'title' => 'Điểm danh / Đánh giá phỏng vấn',
+                'completed' => $hasInterviewResult,
+                'timestamp' => $request->interview_completed_at,
+                'description' => $hasInterviewResult
+                    ? 'Kết quả phỏng vấn đã được ghi nhận.'
+                    : 'Chờ cập nhật kết quả phỏng vấn.',
+            ],
+            [
+                'step' => 5,
+                'title' => 'Ra quyết định duyệt',
+                'completed' => $hasDecision,
+                'timestamp' => $request->handled_at,
+                'description' => $hasDecision
+                    ? 'Yêu cầu đã được duyệt.'
+                    : 'Chờ quyết định duyệt.',
+            ],
+            [
+                'step' => 6,
+                'title' => 'Thêm vào CLB',
+                'completed' => $hasMembership,
+                'timestamp' => $membership?->joined_at,
+                'description' => $hasMembership
+                    ? 'Thành viên đã có trong danh sách CLB.'
+                    : 'Chưa được thêm vào danh sách thành viên.',
+            ],
+        ];
+    }
 }

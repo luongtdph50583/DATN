@@ -118,6 +118,22 @@ public function activeMembers()
     }
 
     /**
+     * Các form tuyển thành viên
+     */
+    public function recruitmentForms()
+    {
+        return $this->hasMany(ClubRecruitmentForm::class, 'club_id')->orderBy('order');
+    }
+
+    /**
+     * Form tuyển thành viên mặc định
+     */
+    public function defaultRecruitmentForm()
+    {
+        return $this->hasOne(ClubRecruitmentForm::class, 'club_id')->where('is_default', true);
+    }
+
+    /**
      * Lịch phỏng vấn
      */
     public function interviewSchedules()

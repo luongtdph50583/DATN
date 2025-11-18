@@ -6,10 +6,33 @@
         <div class="row">
             <div class="col-md-8">
                 <div class="card mb-4">
-                    <div class="card-header">
-                        <h2 class="mb-0">{{ $club->name }}</h2>
-                        @if($club->slogan)
-                            <p class="text-muted mb-0"><em>{{ $club->slogan }}</em></p>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="mb-0">{{ $club->name }}</h2>
+                            @if($club->slogan)
+                                <p class="text-muted mb-0"><em>{{ $club->slogan }}</em></p>
+                            @endif
+                        </div>
+                        @php
+                            $user = Auth::user();
+                            $isMember = \App\Models\ClubMember::where('club_id', $club->id)
+                                ->whereHas('member', function($q) use ($user) {
+                                    $q->where('user_id', $user->id);
+                                })
+                                ->exists();
+                            $hasPendingRequest = \App\Models\ClubJoinRequest::where('club_id', $club->id)
+                                ->where('user_id', $user->id)
+                                ->whereNotIn('status', ['approved', 'rejected', 'cancelled'])
+                                ->exists();
+                        @endphp
+                        @if(!$isMember && !$hasPendingRequest)
+                            <a href="{{ route('club.member.join', ['club_id' => $club->id]) }}" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-1"></i> Đăng ký tham gia
+                            </a>
+                        @elseif($hasPendingRequest)
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-clock me-1"></i> Đang chờ xử lý
+                            </span>
                         @endif
                     </div>
                     <div class="card-body">

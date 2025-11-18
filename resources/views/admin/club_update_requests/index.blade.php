@@ -3,7 +3,12 @@
 @section('title', 'Danh sách yêu cầu cập nhật CLB')
 @section('card-title', 'Danh sách yêu cầu cập nhật CLB')
 @section('card-header')
-    Danh sách
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span>Danh sách</span>
+        <a href="{{ route('admin.club_requests_update.create') }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus me-1"></i> Tạo đề xuất
+        </a>
+    </div>
 @endsection
 
 @section('card-body')

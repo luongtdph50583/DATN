@@ -19,11 +19,12 @@
     <form id="postForm" action="{{ route('admin.posts.update', $post->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
+        <input type="hidden" name="post_id" id="post_id" value="{{ $post->id }}">
 
         {{-- Câu lạc bộ --}}
        <div class="mb-3">
     <label for="club_id" class="form-label">Câu lạc bộ</label>
-    <select name="club_id" id="club_id" class="form-select" required>
+    <select name="club_id" id="club_id" class="form-select select2-club" required>
         <option value="">-- Chọn CLB --</option>
         @foreach($clubs as $club)
             <option value="{{ $club->id }}"
@@ -109,23 +110,19 @@
             @error('is_featured') <small class="text-danger">{{ $message }}</small> @enderror
         </div>
 
-        {{-- Quill Editor --}}
         <div class="mb-3">
-            <label for="editor" class="form-label">Nội dung</label>
-            <div id="editor"
-                style="min-height: 300px; max-height: 600px; overflow-y: auto; border: 1px solid #ced4da; border-radius: 6px; padding: 10px; background-color: #fff;">
-                {!! old('content', $post->content) !!}
-            </div>
-            <input type="hidden" name="content" id="contentInput">
+            <label for="postContentEditor" class="form-label">Nội dung</label>
+            <textarea name="content" id="postContentEditor" class="form-control" rows="10">{{ old('content', $post->content) }}</textarea>
             @error('content') <small class="text-danger">{{ $message }}</small> @enderror
         </div>
 
         {{-- Upload file và chèn vào nội dung --}}
         <div class="mb-3">
-            <label for="fileUpload" class="form-label">Đính kèm file</label>
-            <input type="file" id="fileUpload" class="form-control">
-            <button type="button" class="btn btn-secondary mt-2" onclick="uploadAndInsertFile()">Tải lên & chèn vào nội
-                dung</button>
+            <label for="fileUpload" class="form-label">Đính kèm file (hỗ trợ: ảnh, video, audio, PDF, Word, Excel...)</label>
+            <input type="file" id="fileUpload" class="form-control" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv">
+            <button type="button" class="btn btn-secondary mt-2" onclick="uploadAndInsertFile()">
+                <i class="fas fa-upload me-1"></i> Tải lên & chèn vào nội dung
+            </button>
             <div id="uploadStatus" class="text-muted small mt-1"></div>
         </div>
 
@@ -149,6 +146,18 @@
             position: relative;
         }
     </style>
+    <!-- Include Select2 CSS & JS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        $('.select2-club').select2({
+            width: '100%',
+            placeholder: "-- Chọn CLB --",
+            allowClear: true
+        });
+    });
+    </script>
 @endsection
 
 
@@ -159,145 +168,97 @@
 
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
     <script>
+        let postContentEditorInstance = null;
+
         document.addEventListener('DOMContentLoaded', function () {
-            const ImageResize = window.ImageResize?.default || window.ImageResize;
+            if (typeof ClassicEditor === 'undefined') {
+                console.error('CKEditor chưa được tải.');
+                return;
+            }
 
-            window.quill = new Quill('#editor', {
-                theme: 'snow',
-                placeholder: 'Nhập nội dung bài viết...',
-                modules: {
-                    toolbar: [
-                        ['bold', 'italic', 'underline', 'strike'],
-                        ['link', 'image', 'code-block'],
-                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                        [{ 'header': [1, 2, 3, false] }],
-                        [{ 'align': [] }],
-                        ['clean']
-                    ],
-                    imageResize: {
-                        modules: ['Resize', 'DisplaySize', 'Toolbar']
-                    }
+            ClassicEditor.create(document.querySelector('#postContentEditor'), {
+                toolbar: {
+                    items: [
+                        'heading', '|',
+                        'bold', 'italic', 'link',
+                        '|', 'bulletedList', 'numberedList',
+                        '|', 'blockQuote', 'insertImage', 'insertTable',
+                        '|', 'undo', 'redo'
+                    ]
+                },
+                simpleUpload: {
+                    uploadUrl: "{{ route('admin.posts.uploadImage') }}",
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    withCredentials: true
                 }
-            });
-
-            quill.getModule('toolbar').addHandler('image', () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.click();
-                input.onchange = () => {
-                    const file = input.files[0];
-                    if (file && /^image\//.test(file.type)) {
-                        uploadImage(file);
-                    } else {
-                        alert('Vui lòng chọn file ảnh hợp lệ.');
-                    }
-                };
-            });
-
-            quill.root.addEventListener('paste', function (e) {
-                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                for (let i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf('image') !== -1) {
-                        e.preventDefault();
-                        const file = items[i].getAsFile();
-                        uploadImage(file);
-                    }
-                }
-            });
-
-            document.getElementById('postForm').addEventListener('submit', function (e) {
-                const html = quill.root.innerHTML.trim();
-                if (html === '' || html === '<p><br></p>') {
-                    e.preventDefault();
-                    alert('Vui lòng nhập nội dung bài viết!');
-                    return;
-                }
-                document.getElementById('contentInput').value = html;
-            });
+            }).then(editor => {
+                postContentEditorInstance = editor;
+                const form = document.getElementById('postForm');
+                form.addEventListener('submit', function () {
+                    editor.updateSourceElement();
+                });
+            }).catch(error => console.error(error));
         });
 
-        async function uploadImage(file) {
+        async function uploadAndInsertFile() {
+            if (!postContentEditorInstance) {
+                alert('Trình soạn thảo chưa sẵn sàng.');
+                return;
+            }
+
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+            const status = document.getElementById('uploadStatus');
+
+            if (!file) {
+                status.textContent = '⚠️ Vui lòng chọn file trước.';
+                return;
+            }
+
             const formData = new FormData();
-            formData.append('image', file);
+            formData.append('file', file);
+
+            const postIdInput = document.getElementById('post_id');
+            if (postIdInput && postIdInput.value) {
+                formData.append('related_id', postIdInput.value);
+            }
+
+            formData.append('related_type', 'post');
 
             try {
-                const res = await fetch("{{ route('admin.posts.uploadImage') }}", {
+                const res = await fetch("{{ route('admin.posts.uploadFile') }}", {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                     body: formData
                 });
+
                 const data = await res.json();
-                if (data.url) {
-                    const range = quill.getSelection(true);
-                    const imgTag = `<img src="${data.url}" style="width:150px; height:auto; display:inline-block; margin-right:10px;" />`;
-                    quill.clipboard.dangerouslyPasteHTML(range.index, imgTag);
-                    quill.setSelection(range.index + 1);
+
+                if (data.success && data.url) {
+                    const html = data.type.startsWith('image')
+                        ? `<img src="${data.url}" alt="${data.name}" class="rounded shadow mb-2" style="max-width: 100%;">`
+                        : `<p><a href="${data.url}" target="_blank">📎 ${data.name}</a></p>`;
+
+                    postContentEditorInstance.model.change(writer => {
+                        const insertPosition = postContentEditorInstance.model.document.selection.getFirstPosition();
+                        const viewFragment = postContentEditorInstance.data.processor.toView(html);
+                        const modelFragment = postContentEditorInstance.data.toModel(viewFragment);
+                        postContentEditorInstance.model.insertContent(modelFragment, insertPosition);
+                    });
+
+                    status.textContent = '✅ Đã chèn file vào nội dung.';
+                    fileInput.value = '';
                 } else {
-                    throw new Error('Không nhận được URL ảnh');
+                    status.textContent = '❌ ' + (data.message || 'Không thể upload file.');
                 }
             } catch (err) {
                 console.error(err);
-                alert('Không thể upload ảnh. Vui lòng thử lại.');
+                status.textContent = '⚠️ Lỗi khi tải lên file.';
             }
         }
-
-
-                async function uploadAndInsertFile() {
-                        const fileInput = document.getElementById('fileUpload');
-                        const file = fileInput.files[0];
-                        const status = document.getElementById('uploadStatus');
-
-                        if (!file) {
-                            status.textContent = '⚠️ Vui lòng chọn file trước.';
-                            return;
-                        }
-
-                        const formData = new FormData();
-                        formData.append('file', file);
-
-                        // 👇 Nếu đang chỉnh sửa bài viết thì thêm ID vào
-                        const postIdInput = document.getElementById('post_id');
-                        if (postIdInput && postIdInput.value) {
-                            formData.append('related_id', postIdInput.value);
-                        }
-
-                        // 👇 Thêm luôn type = post để không phải hardcode trong Controller
-                        formData.append('related_type', 'post');
-
-                        try {
-                            const res = await fetch("{{ route('admin.posts.uploadFile') }}", {
-                                method: 'POST',
-                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                                body: formData
-                            });
-
-                            const data = await res.json();
-
-                            if (data.success && data.url) {
-                                const range = quill.getSelection(true);
-                                const fileType = data.type.startsWith('image')
-                                    ? `<img src="${data.url}" alt="${data.name}" class="rounded shadow mb-2" style="max-width: 100%;">`
-                                    : `<p><a href="${data.url}" target="_blank">📎 ${data.name}</a></p>`;
-
-                                quill.clipboard.dangerouslyPasteHTML(range.index, fileType);
-                                quill.setSelection(range.index + 1);
-                                status.textContent = '✅ Đã chèn file vào nội dung.';
-                                fileInput.value = '';
-                            } else {
-                                status.textContent = '❌ ' + (data.message || 'Không thể upload file.');
-                            }
-                        } catch (err) {
-                            console.error(err);
-                            status.textContent = '⚠️ Lỗi khi tải lên file.';
-                        }
-                    }
-                </script>
-
-
-
     </script>
 @endpush
 

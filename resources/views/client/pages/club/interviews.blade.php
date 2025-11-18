@@ -17,16 +17,59 @@
             </a>
         </div>
 
+        {{-- Filter và Search --}}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                <form method="GET" action="{{ route('club_manager.interviews.index', ['club_id' => $club->id]) }}" id="filterForm">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tìm kiếm</label>
+                            <input type="text" name="search" class="form-control" placeholder="Tên, email, MSSV..." 
+                                   value="{{ request('search') }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Trạng thái</label>
+                            <select name="status" class="form-select" data-select2="true">
+                                <option value="">Tất cả</option>
+                                <option value="pending_interview" {{ request('status') === 'pending_interview' ? 'selected' : '' }}>Chờ lên lịch</option>
+                                <option value="waiting_attendance" {{ request('status') === 'waiting_attendance' ? 'selected' : '' }}>Chờ điểm danh</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Người phỏng vấn</label>
+                            <select name="interviewer_id" class="form-select" data-select2="true">
+                                <option value="">Tất cả</option>
+                                @foreach($interviewers as $interviewer)
+                                    <option value="{{ $interviewer->id }}" {{ request('interviewer_id') == $interviewer->id ? 'selected' : '' }}>
+                                        {{ $interviewer->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> Tìm kiếm
+                            </button>
+                            <a href="{{ route('club_manager.interviews.index', ['club_id' => $club->id]) }}" class="btn btn-secondary">
+                                <i class="fas fa-redo me-1"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         @php
             $statusLabels = [
-                'pending' => 'Chờ liên hệ',
-                'scheduling_interview' => 'Đang liên hệ',
-                'interview' => 'Đã lên lịch',
-                'interview_completed' => 'Đã phỏng vấn',
+                'pending_interview' => 'Chờ lên lịch',
+                'waiting_attendance' => 'Chờ điểm danh',
             ];
             $resultLabels = [
-                'completed' => 'Hoàn thành',
-                'no_show' => 'Không tham gia',
+                'pass' => 'Đạt',
+                'fail' => 'Không đạt',
+                'no_show' => 'Vắng mặt',
                 'pending' => 'Chờ kết quả',
             ];
         @endphp
@@ -152,7 +195,7 @@
                                         <div class="modal-body">
                                             <div class="mb-3">
                                                 <label class="form-label">Kết quả <span class="text-danger">*</span></label>
-                                                <select name="attendance_status" class="form-select" required>
+                                                <select name="attendance_status" class="form-select" data-select2="true" required>
                                                     <option value="completed">Đã hoàn thành</option>
                                                     <option value="no_show">Không tham gia</option>
                                                 </select>
