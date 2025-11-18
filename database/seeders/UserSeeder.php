@@ -12,40 +12,58 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
-        $faker = Faker::create('vi_VN'); // Dùng locale Việt Nam cho tên hợp lý
+        $faker = Faker::create('vi_VN');
 
         // 1. Admin cố định
-        User::create([
-            'name' => 'Admin System',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('123456'),
-            'role' => 'admin',
-            'status' => 'active',
-            'avatar' => null,
-            'remember_token' => Str::random(10),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name' => 'Admin System',
+                'password' => Hash::make('123456'),
+                'role' => 'admin',
+                'status' => 'active',
+                'avatar' => null,
+                'remember_token' => Str::random(10),
+            ]
+        );
 
-          User::create([
-            'name' => 'Van Tam',
-            'email' => 'tamnvph49996@gmail.com',
-            'password' => Hash::make('123456'),
-            'role' => 'admin',
-            'status' => 'active',
-            'avatar' => null,
-            'remember_token' => Str::random(10),
-        ]);
+        // 2. Member cố định để test
+        User::firstOrCreate(
+            ['email' => 'member@gmail.com'],
+            [
+                'name' => 'Member User',
+                'password' => Hash::make('123456'),
+                'role' => 'member',
+                'status' => 'active',
+                'avatar' => null,
+                'remember_token' => Str::random(10),
+            ]
+        );
 
-        // 2. Club Manager cố định
-      
-        // 3. Tạo 20 thành viên (member) ngẫu nhiên
-        for ($i = 0; $i < 20; $i++) {
+        // 3. Tạo thêm một số Club Managers
+        for ($i = 1; $i <= 5; $i++) {
+            User::firstOrCreate(
+                ['email' => "manager{$i}@gmail.com"],
+                [
+                    'name' => 'Club Manager ' . $i,
+                    'password' => Hash::make('123456'),
+                    'role' => 'member', // Sẽ được gán làm manager qua ClubMember
+                    'status' => 'active',
+                    'avatar' => null,
+                    'remember_token' => Str::random(10),
+                ]
+            );
+        }
+
+        // 4. Tạo thêm 30 thành viên (member) ngẫu nhiên
+        for ($i = 0; $i < 30; $i++) {
             User::create([
                 'name' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
-                'password' => Hash::make('password'), // Mật khẩu chung cho dễ test
+                'password' => Hash::make('123456'), // Mật khẩu chung cho dễ test
                 'role' => 'member',
                 'status' => $faker->randomElement(['active', 'inactive']),
-                'avatar' => $faker->optional(0.8)->imageUrl(200, 200, 'people', true), // 80% có avatar
+                'avatar' => null,
                 'remember_token' => Str::random(10),
             ]);
         }

@@ -4,7 +4,7 @@
             <div class="col-xl-8 wow fadeInUp" data-wow-delay=".3s">
                 <div class="playing-ranking-items">
                     <div class="thumb">
-                        <img src="assets/img/home-2/playing-ranking-image.jpg" alt="img">
+                        <img src="assets1/img/home-2/playing-ranking-image.jpg" alt="img">
                     </div>
                     <div class="content">
                         <div class="top-content">
@@ -66,7 +66,7 @@
                     <div class="match-result-box">
                         <div class="match-result">
                             <div class="thumb">
-                                <img src="assets/img/home-2/match1.png" alt="img">
+                                <img src="assets1/img/home-2/match1.png" alt="img">
                             </div>
                             <p>atlanta </p>
                         </div>
@@ -78,7 +78,7 @@
                         </div>
                         <div class="match-result">
                             <div class="thumb">
-                                <img src="assets/img/home-2/match2.png" alt="img">
+                                <img src="assets1/img/home-2/match2.png" alt="img">
                             </div>
                             <p>milwaukee</p>
                         </div>
@@ -86,7 +86,7 @@
                     <div class="match-result-box mb-0">
                         <div class="match-result">
                             <div class="thumb">
-                                <img src="assets/img/home-2/match3.png" alt="img">
+                                <img src="assets1/img/home-2/match3.png" alt="img">
                             </div>
                             <p>nsts club</p>
                         </div>
@@ -98,7 +98,7 @@
                         </div>
                         <div class="match-result">
                             <div class="thumb">
-                                <img src="assets/img/home-2/match1.png" alt="img">
+                                <img src="assets1/img/home-2/match1.png" alt="img">
                             </div>
                             <p>atlanta. H</p>
                         </div>
@@ -141,11 +141,11 @@
                                         <div class="match-list">
                                             <ul>
                                                 <li>
-                                                    <img src="assets/img/home-2/table/t-7.png" alt="img">
+                                                    <img src="assets1/img/home-2/table/t-7.png" alt="img">
                                                     <span>atlanta HAWKS</span>
                                                 </li>
                                                 <li>
-                                                    <img src="assets/img/home-2/table/t-8.png" alt="img">
+                                                    <img src="assets1/img/home-2/table/t-8.png" alt="img">
                                                     <span>nba eastern</span>
                                                 </li>
                                             </ul>
@@ -172,11 +172,11 @@
                                         <div class="match-list">
                                             <ul>
                                                 <li>
-                                                    <img src="assets/img/home-2/table/t-9.png" alt="img">
+                                                    <img src="assets1/img/home-2/table/t-9.png" alt="img">
                                                     <span>TORONTO RAPTORS</span>
                                                 </li>
                                                 <li>
-                                                    <img src="assets/img/home-2/table/t-7.png" alt="img">
+                                                    <img src="assets1/img/home-2/table/t-7.png" alt="img">
                                                     <span>nba eastern</span>
                                                 </li>
                                             </ul>
@@ -214,7 +214,7 @@
                                             <td class="rank">01</td>
                                             <td>
                                                 <div class="country">
-                                                    <img src="assets/img/home-2/flag/f1.png" alt="img">
+                                                    <img src="assets1/img/home-2/flag/f1.png" alt="img">
                                                     UNITED STATES
                                                 </div>
                                             </td>
@@ -228,7 +228,7 @@
                                             <td class="rank">02</td>
                                             <td>
                                                 <div class="country">
-                                                    <img src="assets/img/home-2/flag/f2.png" alt="img">
+                                                    <img src="assets1/img/home-2/flag/f2.png" alt="img">
                                                     SERBIA
                                                 </div>
                                             </td>
@@ -242,7 +242,7 @@
                                             <td class="rank">03</td>
                                             <td>
                                                 <div class="country">
-                                                    <img src="assets/img/home-2/flag/f3.png" alt="img">
+                                                    <img src="assets1/img/home-2/flag/f3.png" alt="img">
                                                     GERMANY
                                                 </div>
                                             </td>
@@ -256,7 +256,7 @@
                                             <td class="rank">04</td>
                                             <td>
                                                 <div class="country">
-                                                    <img src="assets/img/home-2/flag/f4.png" alt="img">
+                                                    <img src="assets1/img/home-2/flag/f4.png" alt="img">
                                                     FRANCE
                                                 </div>
                                             </td>
@@ -270,7 +270,7 @@
                                             <td class="rank">05</td>
                                             <td>
                                                 <div class="country">
-                                                    <img src="assets/img/home-2/flag/f5.png" alt="img">
+                                                    <img src="assets1/img/home-2/flag/f5.png" alt="img">
                                                     SPAIN
                                                 </div>
                                             </td>

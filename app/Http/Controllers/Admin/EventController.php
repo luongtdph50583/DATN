@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\ClubMember;
 use App\Models\EventFundRequest;
+use App\Models\FundTransaction;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -101,23 +102,35 @@ public function store(Request $request)
         ->with('success', 'Tạo sự kiện thành công!');
 }
 
-    public function show(Event $event)
+public function show(Event $event)
 {
-   $event->load([
+    // Eager load quan hệ cần thiết
+    $event->load([
         'club',
         'createdBy',
         'approvalBy',
         'registrations.user',
-        'funRequests',
+        'funRequests.requestedBy',
+        'funRequests.approvedBy',
+        'media',
     ]);
-    // Phân trang người tham gia, eager load user
+
+    // Phân trang người tham gia (registrations)
     $registrations = $event->registrations()->with('user')->paginate(3);
 
-    // Phân trang giao dịch quỹ, eager load approvedBy và requestedBy nếu cần
+    // Phân trang giao dịch quỹ (funRequests)
     $funRequests = $event->funRequests()->with(['approvedBy', 'requestedBy'])->paginate(2);
 
-    return view('admin.events.show', compact('event','registrations', 'funRequests'));
+    // Lấy tất cả giao dịch CLB liên quan sự kiện này
+    $clubTransactions = FundTransaction::where('club_id', $event->club_id)
+        ->where('event_id', $event->id)
+        ->with('creator') // eager load người tạo
+        ->orderByDesc('created_at')
+        ->get();
+
+    return view('admin.events.show', compact('event', 'registrations', 'funRequests', 'clubTransactions'));
 }
+
 
 
     public function edit(Event $event)

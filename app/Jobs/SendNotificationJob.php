@@ -84,7 +84,12 @@ class SendNotificationJob implements ShouldQueue
 
             if ($shouldSendInApp) {
                 try {
-                    $user->notify(new CustomNotification($this->title, $this->contentText, $this->batchId));
+                    $user->notify(new CustomNotification(
+                        $this->title,
+                        $this->contentHtml,
+                        $this->contentText,
+                        $this->batchId
+                    ));
 
                     // Cập nhật record cũ hoặc lấy bản ghi mới nhất vừa tạo
                     if ($notification) {

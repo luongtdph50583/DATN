@@ -69,12 +69,21 @@
     <!-- End Right Bar -->
     @include('client.layouts.sidebar')
 
-    <!-- Header Top Section Start -->
-    <!-- End Header -->
-    @include('client.layouts.header1')
+    @php
+        $clientNotifications = Auth::check()
+            ? Auth::user()->unreadNotifications()->latest()->limit(5)->get()
+            : collect();
+    @endphp
 
+    <!-- Header -->
+    @include('client.layouts.header1', ['clientNotifications' => $clientNotifications])
 
-        @yield('content')
+    <!-- Notification banner -->
+    @if($clientNotifications->isNotEmpty())
+        @include('client.layouts.notification-banner', ['notifications' => $clientNotifications])
+    @endif
+
+    @yield('content')
 
     <!-- Footer -->
     @include('client.layouts.footer')

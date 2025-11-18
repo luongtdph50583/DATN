@@ -11,13 +11,15 @@ class CustomNotification extends Notification
     use Queueable;
 
     public string $title;
-    public string $content;
+    public string $contentHtml;
+    public string $contentText;
     public string $batchId;
 
-    public function __construct(string $title, string $content, string $batchId)
+    public function __construct(string $title, string $contentHtml, string $contentText, string $batchId)
     {
         $this->title = $title;
-        $this->content = $content;
+        $this->contentHtml = $contentHtml;
+        $this->contentText = $contentText;
         $this->batchId = $batchId;
     }
 
@@ -30,9 +32,10 @@ class CustomNotification extends Notification
     {
         return [
             'title' => $this->title,
-            'message' => $this->content,
+            'message' => $this->contentText,
+            'message_html' => $this->contentHtml,
             'status' => 'sent',
-            'batch_id' => $this->batchId, // Observer sẽ lấy từ đây
+            'batch_id' => $this->batchId,
         ];
     }
 

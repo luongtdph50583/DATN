@@ -1,13 +1,13 @@
 <section class="hero-section parallaxie hero-2 bg-cover"
-    style="background-image: url('assets/img/home-2/hero/hero-bg.jpg');">
+    style="background-image: url('assets1/img/home-2/hero/hero-bg.jpg');">
     <h2 class="stoke-title">
         BASKETBALL
     </h2>
     <div class="vec-shape1">
-        <img src="assets/img/home-2/hero/vec-1.png" alt="img">
+        <img src="assets1/img/home-2/hero/vec-1.png" alt="img">
     </div>
     <div class="vec-shape2">
-        <img src="assets/img/home-2/hero/vec-2.png" alt="img">
+        <img src="assets1/img/home-2/hero/vec-2.png" alt="img">
     </div>
     <div class="container">
         <div class="row g-4 align-items-center">

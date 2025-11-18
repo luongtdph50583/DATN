@@ -9,6 +9,6 @@ class HomeController extends Controller
     public function index()
     {
         // Trả về view home.blade.php
-        return view('client.pages.post.index');
+        return view('client.pages.home.index');
     }
 }

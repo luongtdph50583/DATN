@@ -91,6 +91,7 @@ class UserController extends Controller
     $validated = $request->validate([
         'role' => 'required|in:admin,club_manager,member',
         'status' => 'required|in:active,inactive',
+
     ]);
 
     // Cập nhật chỉ hai trường được phép
@@ -135,23 +136,23 @@ class UserController extends Controller
     return view('admin.users.deleted', compact('users'));
 }
 
-public function destroy(User $user)
-{
-    return $this->softDelete(request(), $user);
-}
+// public function destroy(User $user)
+// {
+//     return $this->softDelete(request(), $user);
+// }
 
-    /**
-     * Khôi phục người dùng bị xóa
-     */
-    public function restore($id)
-    {
-        $user = User::onlyTrashed()->findOrFail($id);
-        $user->restore();
+//     /**
+//      * Khôi phục người dùng bị xóa
+//      */
+//     public function restore($id)
+//     {
+//         $user = User::onlyTrashed()->findOrFail($id);
+//         $user->restore();
 
-        return redirect()
-            ->route('admin.users.index')
-            ->with('success', 'Khôi phục người dùng thành công!');
-    }
+//         return redirect()
+//             ->route('admin.users.index')
+//             ->with('success', 'Khôi phục người dùng thành công!');
+//     }
 
     /**
      * Xóa vĩnh viễn người dùng

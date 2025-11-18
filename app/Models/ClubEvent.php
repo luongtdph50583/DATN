@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ClubEvent extends Model
 {
     use SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'club_id', 'created_by', 'title', 'description', 'type',

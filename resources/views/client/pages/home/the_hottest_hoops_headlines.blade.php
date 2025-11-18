@@ -9,7 +9,7 @@
             <div class="col-lg-7 wow fadeInUp" data-wow-delay=".3s">
                 <div class="hottest-box-items">
                     <div class="hottest-thumb">
-                        <img src="assets/img/home-2/news/news-04.jpg" alt="img">
+                        <img src="assets1/img/home-2/news/news-04.jpg" alt="img">
                         <span class="post-box">
                             16:09
                         </span>
@@ -38,7 +38,7 @@
             <div class="col-lg-5 wow fadeInUp" data-wow-delay=".5s">
                 <div class="hottest-box-items">
                     <div class="hottest-thumb">
-                        <img src="assets/img/home-2/news/news-05.jpg" alt="img">
+                        <img src="assets1/img/home-2/news/news-05.jpg" alt="img">
                         <span class="post-box">
                             16:09
                         </span>
@@ -98,7 +98,7 @@
                 </div>
                 <div class="col-lg-6 wow fadeInUp" data-wow-delay=".5s">
                     <div class="hottest-hoop-wrap-thumb bg-cover"
-                        style="background-image: url('assets/img/home-2/news/news-06.jpg');">
+                        style="background-image: url('assets1/img/home-2/news/news-06.jpg');">
                         <span class="post-box">
                             16:09
                         </span>

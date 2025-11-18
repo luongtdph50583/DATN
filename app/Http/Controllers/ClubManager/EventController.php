@@ -12,24 +12,6 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class EventController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            $user = Auth::user();
-            if (!$user || $user->role !== 'club_manager') {
-                abort(403, 'Không có quyền truy cập');
-            }
-
-            $club = $user->managedClub; // Quan hệ: User hasOne Club
-            if (!$club) {
-                abort(403, 'Bạn chưa được gán quản lý CLB nào');
-            }
-
-            $request->merge(['club' => $club]);
-            return $next($request);
-        });
-    }
-
     // Danh sách sự kiện
     public function index(Request $request)
     {

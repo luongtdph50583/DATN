@@ -8,7 +8,7 @@
                             <ul>
                                 <li>
                                     <div class="icon">
-                                        <img src="assets/img/home-2/ball.png" alt="img">
+                                        <img src="assets1/img/home-2/ball.png" alt="img">
                                     </div>
                                 </li>
                                 <li class="box-list">
@@ -34,7 +34,7 @@
                 </div>
                 <div class="col-lg-4 wow fadeInUp" data-wow-delay=".3s">
                     <div class="feature-progress-thumb">
-                        <img src="assets/img/home-2/video-image.jpg" alt="img">
+                        <img src="assets1/img/home-2/video-image.jpg" alt="img">
                         <a href="https://www.youtube.com/watch?v=Cn4G2lZ_g2I" class="video-btn ripple video-popup">
                             <i class="fa-duotone fa-play"></i>
                         </a>
@@ -45,7 +45,7 @@
     </div>
     <div class="about-section-2 section-padding pb-0">
         <div class="vec-shape">
-            <img src="assets/img/home-2/about/vec-shape.png" alt="img">
+            <img src="assets1/img/home-2/about/vec-shape.png" alt="img">
         </div>
         <div class="container">
             <div class="about-wrapper-2">
@@ -53,18 +53,18 @@
                     <div class="col-lg-6 wow fadeInUp" data-wow-delay=".3s">
                         <div class="about-image-items">
                             <div class="about-image">
-                                <img src="assets/img/home-2/about/about-01.png" alt="img">
+                                <img src="assets1/img/home-2/about/about-01.png" alt="img">
                                 <div class="text-circle">
-                                    <img src="assets/img/home-2/about/circle-text.png" alt="img">
+                                    <img src="assets1/img/home-2/about/circle-text.png" alt="img">
                                     <div class="ball-cicrle">
-                                        <img src="assets/img/home-2/about/ball.png" alt="img">
+                                        <img src="assets1/img/home-2/about/ball.png" alt="img">
                                     </div>
                                 </div>
                             </div>
                             <div class="about-sm-img">
-                                <img src="assets/img/home-2/about/about-02.png" alt="img">
+                                <img src="assets1/img/home-2/about/about-02.png" alt="img">
                                 <div class="img">
-                                    <img src="assets/img/home-2/about/Shape-1.png" alt="img">
+                                    <img src="assets1/img/home-2/about/Shape-1.png" alt="img">
                                 </div>
                             </div>
                         </div>

@@ -1,4 +1,4 @@
-<div class="gt-breadcrumb-wrapper bg-cover" style="background-image: url('assets/img/breadcrumb-bg.jpg');">
+<div class="gt-breadcrumb-wrapper bg-cover" style="background-image: url('assets1/img/breadcrumb-bg.jpg');">
     <div class="container">
         <div class="gt-page-heading">
             <div class="gt-breadcrumb-sub-title">

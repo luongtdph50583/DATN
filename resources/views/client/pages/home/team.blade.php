@@ -1,5 +1,5 @@
 <section class="team-section-2 section-padding fix bg-cover"
-    style="background-image: url('assets/img/home-2/team/team-bg.jpg');">
+    style="background-image: url('assets1/img/home-2/team/team-bg.jpg');">
     <div class="container">
         <div class="row g-4">
             <div class="col-xxl-6 d-xxl-none">
@@ -22,7 +22,7 @@
             <div class="col-xxl-3 col-xl-4 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".3s">
                 <div class="team-images-items">
                     <div class="themb">
-                        <img src="assets/img/home-2/team/team-01.jpg" alt="img">
+                        <img src="assets1/img/home-2/team/team-01.jpg" alt="img">
                         <div class="social-icon">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -35,7 +35,7 @@
                             <div class="last-name">
                                 <p>Aug 26, 1996</p>
                                 <div class="flag-name">
-                                    <img src="assets/img/home-2/flag/f6.png" alt="img">
+                                    <img src="assets1/img/home-2/flag/f6.png" alt="img">
                                     Far
                                 </div>
                             </div>
@@ -46,7 +46,7 @@
             <div class="col-xxl-3 col-xl-4 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".5s">
                 <div class="team-images-items">
                     <div class="themb">
-                        <img src="assets/img/home-2/team/team-02.jpg" alt="img">
+                        <img src="assets1/img/home-2/team/team-02.jpg" alt="img">
                         <div class="social-icon">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -59,7 +59,7 @@
                             <div class="last-name">
                                 <p>Aug 26, 1996</p>
                                 <div class="flag-name">
-                                    <img src="assets/img/home-2/flag/f6.png" alt="img">
+                                    <img src="assets1/img/home-2/flag/f6.png" alt="img">
                                     Far
                                 </div>
                             </div>
@@ -87,7 +87,7 @@
             <div class="col-xxl-3 col-xl-4 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".3s">
                 <div class="team-images-items">
                     <div class="themb">
-                        <img src="assets/img/home-2/team/team-03.jpg" alt="img">
+                        <img src="assets1/img/home-2/team/team-03.jpg" alt="img">
                         <div class="social-icon">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -100,7 +100,7 @@
                             <div class="last-name">
                                 <p>Aug 26, 1996</p>
                                 <div class="flag-name">
-                                    <img src="assets/img/home-2/flag/f6.png" alt="img">
+                                    <img src="assets1/img/home-2/flag/f6.png" alt="img">
                                     Far
                                 </div>
                             </div>
@@ -111,7 +111,7 @@
             <div class="col-xxl-3 col-xl-4 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".5s">
                 <div class="team-images-items">
                     <div class="themb">
-                        <img src="assets/img/home-2/team/team-04.jpg" alt="img">
+                        <img src="assets1/img/home-2/team/team-04.jpg" alt="img">
                         <div class="social-icon">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -124,7 +124,7 @@
                             <div class="last-name">
                                 <p>Aug 26, 1996</p>
                                 <div class="flag-name">
-                                    <img src="assets/img/home-2/flag/f6.png" alt="img">
+                                    <img src="assets1/img/home-2/flag/f6.png" alt="img">
                                     Far
                                 </div>
                             </div>
@@ -135,7 +135,7 @@
             <div class="col-xxl-3 col-xl-4 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".7s">
                 <div class="team-images-items">
                     <div class="themb">
-                        <img src="assets/img/home-2/team/team-05.jpg" alt="img">
+                        <img src="assets1/img/home-2/team/team-05.jpg" alt="img">
                         <div class="social-icon">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -148,7 +148,7 @@
                             <div class="last-name">
                                 <p>Aug 26, 1996</p>
                                 <div class="flag-name">
-                                    <img src="assets/img/home-2/flag/f6.png" alt="img">
+                                    <img src="assets1/img/home-2/flag/f6.png" alt="img">
                                     Far
                                 </div>
                             </div>
@@ -159,7 +159,7 @@
             <div class="col-xxl-3 col-xl-4 col-lg-4 col-md-6 wow fadeInUp" data-wow-delay=".9s">
                 <div class="team-images-items">
                     <div class="themb">
-                        <img src="assets/img/home-2/team/team-06.jpg" alt="img">
+                        <img src="assets1/img/home-2/team/team-06.jpg" alt="img">
                         <div class="social-icon">
                             <a href="#"><i class="fab fa-facebook-f"></i></a>
                             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -172,7 +172,7 @@
                             <div class="last-name">
                                 <p>Aug 26, 1996</p>
                                 <div class="flag-name">
-                                    <img src="assets/img/home-2/flag/f6.png" alt="img">
+                                    <img src="assets1/img/home-2/flag/f6.png" alt="img">
                                     Far
                                 </div>
                             </div>
