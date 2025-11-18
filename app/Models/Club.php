@@ -4,28 +4,30 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Club extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
-    protected $fillable = [
+protected $fillable = [
         'name',
         'description',
         'logo',
         'field',
         'status',
         'manager_id',
+        'advisor_id', // thêm nếu muốn cho phép mass assign
         'email',
         'phone',
         'member_limit',
         'founded_at',
         'location',
         'rules',
+        'deleted_reason',
+        'slogan'
     ];
 
     protected $casts = [
-        'social_links' => 'array',
         'founded_at' => 'date',
         'description' => 'string',
     ];
@@ -37,12 +39,13 @@ class Club extends Model
     }
 
     /** Thành viên CLB (qua bảng club_members) */
-    public function members()
-    {
-        return $this->belongsToMany(User::class, 'club_members', 'club_id', 'member_id')
-            ->withPivot(['role', 'status', 'note', 'joined_at'])
-            ->withTimestamps();
-    }
+public function members()
+{
+    return $this->belongsToMany(Member::class, 'club_members')
+                ->withPivot(['role','status','joined_at','appointed_at'])
+                ->withTimestamps();
+}
+
 
     /** Bài viết CLB */
     public function posts()
@@ -69,15 +72,12 @@ class Club extends Model
     }
 
     /** Tự động tạo quỹ khi tạo CLB mới */
-    protected static function booted()
+
+    public function clubMembers()
     {
-        static::created(function ($club) {
-            $club->fund()->create([
-                'initial_balance' => 0,
-                'balance' => 0,
-            ]);
-        });
+        return $this->hasMany(ClubMember::class, 'club_id');
     }
+
 
     /** Yêu cầu tham gia CLB */
     public function joinRequests()
@@ -88,6 +88,20 @@ class Club extends Model
     {
         return $this->hasMany(Document::class, 'clb_id');
     }
+    // app/Models/Club.php
+
+    // app/Models/Club.php
+    public function advisor()
+    {
+        return $this->belongsTo(User::class, 'advisor_id');
+    }
+    public function advisorFaculty()
+    {
+        // advisor_id = faculty_members.id
+        return $this->belongsTo(FacultyMember::class, 'advisor_id')->with('user');
+    }
+
+
 
 
 }

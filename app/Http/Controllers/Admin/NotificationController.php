@@ -16,6 +16,7 @@ use App\Mail\GenericNotificationMail;
 use App\Notifications\CustomNotification;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Notifications\DatabaseNotification;
+use Carbon\Carbon;
 
 class NotificationController extends Controller
 {
@@ -26,8 +27,20 @@ class NotificationController extends Controller
 
     public function index(Request $request)
     {
-        $sentEmails = SentEmail::with('user')->latest()->get();
-        $inAppNotifications = DatabaseNotification::with('notifiable')->latest()->get();
+        $fromDate = $request->filled('from_date') ? Carbon::parse($request->input('from_date'))->startOfDay() : null;
+        $toDate = $request->filled('to_date') ? Carbon::parse($request->input('to_date'))->endOfDay() : null;
+
+        $sentEmails = SentEmail::with('user')
+            ->when($fromDate, fn($q) => $q->where('created_at', '>=', $fromDate))
+            ->when($toDate, fn($q) => $q->where('created_at', '<=', $toDate))
+            ->latest()
+            ->get();
+
+        $inAppNotifications = DatabaseNotification::with('notifiable')
+            ->when($fromDate, fn($q) => $q->where('created_at', '>=', $fromDate))
+            ->when($toDate, fn($q) => $q->where('created_at', '<=', $toDate))
+            ->latest()
+            ->get();
 
         $grouped = [];
 
@@ -81,7 +94,12 @@ class NotificationController extends Controller
             ->sortByDesc('created_at')
             ->values();
 
-        return view('admin.notifications.index', compact('activities'));
+        $filters = [
+            'from_date' => $fromDate?->format('Y-m-d'),
+            'to_date' => $toDate?->format('Y-m-d'),
+        ];
+
+        return view('admin.notifications.index', compact('activities', 'filters'));
     }
 
 
@@ -97,7 +115,8 @@ class NotificationController extends Controller
 
         if (empty($ids)) {
             return redirect()->route('admin.notifications.index')
-                ->with('error', 'bạn chưa chọn thông báo để xóa');        }
+                ->with('error', 'bạn chưa chọn thông báo để xóa');
+        }
 
         $deletedCount = 0;
 
@@ -139,7 +158,8 @@ class NotificationController extends Controller
         }
 
         return redirect()->route('admin.notifications.index')
-            ->with('success', 'đã xóa');    }
+            ->with('success', 'đã xóa');
+    }
     public function resend(string $batchId, string $userId)
     {
         // Lấy user
@@ -147,7 +167,8 @@ class NotificationController extends Controller
         $user = User::find($userId);
         if (!$user) {
             return redirect()->route('admin.notifications.index')
-                ->with('success', 'user không hợp lệ');        }
+                ->with('success', 'user không hợp lệ');
+        }
 
         $channelsToResend = [];
 
@@ -174,17 +195,19 @@ class NotificationController extends Controller
         // Nếu không có kênh nào cần gửi lại
         if (empty($channelsToResend)) {
             return redirect()->route('admin.notifications.index')
-                ->with('infor', 'Không có kênh nào cần gửi lại');        }
+                ->with('infor', 'Không có kênh nào cần gửi lại');
+        }
 
         // Lấy tiêu đề và nội dung từ email hoặc notification
         $title = $email?->title ?? $notification?->data['title'] ?? '(Không có tiêu đề)';
-        $content = $email?->content ?? $notification?->data['message'] ?? '(Không có nội dung)';
+        $contentHtml = $email?->content ?? $notification?->data['message'] ?? '';
+        $contentText = $notification?->data['message'] ?? $this->convertHtmlToPlain($contentHtml);
 
         // Xác định kênh gửi
         $sendVia = count($channelsToResend) > 1 ? 'both' : $channelsToResend[0];
 
         // Gửi lại bằng job
-        SendNotificationJob::dispatch($user->id, $title, $content, $sendVia, $batchId)
+        SendNotificationJob::dispatch($user->id, $title, $contentHtml, $sendVia, $batchId, true, $contentText)
             ->onQueue('notifications');
 
         Log::info('Resending notification queued', [
@@ -200,38 +223,39 @@ class NotificationController extends Controller
 
 
 
-    public function fetchUsers(Request $request)
-    {
-        $q = $request->get('q', '');
-        $role = $request->get('role');
-        $all = $request->boolean('all');
+    // public function fetchUsers(Request $request)
+    // {
+    //     $q = $request->get('q', '');
+    //     $role = $request->get('role');
+    //     $all = $request->boolean('all');
 
+    //     $query = User::query()
+    //         ->join('members', 'users.id', '=', 'members.user_id') // đảm bảo có member
+    //         ->where('users.status', 'active');
 
-        $query = User::query()->where('status', 'active');
+    //     if (!$all) {
+    //         $query->when($q, function ($query, $q) {
+    //             $query->where(function ($subQuery) use ($q) {
+    //                 $subQuery->where('users.name', 'like', "%{$q}%")
+    //                     ->orWhere('users.email', 'like', "%{$q}%");
+    //             });
+    //         });
+    //     }
 
-        if (!$all) {
-            $query->when($q, function ($query, $q) {
-                $query->where(function ($subQuery) use ($q) {
-                    $subQuery->where('name', 'like', "%{$q}%")
-                        ->orWhere('email', 'like', "%{$q}%");
-                });
-            });
-        }
+    //     if ($role) {
+    //         $query->where('users.role', $role);
+    //     }
 
-        if ($role) {
-            $query->where('role', $role);
-        }
+    //     $users = $query->select('users.id', 'users.name', 'users.email')->get();
 
-        // ❌ Không còn phân trang, lấy tất cả
-        $users = $query->get(['id', 'name', 'email']);
+    //     $results = $users->map(fn($u) => [
+    //         'id' => $u->id,
+    //         'text' => "{$u->name} ({$u->email})"
+    //     ]);
 
-        $results = $users->map(fn($u) => [
-            'id' => $u->id,
-            'text' => "{$u->name} ({$u->email})",
-        ]);
+    //     return response()->json(['results' => $results]);
+    // }
 
-        return response()->json(['results' => $results]);
-    }
 
 
 
@@ -244,24 +268,137 @@ class NotificationController extends Controller
     }
 
     // AJAX: lấy thành viên của CLB từ bảng members
+    protected function getActiveUsers($query = null)
+    {
+        $query = $query ?? User::query();
+
+        return $query->join('members', 'users.id', '=', 'members.user_id')
+            ->where('users.status', 'active')
+            ->select('users.id', 'users.name', 'users.email');
+    }
+
+    /**
+     * Lấy danh sách user theo role, từ input q và all
+     */
+    public function fetchUsers(Request $request)
+    {
+        $ids = array_filter((array) $request->input('ids', []));
+        $q = $request->get('q', '');
+        $role = $request->get('role');
+        $all = $request->boolean('all');
+
+        $query = $this->getActiveUsers();
+
+        if (!empty($ids)) {
+            $query->whereIn('users.id', $ids);
+        } else {
+            if (!$all && $q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('users.name', 'like', "%{$q}%")
+                        ->orWhere('users.email', 'like', "%{$q}%");
+                });
+            }
+
+            if ($role && !$this->isClubMemberRole($role)) {
+                $query->where('users.role', $role);
+            }
+        }
+
+        $users = $query->get();
+
+        $results = $users->map(fn($u) => [
+            'id' => $u->id,
+            'text' => "{$u->name} ({$u->email})"
+        ]);
+
+        return response()->json(['results' => $results]);
+    }
+
+    /**
+     * Helper: Build query lấy thành viên CLB theo club_id và role
+     */
+    protected function getClubMembersQuery($clubId = null, $role = null)
+    {
+        $query = DB::table('club_members')
+            ->join('members', 'club_members.member_id', '=', 'members.id')
+            ->join('users', 'members.user_id', '=', 'users.id')
+            ->join('clubs', 'club_members.club_id', '=', 'clubs.id')
+            ->where('users.status', 'active');
+
+        if ($clubId) {
+            $query->where('club_members.club_id', $clubId);
+        }
+
+        if ($role) {
+            $query->where('club_members.role', $role);
+        }
+
+        return $query->select(
+            'users.id as user_id',
+            'users.name as user_name',
+            'users.email',
+            'club_members.role',
+            'clubs.name as club_name'
+        );
+    }
+
+    /**
+     * Lấy danh sách thành viên CLB
+     * Nếu role = club_manager, lấy tất cả chủ nhiệm CLB
+     */
     public function fetchClubMembers(Request $request)
     {
         $clubId = $request->get('club_id');
-        if (!$clubId) {
-            return response()->json(['results' => []]);
-        }
+        $role = $request->get('role');
+        $q = $request->get('q', '');
+        $ids = array_filter((array) $request->input('ids', []));
+        $all = $request->boolean('all');
 
-        $members = DB::table('club_members')
+        $query = DB::table('club_members')
             ->join('members', 'club_members.member_id', '=', 'members.id')
             ->join('users', 'members.user_id', '=', 'users.id')
-            ->where('club_members.club_id', $clubId)
-            ->where('users.status', 'active')
-            ->select('users.id', 'users.name', 'users.email')
-            ->get();
+            ->join('clubs', 'club_members.club_id', '=', 'clubs.id')
+            ->where('users.status', 'active');
 
-        $results = $members->map(fn($u) => ['id' => $u->id, 'text' => "{$u->name} ({$u->email})"]);
+        if ($clubId) {
+            $query->where('club_members.club_id', $clubId);
+        }
+
+        if ($role) {
+            $query->where('club_members.role', $role);
+        }
+
+        if (!empty($ids)) {
+            $query->whereIn('users.id', $ids);
+        } elseif (!$all && $q) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('users.name', 'like', "%{$q}%")
+                    ->orWhere('users.email', 'like', "%{$q}%")
+                    ->orWhere('clubs.name', 'like', "%{$q}%");
+            });
+        }
+
+        $members = $query->select(
+            'users.id as user_id',
+            'users.name as user_name',
+            'users.email',
+            'club_members.role',
+            'clubs.name as club_name'
+        )->get();
+
+        $results = $members->map(function ($m) {
+            $roleLabel = $m->role ? Str::headline(str_replace('_', ' ', $m->role)) : 'Thành viên';
+            return [
+                'id' => $m->user_id,
+                'text' => "{$m->user_name} ({$m->email}) - {$roleLabel} tại {$m->club_name}"
+            ];
+        });
+
         return response()->json(['results' => $results]);
     }
+
+
+
 
 
     // AJAX: lấy tất cả sự kiện
@@ -275,17 +412,38 @@ class NotificationController extends Controller
     public function fetchEventMembers(Request $request)
     {
         $eventId = $request->get('event_id');
-        if (!$eventId)
+        $ids = array_filter((array) $request->input('ids', []));
+        $q = $request->get('q', '');
+        $all = $request->boolean('all');
+
+        if (!$eventId && empty($ids)) {
             return response()->json(['results' => []]);
+        }
 
-        $participants = DB::table('event_registrations')
+        $query = DB::table('event_registrations')
             ->join('users', 'event_registrations.user_id', '=', 'users.id')
-            ->where('event_registrations.event_id', $eventId)
-            ->where('users.status', 'active')
-            ->select('users.id', 'users.name', 'users.email')
-            ->get();
+            ->where('users.status', 'active');
 
-        $results = $participants->map(fn($u) => ['id' => $u->id, 'text' => "{$u->name} ({$u->email})"]);
+        if ($eventId) {
+            $query->where('event_registrations.event_id', $eventId);
+        }
+
+        if (!empty($ids)) {
+            $query->whereIn('users.id', $ids);
+        } elseif (!$all && $q) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('users.name', 'like', "%{$q}%")
+                    ->orWhere('users.email', 'like', "%{$q}%");
+            });
+        }
+
+        $participants = $query->select('users.id', 'users.name', 'users.email')->get();
+
+        $results = $participants->map(fn($u) => [
+            'id' => $u->id,
+            'text' => "{$u->name} ({$u->email})"
+        ]);
+
         return response()->json(['results' => $results]);
     }
 
@@ -294,7 +452,7 @@ class NotificationController extends Controller
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'content_html' => 'required|string',
             'target_type' => 'required|in:user,club,role,event',
             'users' => 'nullable|array',
             'club_id' => 'nullable|exists:clubs,id',
@@ -303,12 +461,15 @@ class NotificationController extends Controller
             'send_via' => 'required|in:database,mail,both',
         ]);
 
+        $htmlContent = $this->sanitizeHtml($data['content_html']);
+        $plainContent = $this->convertHtmlToPlain($htmlContent);
+
         $recipients = collect();
 
         if (!empty($data['users'])) {
             $recipients = User::whereIn('id', $data['users'])
                 ->where('status', 'active')
-                ->pluck('id'); // chỉ lấy id
+                ->pluck('id');
         } else {
             switch ($data['target_type']) {
                 case 'user':
@@ -326,9 +487,18 @@ class NotificationController extends Controller
                     break;
                 case 'role':
                     if (!empty($data['role'])) {
-                        $recipients = User::where('role', $data['role'])
-                            ->where('status', 'active')
-                            ->pluck('id');
+                        if ($this->isClubMemberRole($data['role'])) {
+                            $recipients = \DB::table('club_members')
+                                ->join('members', 'club_members.member_id', '=', 'members.id')
+                                ->join('users', 'members.user_id', '=', 'users.id')
+                                ->where('club_members.role', $data['role'])
+                                ->where('users.status', 'active')
+                                ->pluck('users.id');
+                        } else {
+                            $recipients = User::where('role', $data['role'])
+                                ->where('status', 'active')
+                                ->pluck('id');
+                        }
                     }
                     break;
                 case 'event':
@@ -342,8 +512,9 @@ class NotificationController extends Controller
         }
 
         if ($recipients->isEmpty()) {
-            return redirect()->route('admin.notifications.store')
-                ->with('error', 'không thấy người nhận hợp lệ');
+            return redirect()->route('admin.notifications.create')
+                ->with('error', 'Không tìm thấy người nhận hợp lệ')
+                ->withInput();
         }
 
         $batchId = \Str::uuid()->toString();
@@ -352,9 +523,11 @@ class NotificationController extends Controller
             SendNotificationJob::dispatch(
                 $userId,
                 $data['title'],
-                $data['content'],
+                $htmlContent,
                 $data['send_via'],
-                $batchId
+                $batchId,
+                false,
+                $plainContent
             );
         }
 
@@ -362,4 +535,55 @@ class NotificationController extends Controller
             ->with('success', 'Thông báo đang được gửi qua hàng đợi!');
     }
 
+    protected function sanitizeHtml(string $html): string
+    {
+        $allowedTags = '<p><br><strong><b><em><i><u><ul><ol><li><blockquote>';
+        $clean = strip_tags($html, $allowedTags);
+        $clean = preg_replace('/<(\/?)\s*(strong|b|em|i|u|ul|ol|li|p|br|blockquote)([^>]*)>/i', '<$1$2>', $clean);
+        $clean = str_ireplace(['<br>', '<br/>', '<br />'], '<br>', $clean);
+        $clean = preg_replace('/(<br>\s*){3,}/', '<br><br>', $clean);
+        $clean = preg_replace('/(<p>\s*){2,}/', '<p>', $clean);
+        return trim($clean);
+    }
+
+    protected function convertHtmlToPlain(string $html): string
+    {
+        $map = [
+            '<strong>' => '**',
+            '</strong>' => '**',
+            '<b>' => '**',
+            '</b>' => '**',
+            '<em>' => '*',
+            '</em>' => '*',
+            '<i>' => '*',
+            '</i>' => '*',
+            '<u>' => '_',
+            '</u>' => '_',
+            '<br>' => "\n",
+            '</p>' => "\n\n",
+            '<p>' => '',
+        ];
+
+        $normalized = str_ireplace(array_keys($map), array_values($map), $html);
+        $normalized = strip_tags($normalized);
+        $normalized = html_entity_decode($normalized, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $normalized = preg_replace("/[ \t]+/", ' ', $normalized);
+        $normalized = preg_replace("/ *\n */", "\n", $normalized);
+        $normalized = preg_replace("/\n{3,}/", "\n\n", $normalized);
+
+        return trim($normalized);
+    }
+
+    protected function isClubMemberRole(string $role): bool
+    {
+        return in_array($role, [
+            'club_manager',
+            'deputy_manager',
+            'secretary',
+            'treasurer',
+            'event_manager',
+            'communication',
+            'member',
+        ], true);
+    }
 }

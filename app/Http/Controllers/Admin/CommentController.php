@@ -39,6 +39,27 @@ public function destroy(Request $request, Comment $comment)
 
     return redirect()->back()->with('success', 'Comment đã được xóa thành công!');
 }
+public function trashed()
+{
+    // Lấy các comment đã xóa mềm
+    $comments = Comment::onlyTrashed()->with(['user', 'post'])->paginate(15);
+
+    return view('admin.comments.trashed', compact('comments'));
+}
+   public function restore($id)
+    {
+        $comment = Comment::onlyTrashed()->findOrFail($id);
+        $comment->restore();
+        return redirect()->back()->with('success', 'Bình luận đã được khôi phục.');
+    }
+
+    // Xóa vĩnh viễn
+    public function forceDelete($id)
+    {
+        $comment = Comment::onlyTrashed()->findOrFail($id);
+        $comment->forceDelete();
+        return redirect()->back()->with('success', 'Bình luận đã bị xóa vĩnh viễn.');
+    }
 
     public function toggleStatus(Comment $comment)
     {

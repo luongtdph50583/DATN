@@ -32,7 +32,6 @@ class CreateClubMembersTable extends Migration
                 'event_manager',       // Quản lý sự kiện
                 'communication',       // Truyền thông
                 'member',              // Thành viên thường
-                'guest'                // Khách tạm thời
             ])->default('member')->comment('Vai trò trong CLB');
 
             // Trạng thái & ghi chú

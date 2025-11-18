@@ -34,7 +34,7 @@ Danh sách
     <table class="table table-bordered table-striped align-middle">
         <thead class="table-light">
             <tr>
-                <th>ID</th>
+                <th>stt</th>
                 <th>Người gửi</th>
                 <th>CLB</th>
                 <th>Ngày gửi</th>
@@ -49,17 +49,36 @@ Danh sách
                     <td>{{ $request->user->name ?? '—' }}</td>
                     <td>{{ $request->club->name ?? '—' }}</td>
                     <td>{{ $request->requested_at ? $request->requested_at->format('d/m/Y') : '—' }}</td>
-                    <td>
-                        @if($request->status === 'pending')
-                            <span class="badge bg-warning text-dark">Chờ duyệt</span>
-                        @elseif($request->status === 'approved')
-                            <span class="badge bg-success">Đã duyệt</span>
-                        @elseif($request->status === 'rejected')
-                            <span class="badge bg-danger">Từ chối</span>
-                        @endif
-                    </td>
+                  <td>
+    @switch($request->status)
+        @case('pending')
+            <span class="badge bg-warning text-dark">Chờ duyệt</span>
+            @break
+        @case('scheduling_interview')
+            <span class="badge bg-info text-dark">Đang lên lịch phỏng vấn</span>
+            @break
+        @case('interview')
+            <span class="badge bg-primary">Đã có lịch phỏng vấn</span>
+            @break
+        @case('interview_completed')
+            <span class="badge bg-secondary">Phỏng vấn xong, chờ duyệt</span>
+            @break
+        @case('approved')
+            <span class="badge bg-success">Đã duyệt</span>
+            @break
+        @case('rejected')
+            <span class="badge bg-danger">Từ chối</span>
+            @break
+        @case('cancelled')
+            <span class="badge bg-dark">Đã hủy</span>
+            @break
+        @default
+            <span class="badge bg-light text-dark">Không xác định</span>
+    @endswitch
+</td>
+
                     <td class="text-center">
-                    
+
                     @if($request->status === 'pending')
                         <button class="btn btn-sm btn-primary" data-bs-toggle="offcanvas"
                             data-bs-target="#clubRequestDetail{{ $request->id }}">
@@ -87,14 +106,14 @@ Danh sách
                             Xem chi tiết
                         </a>
                     @endif
-                    
+
                         <form action="{{ route('admin.club_join_requests.destroy', $request->id) }}" method="POST"
                             class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa yêu cầu này không?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                         </form>
-                    
+
                     </td>
                 </tr>
             @empty
@@ -104,9 +123,12 @@ Danh sách
             @endforelse
         </tbody>
     </table>
+    @endsection
+
 
     {{-- 🔧 Script xử lý AJAX --}}
     <script>
+        
         document.addEventListener('DOMContentLoaded', function () {
 
             // 🧩 Bắt sự kiện mở Offcanvas
@@ -166,9 +188,10 @@ Danh sách
                     return;
                 }
 
-                tableBody.innerHTML = requests.map(r => `
-                    <tr>
-                        <td>${r.id}</td>
+               tableBody.innerHTML = requests.map((r, index) => `
+    <tr>
+        <td>${index + 1}</td>
+
                         <td>${r.user}</td>
                         <td>${r.club}</td>
                         <td>${r.requested_at}</td>
@@ -176,15 +199,15 @@ Danh sách
                         <td class="text-center">
                             ${r.status === 'pending'
                         ? `
-                                    <button class="btn btn-sm btn-primary" 
+                                    <button class="btn btn-sm btn-primary"
                                         data-bs-toggle="offcanvas"
                                         data-bs-target="#clubRequestDetail${r.id}">
                                         Xử lý yêu cầu
                                     </button>
 
-                                    <div class="offcanvas offcanvas-end border-0 shadow-lg rounded-4" 
-                                        tabindex="-1" 
-                                        id="clubRequestDetail${r.id}" 
+                                    <div class="offcanvas offcanvas-end border-0 shadow-lg rounded-4"
+                                        tabindex="-1"
+                                        id="clubRequestDetail${r.id}"
                                         style="width: 80%; background-color: #f8f9fa;">
                                         <div class="offcanvas-header px-4 pt-4 pb-2 border-bottom">
                                             <h5 class="offcanvas-title fw-semibold">Chi tiết yêu cầu CLB</h5>
@@ -277,4 +300,3 @@ Danh sách
         });
     </script>
 
-@endsection

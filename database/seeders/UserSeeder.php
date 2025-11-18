@@ -25,17 +25,18 @@ class UserSeeder extends Seeder
             'remember_token' => Str::random(10),
         ]);
 
-        // 2. Club Manager cố định
-        User::create([
-            'name' => 'Quản Lý Câu Lạc Bộ',
-            'email' => 'manager@club.com',
+          User::create([
+            'name' => 'Van Tam',
+            'email' => 'tamnvph49996@gmail.com',
             'password' => Hash::make('123456'),
-            'role' => 'club_manager',
+            'role' => 'admin',
             'status' => 'active',
-            'avatar' => $faker->imageUrl(200, 200, 'people', true, 'manager'),
+            'avatar' => null,
             'remember_token' => Str::random(10),
         ]);
 
+        // 2. Club Manager cố định
+      
         // 3. Tạo 20 thành viên (member) ngẫu nhiên
         for ($i = 0; $i < 20; $i++) {
             User::create([

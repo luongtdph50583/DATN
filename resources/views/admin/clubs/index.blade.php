@@ -5,22 +5,47 @@
 
 @section('card-header')
     <div class="d-flex justify-content-between align-items-center mb-2">
-        <span>Quản lý các câu lạc bộ trong hệ thống</span>
-        <a href="{{ route('admin.clubs.create') }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-plus"></i> Thêm CLB mới
-        </a>
+        <!-- Tiêu đề -->
+        <div>
+            <span class="fw-bold">Quản lý các câu lạc bộ trong hệ thống</span>
+        </div>
+
+        <!-- Nút hành động -->
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.clubs.create') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i>
+            </a>
+            <a href="{{ route('admin.clubs.trash') }}" class="btn btn-outline-danger btn-sm">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </div>
     </div>
 
-    <form id="search-form" class="d-flex gap-2">
-        <input type="text" name="keyword" class="form-control form-control-sm"
-            placeholder="Tìm tên CLB, lĩnh vực, chủ nhiệm">
-        <select name="status" class="form-select form-select-sm">
-            <option value="">-- Trạng thái --</option>
-            <option value="active">Hoạt động</option>
-            <option value="pending">Chờ duyệt</option>
-            <option value="inactive">Ngưng hoạt động</option>
-        </select>
+
+
+  <form id="search-form" class="row g-2 align-items-center">
+        <div class="col-md-6 col-sm-12">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light"><i class="fas fa-search text-secondary"></i></span>
+                <input type="text" name="keyword" class="form-control" placeholder="Tìm tên CLB, lĩnh vực, chủ nhiệm...">
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <select name="status" class="form-select form-select-sm">
+                <option value="">-- Trạng thái --</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Ngưng hoạt động</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 col-sm-6 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary btn-sm px-3">
+                <i class="fas fa-filter me-1"></i> Lọc kết quả
+            </button>
+        </div>
     </form>
+
 @endsection
 
 @section('card-body')
@@ -54,45 +79,27 @@
                         <td><strong>{{ $club->name }}</strong></td>
                         <td>{{ $club->field }}</td>
                         <td>{{ $club->manager?->member?->user?->name ?? '—' }}</td>
-
                         <td>{{ $club->founded_at ? $club->founded_at->format('d/m/Y') : '—' }}</td>
                         <td>
                             @if ($club->status === 'active')
                                 <span class="badge bg-success">Hoạt động</span>
-                            @elseif($club->status === 'pending')
-                                <span class="badge bg-warning text-dark">Chờ duyệt</span>
                             @else
                                 <span class="badge bg-secondary">Ngưng hoạt động</span>
                             @endif
                         </td>
                         <td class="text-center">
-                            <a href="{{ route('admin.clubs.show', $club->id) }}" class="btn btn-info btn-sm">
-                                <i class="fas fa-eye"></i> Chi tiết
+                            <a href="{{ route('admin.clubs.show', $club->id) }}" class="btn btn-info btn-sm" title="Chi tiết">
+                                <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('admin.clubs.edit', $club->id) }}" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i> Sửa
+                            <a href="{{ route('admin.clubs.edit', $club->id) }}" class="btn btn-warning btn-sm" title="Sửa">
+                                <i class="fas fa-edit"></i>
                             </a>
-                            <button type="button" class="btn btn-danger btn-sm btn-show-delete"
-                                data-id="{{ $club->id }}">
-                                <i class="fas fa-trash"></i> Xóa
+                            <button type="button" class="btn btn-danger btn-sm btn-open-delete" data-id="{{ $club->id }}"
+                                data-name="{{ $club->name }}" title="Xóa">
+                                <i class="fas fa-trash"></i>
                             </button>
-
-                            <form action="{{ route('admin.clubs.destroy', $club->id) }}" method="POST"
-                                class="delete-form p-3 border rounded bg-light mt-2 d-none" data-id="{{ $club->id }}">
-                                @csrf
-                                @method('DELETE')
-                                <div class="mb-3">
-                                    <label for="delete_reason_{{ $club->id }}" class="form-label">Lý do xóa CLB</label>
-                                    <input type="text" name="delete_reason" id="delete_reason_{{ $club->id }}"
-                                        class="form-control" placeholder="Nhập lý do xóa" required>
-                                </div>
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
-                                    <button type="button" class="btn btn-secondary btn-cancel-delete"
-                                        data-id="{{ $club->id }}">Hủy</button>
-                                </div>
-                            </form>
                         </td>
+
                     </tr>
                 @empty
                     <tr>
@@ -102,100 +109,134 @@
             </tbody>
         </table>
     </div>
+
 @endsection
+
+{{-- ✅ MODAL NHẬP LÝ DO --}}
+<div class="modal fade" id="deleteClubModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="delete-club-form" method="POST">
+            @csrf
+            @method('DELETE')
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Xóa câu lạc bộ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p id="club-delete-message" class="fw-bold"></p>
+                    <div class="mb-3">
+                        <label class="form-label">Lý do xóa</label>
+                        <input type="text" name="delete_reason" class="form-control" placeholder="Nhập lý do" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
 
 @push('scripts')
     <script>
-        // Show form xóa theo ID
-        document.querySelectorAll('.btn-show-delete').forEach(btn => {
-            btn.addEventListener('click', function() {
+        // 👉 Mở modal khi bấm nút Xóa
+        document.querySelectorAll('.btn-open-delete').forEach(btn => {
+            btn.addEventListener('click', function () {
                 const id = this.dataset.id;
-                const form = document.querySelector(`.delete-form[data-id="${id}"]`);
-                form.classList.remove('d-none');
-                this.style.display = 'none';
+                const name = this.dataset.name;
+
+                document.getElementById('club-delete-message').innerText =
+                    `Bạn chắc muốn xóa câu lạc bộ "${name}" không?`;
+
+                const form = document.getElementById('delete-club-form');
+                form.action = `/admin/clubs/${id}`;
+
+                new bootstrap.Modal(document.getElementById('deleteClubModal')).show();
+            });
+        });
+ 
+document.getElementById('search-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // tránh reload page
+
+    const formData = new FormData(this);
+    const params = new URLSearchParams();
+    formData.forEach((value, key) => {
+        if (value) params.append(key, value);
+    });
+
+    fetch("{{ route('admin.clubs.search') }}", {
+        method: "POST",
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+        },
+        body: params
+    })
+    .then(res => res.json())
+    .then(clubs => {
+        const tbody = document.getElementById('club-table-body');
+        tbody.innerHTML = '';
+
+        if (clubs.length === 0) {
+            tbody.innerHTML = `<tr>
+                <td colspan="8" class="text-center text-muted">Không tìm thấy CLB nào.</td>
+            </tr>`;
+            return;
+        }
+
+        clubs.forEach((club, index) => {
+            tbody.innerHTML += `
+            <tr>
+                <td>${index+1}</td>
+                <td><img src="${club.logo ? '/storage/' + club.logo : '/images/default-club.png'}"
+                    alt="Logo" class="rounded-circle" width="40" height="40"></td>
+                <td><strong>${club.name}</strong></td>
+                <td>${club.field ?? ''}</td>
+                <td>${club.manager?.member?.user?.name ?? '—'}</td>
+                <td>${club.founded_at ? new Date(club.founded_at).toLocaleDateString('vi-VN') : '—'}</td>
+                <td>
+                    ${club.status === 'active' 
+                        ? '<span class="badge bg-success">Hoạt động</span>' 
+                        : '<span class="badge bg-secondary">Ngưng hoạt động</span>'}
+                </td>
+                <td class="text-center">
+                    <a href="/admin/clubs/${club.id}" class="btn btn-info btn-sm" title="Chi tiết">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="/admin/clubs/${club.id}/edit" class="btn btn-warning btn-sm" title="Sửa">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button type="button" class="btn btn-danger btn-sm btn-open-delete" 
+                        data-id="${club.id}" data-name="${club.name}" title="Xóa">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+        });
+
+        // Reattach modal delete buttons
+        document.querySelectorAll('.btn-open-delete').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+                document.getElementById('club-delete-message').innerText =
+                    `Bạn chắc muốn xóa câu lạc bộ "${name}" không?`;
+                const form = document.getElementById('delete-club-form');
+                form.action = `/admin/clubs/${id}`;
+                new bootstrap.Modal(document.getElementById('deleteClubModal')).show();
             });
         });
 
-        // Hủy xóa
-        document.querySelectorAll('.btn-cancel-delete').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const form = document.querySelector(`.delete-form[data-id="${id}"]`);
-                form.classList.add('d-none');
-                const showBtn = document.querySelector(`.btn-show-delete[data-id="${id}"]`);
-                showBtn.style.display = 'inline-block';
-            });
-        });
+    })
+    .catch(err => console.error(err));
+});
+</script>
 
-        // Real-time search
-        const searchForm = document.getElementById('search-form');
-        const tableBody = document.getElementById('club-table-body');
 
-        searchForm.addEventListener('input', function() {
-            const formData = new FormData(searchForm);
-
-            fetch("{{ route('admin.clubs.search') }}", {
-                    method: "POST",
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    let html = '';
-                    if (data.length === 0) {
-                        html =
-                            `<tr><td colspan="8" class="text-center text-muted">Không tìm thấy kết quả phù hợp.</td></tr>`;
-                    } else {
-                        data.forEach((club, index) => {
-                            const logo = club.logo ? `/storage/${club.logo}` :
-                                `/images/default-club.png`;
-                            const managerName = club.manager?.member?.user?.name ?? '—';
-                            const founded = club.founded_at ? new Date(club.founded_at)
-                                .toLocaleDateString('vi-VN') : '—';
-
-                            let statusBadge = '';
-                            switch (club.status) {
-                                case 'active':
-                                    statusBadge = '<span class="badge bg-success">Hoạt động</span>';
-                                    break;
-                                case 'pending':
-                                    statusBadge =
-                                        '<span class="badge bg-warning text-dark">Chờ duyệt</span>';
-                                    break;
-                                default:
-                                    statusBadge =
-                                        '<span class="badge bg-secondary">Ngưng hoạt động</span>';
-                            }
-
-                            html += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td><img src="${logo}" class="rounded-circle" width="40" height="40"></td>
-                                <td><strong>${club.name}</strong></td>
-                                <td>${club.field}</td>
-                                <td>${managerName}</td>
-                                <td>${founded}</td>
-                                <td>${statusBadge}</td>
-                                <td class="text-center">
-                                    <a href="/admin/clubs/${club.id}" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> Chi tiết
-                                    </a>
-                                    <a href="/admin/clubs/${club.id}/edit" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i> Sửa
-                                    </a>
-                                    <button type="button" class="btn btn-danger btn-sm btn-show-delete" data-id="${club.id}">
-                                        <i class="fas fa-trash"></i> Xóa
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                        });
-                    }
-
-                    tableBody.innerHTML = html;
-                });
-        });
-    </script>
 @endpush

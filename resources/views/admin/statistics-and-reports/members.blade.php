@@ -3,35 +3,15 @@
 
 @section('title', 'Thống kê Thành viên')
 
-
 @section('card-body')
 <div class="container-fluid">
-    <!-- Tiêu đề trang -->
+    <!-- Tiêu đề -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Thống kê Thành viên</h1>
         <a href="{{ route('admin.stats.index') }}" class="btn btn-secondary btn-sm">
             ← Quay lại trang thống kê
         </a>
     </div>
-
-    <!-- Hiển thị thông báo -->
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Đóng">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="close" data-dismiss="alert" aria-label="Đóng">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-    @endif
 
     <!-- Card thống kê -->
     <div class="row mb-4">
@@ -65,21 +45,33 @@
     </div>
 
     <!-- Bộ lọc -->
-    <div class="row mb-4">
-       
+    <form id="filterForm" class="row mb-4">
         <div class="col-md-3">
-            <select id="statusFilter" class="form-control">
+            <label for="statusFilter">Trạng thái</label>
+            <select id="statusFilter" name="status" class="form-control">
                 <option value="">-- Tất cả trạng thái --</option>
                 <option value="active" {{ $status == 'active' ? 'selected' : '' }}>Hoạt động</option>
                 <option value="inactive" {{ $status == 'inactive' ? 'selected' : '' }}>Không hoạt động</option>
             </select>
         </div>
-    </div>
+
+        <div class="col-md-4">
+            <label for="clubsFilter">Câu lạc bộ</label>
+            <select id="clubsFilter" name="clubs[]" class="form-control" multiple>
+                @foreach ($allClubs as $club)
+                    <option value="{{ $club->id }}"
+                        {{ in_array($club->id, $selectedClubs ?? []) ? 'selected' : '' }}>
+                        {{ $club->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+    </form>
 
     <!-- Bảng danh sách -->
     <div class="row">
         <div class="col-lg-12">
-            <div class="card shadow mb-4">
+            <div class="card shadow mb-4" id="membersTableContainer">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Danh sách Thành viên</h6>
                 </div>
@@ -89,79 +81,56 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                        <th>Tên người dùng</th>
-                        <th>Giới tính</th>
-                        <th>Khóa học</th>
-                        <th>Chuyên ngành</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày tham gia</th>
-                                     <th class="text-center">Hành động</th>
+                                    <th>Tên người dùng</th>
+                                    <th>Giới tính</th>
+                                    <th>Khóa học</th>
+                                    <th>Chuyên ngành</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tham gia</th>
+                                    <th class="text-center">Hành động</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                 @forelse($members as $index => $member)
-                        <tr>
-                            <td>{{ $index + 1 + ($members->currentPage() - 1) * $members->perPage() }}</td>
-                            <td>{{ $member->user->name ?? 'Không rõ' }}</td>
-                            <td>
-                                @if($member->gender == 'male') Nam
-                                @elseif($member->gender == 'female') Nữ
-                                @else Khác @endif
-                            </td>
-                            <td>{{ $member->course ?? '-' }}</td>
-                            <td>{{ $member->major ?? '-' }}</td>
-                            <td>
-                                <span class="badge bg-{{ $member->status == 'active' ? 'success' : 'secondary' }}">
-                                    {{ $member->status == 'active' ? 'Hoạt động' : 'Ngưng hoạt động' }}
-                                </span>
-                            </td>
-                            <td>{{ $member->created_at ? $member->created_at->format('d/m/Y') : '-' }}</td>
-                            <td><a href="#" class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i> Xem chi tiết
-                                        </a>
-                                    </td> 
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">Không có thành viên nào phù hợp</td>
-                        </tr>
-                    @endforelse
-                                       
+                                @forelse($members as $index => $member)
+                                    <tr>
+                                        <td>{{ $index + 1 + ($members->currentPage() - 1) * $members->perPage() }}</td>
+                                        <td>{{ $member->user->name ?? 'Không rõ' }}</td>
+                                        <td>{{ $member->gender == 'male' ? 'Nam' : ($member->gender == 'female' ? 'Nữ' : 'Khác') }}</td>
+                                        <td>{{ $member->course ?? '-' }}</td>
+                                        <td>{{ $member->major ?? '-' }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ $member->status == 'active' ? 'success' : 'secondary' }}">
+                                                {{ $member->status == 'active' ? 'Hoạt động' : 'Ngưng hoạt động' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $member->created_at ? $member->created_at->format('d/m/Y') : '-' }}</td>
+                                        <td class="text-center">
+                                            <a href="#" class="btn btn-sm btn-info"><i class="fas fa-eye"></i> Xem chi tiết</a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted">Không có thành viên nào phù hợp</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Phân trang -->
-                    <div class="d-flex justify-content-center mt-3">
-                        {{ $members->appends(['sort' => $sort, 'status' => $status])->links() }}
+                    {{-- Phân trang --}}
+                    <div class="d-flex justify-content-center mt-3" id="paginationLinks">
+                        {{ $members->appends(request()->query())->links() }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-        {{-- 🧭 Biểu đồ số lượng Thành viên theo tháng --}}
+    <!-- Biểu đồ -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">Biểu đồ số lượng Thành viên mới theo tháng</h5>
         </div>
-
-        {{-- 🧭 Bộ lọc thời gian cho biểu đồ --}}
-        <form method="GET" action="{{ route('admin.stats.members') }}" class="row g-3 mb-4">
-            <div class="col-md-3">
-                <label for="start_date" class="form-label">Từ ngày</label>
-                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ $startDate }}">
-            </div>
-            <div class="col-md-3">
-                <label for="end_date" class="form-label">Đến ngày</label>
-                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ $endDate }}">
-            </div>
-            <div class="col-md-3 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary w-100">Lọc</button>
-                <button type="submit" name="reset" value="true" class="btn btn-secondary w-100">Đặt lại</button>
-            </div>
-        </form>
-
         <div class="card-body">
             <canvas id="membersChart" height="90"></canvas>
         </div>
@@ -170,37 +139,69 @@
 @endsection
 
 @push('scripts')
-<script>
-document.getElementById('sortMembers').addEventListener('change', function() {
-    const sort = this.value;
-    const status = document.getElementById('statusFilter').value;
-    window.location.href = '{{ route("admin.stats.members") }}?sort=' + sort + '&status=' + status;
-});
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-document.getElementById('statusFilter').addEventListener('change', function() {
-    const status = this.value;
-    const sort = document.getElementById('sortMembers').value;
-    window.location.href = '{{ route("admin.stats.members") }}?sort=' + sort + '&status=' + status;
+<script>
+$(document).ready(function() {
+    // init Select2
+    $('#clubsFilter').select2({
+        placeholder: "-- Chọn câu lạc bộ --",
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Hàm fetch AJAX table + pagination
+    function fetchMembers(url = null) {
+        let actionUrl = url || "{{ route('admin.stats.members') }}";
+        $.ajax({
+            url: actionUrl,
+            data: $('#filterForm').serialize(),
+            type: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(res) {
+                let newTable = $(res).find('#membersTableContainer').html();
+                $('#membersTableContainer').html(newTable);
+                attachPaginationLinks(); // attach lại event cho pagination
+            },
+            error: function(err) { console.error(err); }
+        });
+    }
+
+    // Event filter
+    $('#statusFilter, #clubsFilter').on('change', function() {
+        fetchMembers();
+    });
+
+    // Xử lý pagination AJAX
+    function attachPaginationLinks() {
+        $('#membersTableContainer').find('.pagination a').on('click', function(e) {
+            e.preventDefault();
+            let url = $(this).attr('href');
+            fetchMembers(url);
+        });
+    }
+
+    attachPaginationLinks(); // lần đầu attach
+
 });
 </script>
-@endpush
 
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Biểu đồ thống kê thành viên
+    // Chart.js
     const ctxMembers = document.getElementById('membersChart').getContext('2d');
     const membersChart = new Chart(ctxMembers, {
-        type: 'line', // ✅ đổi từ 'bar' sang 'line'
+        type: 'line',
         data: {
-            labels: @json($labels), // ["Tháng 1/2025", "Tháng 2/2025", ...]
+            labels: @json($labels),
             datasets: [{
                 label: 'Số lượng thành viên mới',
-                data: @json($membersPerMonth), // mảng số liệu tương ứng
-                fill: false, // không tô màu dưới đường
+                data: @json($membersPerMonth),
+                fill: false,
                 borderColor: 'rgba(54, 162, 235, 1)',
                 backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                tension: 0.3, // đường mượt
+                tension: 0.3,
                 borderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6
@@ -209,12 +210,7 @@ document.getElementById('statusFilter').addEventListener('change', function() {
         options: {
             responsive: true,
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        precision:0
-                    }
-                }
+                y: { beginAtZero: true, ticks: { precision:0 } }
             }
         }
     });

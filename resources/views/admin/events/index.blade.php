@@ -42,7 +42,7 @@
         <div class="card-body">
             <form action="{{ route('admin.events.index') }}" method="GET" class="row g-3">
                 <div class="col-md-5">
-                    <input type="text" name="search_name" class="form-control" 
+                    <input type="text" name="search_name" class="form-control"
                            placeholder="Tìm theo tên sự kiện..." value="{{ request('search_name') }}">
                 </div>
                 <div class="col-md-4">
@@ -89,22 +89,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($events as $event)
+                            @foreach ($events as $index => $event)
                                 <tr>
-                                    <td><span class="badge bg-primary">#{{ $event->id }}</span></td>
+                                    <td><span class="badge bg-primary">#{{ $index+1 }}</span></td>
                                     <td>
                                         <a href="{{ route('admin.events.show', $event) }}" class="text-decoration-none">
                                             {{ Str::limit($event->name, 40) }}
                                         </a>
                                     </td>
                                     <td class="small">
-                                        {{ $event->start_time?->format('d/m H:i') }} - 
+                                        {{ $event->start_time?->format('d/m H:i') }} -
                                         {{ $event->end_time?->format('d/m H:i') }}
                                     </td>
                                     <td>{{ Str::limit($event->location, 25) }}</td>
                                     <td>
                                         <span class="badge bg-info">
-                                            {{ $event->registrations_count ?? 0 }} / {{ $event->max_participants ?? '∞' }}
+                                            {{ $event->registrations->count() ?? 0 }} / {{ $event->max_participants ?? '∞' }}
                                         </span>
                                     </td>
                                     <td>
@@ -166,7 +166,7 @@
                                             </a>
 
                                             <!-- Xóa mềm -->
-                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ $event->id }}" title="Xóa sự kiện">
+                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal-{{ $event->id }}" title="Xóa sự kiện">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
@@ -276,4 +276,22 @@
     </div>
     @endforeach
 </div>
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Áp dụng Select2 cho dropdown CLB
+        $('select[name="club_id"]').select2({
+            placeholder: '-- Tất cả CLB --',
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+@endpush
+
 @endsection

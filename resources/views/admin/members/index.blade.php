@@ -24,9 +24,7 @@
                     Xuất Excel
                 </button>
             </form>
-            <button type="button" class="btn btn-warning text-white fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#topMembersModal">
-                TOP 10 THÀNH VIÊN NHIỀU CLB NHẤT
-            </button>
+         
             <a href="{{ route('admin.members.trashed') }}" class="btn btn-outline-danger">
                 Lịch sử xóa ({{ \App\Models\Member::onlyTrashed()->count() }})
             </a>
@@ -124,7 +122,7 @@
                                     <td class="text-center">
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('admin.members.show', $member) }}" 
-                                               class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                                               class="btn btn-sm btn-info" title="Xem chi tiết">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             {{-- <a href="{{ route('admin.members.edit', $member) }}" 
@@ -132,7 +130,7 @@
                                                 <i class="fas fa-edit"></i>
                                             </a> --}}
                                             <button type="button" 
-                                                    class="btn btn-sm btn-outline-danger" 
+                                                    class="btn btn-sm btn-outline-danger"
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#deleteModal-{{ $member->id }}"
                                                     title="Xóa thành viên">

@@ -11,24 +11,28 @@ class GenericNotificationMail extends Mailable
     use Queueable, SerializesModels;
 
     public $title;
-    public $messageContent;
+    public $messageHtml;
+    public $messageText;
     public $batchId; // thêm batch_id
 
-    public function __construct($title, $messageContent, $batchId = null)
+    public function __construct($title, $messageHtml, $messageText = null, $batchId = null)
     {
         $this->title = $title;
-        $this->messageContent = $messageContent;
+        $this->messageHtml = $messageHtml;
+        $this->messageText = $messageText ?? trim(preg_replace('/\s+/', ' ', strip_tags($messageHtml)));
         $this->batchId = $batchId;
     }
 
     public function build()
     {
         return $this->subject($this->title)
-            ->view('admin.emails.generic_notification')
-            ->with([
+            ->view('admin.emails.generic_notification', [
                 'title' => $this->title,
-                'messageContent' => $this->messageContent,
-                'batchId' => $this->batchId, // truyền vào view nếu cần
+                'messageHtml' => $this->messageHtml,
+            ])
+            ->text('admin.emails.generic_notification_plain', [
+                'title' => $this->title,
+                'messageText' => $this->messageText,
             ]);
     }
 }

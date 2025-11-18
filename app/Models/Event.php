@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Event extends Model
 {
     use HasFactory, SoftDeletes;
@@ -29,8 +29,8 @@ class Event extends Model
         'approval_by',        // GIỮ NGUYÊN
         'media_id',
         'budget_estimated',
-        'budget_current',
-        'budget_used',
+    'budget_requested',
+    'budget_club', // <-- thêm đây
         'deleted_by',         // ĐÃ CÓ TRONG DB
         'delete_reason',
     ];
@@ -45,8 +45,8 @@ class Event extends Model
         'is_public'         => 'boolean',
         'max_participants'  => 'integer',
         'budget_estimated'  => 'decimal:2',
-        'budget_current'    => 'decimal:2',
-        'budget_used'       => 'decimal:2',
+        'budget_requested'    => 'decimal:2',
+        'budget_club'       => 'decimal:2',
         'status'            => 'string',
     ];
 
@@ -56,10 +56,10 @@ class Event extends Model
     // RELATIONSHIPS – GIỮ NGUYÊN TÊN CŨ ĐỂ KHÔNG LỖI
     // =================================================================
 
-    public function club(): BelongsTo
-    {
-        return $this->belongsTo(Club::class)->withDefault(['name' => 'Không có CLB']);
-    }
+   public function club(): BelongsTo
+{
+    return $this->belongsTo(Club::class, 'club_id'); // khóa ngoại là club_id
+}
 
     public function createdBy(): BelongsTo
     {
@@ -68,6 +68,11 @@ class Event extends Model
             'email' => '',
         ]);
     }
+  public function funRequests()
+{
+    return $this->hasMany(EventFundRequest::class, 'event_id', 'id');
+}
+
 
     // GIỮ NGUYÊN TÊN approvalBy – KHÔNG ĐỔI NỮA!
     public function approvalBy(): BelongsTo
@@ -87,9 +92,24 @@ class Event extends Model
         ]);
     }
 
-    public function media(): BelongsTo
+     public function media()
     {
-        return $this->belongsTo(Media::class)->withDefault();
+        return $this->morphMany(Media::class, 'related', 'related_type', 'related_id');
+    }
+     // Ví dụ phân loại hình ảnh, video
+    public function images(): MorphMany
+    {
+        return $this->media()->where('file_type', 'image');
+    }
+
+    public function videos(): MorphMany
+    {
+        return $this->media()->where('file_type', 'video');
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->media()->where('file_type', 'document');
     }
 
     public function registrations(): HasMany

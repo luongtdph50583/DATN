@@ -25,6 +25,7 @@ class Post extends Model
         'approved_by',
         'approved_at',
         'rejection_reason'
+        
     ];
 
     protected $casts = [

@@ -47,4 +47,11 @@ protected static function boot()
             }
         });
     }
+    // app/Models/ClubMember.php
+    public function memberInfo()
+    {
+        return $this->belongsTo(Member::class, 'user_id', 'user_id');
+    }
+
+
 }

@@ -66,7 +66,7 @@
                 <tr>
                     <th>Nổi bật</th>
                     <td>
-                        <span class="badge bg-{{ $post->is_featured ? 'warning' : 'light' }}">
+                        <span class="badge bg-{{ $post->is_featured ? 'warning' : 'black' }}">
                             {{ $post->is_featured ? 'Có' : 'Không' }}
                         </span>
                     </td>

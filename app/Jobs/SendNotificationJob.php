@@ -21,19 +21,33 @@ class SendNotificationJob implements ShouldQueue
 
     public int $userId;
     public string $title;
-    public string $content;
+    public string $contentHtml;
+    public string $contentText;
     public string $sendVia;
     public string $batchId;
     public bool $force;
 
-    public function __construct(int $userId, string $title, string $content, string $sendVia, string $batchId, bool $force = false)
-    {
+    public function __construct(
+        int $userId,
+        string $title,
+        string $content,
+        string $sendVia,
+        string $batchId,
+        bool $force = false,
+        ?string $contentText = null
+    ) {
         $this->userId = $userId;
         $this->title = $title;
-        $this->content = $content;
+        $this->contentHtml = $content;
         $this->sendVia = $sendVia;
         $this->batchId = $batchId;
         $this->force = $force;
+        $this->contentText = $contentText ?? $this->fallbackPlain($content);
+    }
+
+    protected function fallbackPlain(string $html): string
+    {
+        return trim(preg_replace('/\s+/', ' ', strip_tags($html)));
     }
 
     public function handle(): void
@@ -70,7 +84,7 @@ class SendNotificationJob implements ShouldQueue
 
             if ($shouldSendInApp) {
                 try {
-                    $user->notify(new CustomNotification($this->title, $this->content, $this->batchId));
+                    $user->notify(new CustomNotification($this->title, $this->contentText, $this->batchId));
 
                     // Cập nhật record cũ hoặc lấy bản ghi mới nhất vừa tạo
                     if ($notification) {
@@ -118,13 +132,13 @@ class SendNotificationJob implements ShouldQueue
 
             if ($shouldSendMail) {
                 try {
-                    Mail::to($user->email)->send(new GenericNotificationMail($this->title, $this->content));
+                    Mail::to($user->email)->send(new GenericNotificationMail($this->title, $this->contentHtml, $this->contentText, $this->batchId));
 
                     SentEmail::updateOrCreate(
                         ['batch_id' => $this->batchId, 'user_id' => $user->id],
                         [
                             'title' => $this->title,
-                            'content' => $this->content,
+                            'content' => $this->contentHtml,
                             'status' => 'sent',
                         ]
                     );
@@ -137,7 +151,7 @@ class SendNotificationJob implements ShouldQueue
                         ['batch_id' => $this->batchId, 'user_id' => $user->id],
                         [
                             'title' => $this->title,
-                            'content' => $this->content,
+                            'content' => $this->contentHtml,
                             'status' => 'failed',
                         ]
                     );

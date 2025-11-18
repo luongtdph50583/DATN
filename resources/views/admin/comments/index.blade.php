@@ -53,31 +53,28 @@
                                     </td>
                                     <td>{{ $comment->likes_count }}</td>
                                     <td>{{ $comment->created_at->format('d/m/Y H:i') }}</td>
-                                    <td>
-                                        <div class="d-flex flex-wrap align-items-center gap-1 justify-content-center">
-                                            <!-- Nút chuyển trạng thái -->
-                                            <form action="{{ route('admin.comments.toggleStatus', $comment->id) }}"
-                                                method="POST" style="display:inline;">
-                                                @csrf
-                                                <button type="submit" class="btn btn-sm btn-warning">
-                                                    <i class="fas fa-eye-slash"></i>
-                                                    {{ $comment->status === 'visible' ? 'Ẩn' : 'Hiện' }}
-                                                </button>
-                                            </form>
+                                 <td>
+    <div class="d-flex flex-wrap align-items-center gap-1 justify-content-center">
+        <!-- Nút chuyển trạng thái (Ẩn / Hiện) -->
+        <form action="{{ route('admin.comments.toggleStatus', $comment->id) }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-warning" title="{{ $comment->status === 'visible' ? 'Ẩn bình luận' : 'Hiện bình luận' }}">
+                <i class="fas {{ $comment->status === 'visible' ? 'fa-eye-slash' : 'fa-eye' }}"></i>
+            </button>
+        </form>
 
-                                            <!-- Nút xem chi tiết -->
-                                            <a href="{{ route('admin.comments.show', $comment->id) }}"
-                                                class="btn btn-sm btn-info">
-                                                <i class="fas fa-eye"></i> Xem chi tiết
-                                            </a>
+        <!-- Nút xem chi tiết -->
+        <a href="{{ route('admin.comments.show', $comment->id) }}" class="btn btn-sm btn-info" title="Xem chi tiết">
+            <i class="fas fa-eye"></i>
+        </a>
 
-                                            <!-- Nút xóa mở modal -->
-                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                                data-bs-target="#deleteModal{{ $comment->id }}">
-                                                <i class="fas fa-trash-alt"></i> Xóa
-                                            </button>
-                                        </div>
-                                    </td>
+        <!-- Nút xóa mở modal -->
+        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $comment->id }}" title="Xóa">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    </div>
+</td>
+
 
 
                                 </tr>
@@ -89,7 +86,7 @@
 
                         </tbody>
 
-                    </table>
+                    </table> 
                     @foreach ($comments as $comment)
                         <div class="modal fade" id="deleteModal{{ $comment->id }}" tabindex="-1"
                             aria-labelledby="deleteModalLabel{{ $comment->id }}" aria-hidden="true">

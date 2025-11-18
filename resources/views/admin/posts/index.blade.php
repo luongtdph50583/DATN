@@ -58,53 +58,58 @@ Tin tức & Bài viết
                         {{ $post->is_visible ? 'Hiển thị' : 'Ẩn' }}
                     </span>
                 </td>
-                <td>
-                    {{-- Xem luôn có --}}
-                    <a href="{{ route('admin.posts.show', $post->id) }}" class="btn btn-warning btn-sm me-1">
-                        <i class="fas fa-eye"></i> Xem
-                    </a>
+              <td>
+    {{-- Xem --}}
+    <a href="{{ route('admin.posts.show', $post->id) }}" class="btn btn-warning btn-sm me-1" title="Xem">
+        <i class="fas fa-eye"></i>
+    </a>
 
-                    @if($post->status === 'pending')
-                        {{-- Sửa --}}
-                       
-                        {{-- Duyệt --}}
-                        <form action="{{ route('admin.posts.approve', $post->id) }}" method="POST" class="d-inline me-1">
-                            @csrf
-                            @method('PUT')
-                            <button type="submit" class="btn btn-success btn-sm">
-                                <i class="bi bi-check-circle me-1"></i> Duyệt
-                            </button>
-                        </form>
-                        {{-- Từ chối --}}
-                        <button type="button" class="btn btn-danger btn-sm" onclick="toggleRejectForm({{ $post->id }})">
-                            <i class="bi bi-x-circle me-1"></i> Từ chối
-                        </button>
-                        <form id="rejectForm-{{ $post->id }}" action="{{ route('admin.posts.reject', $post->id) }}" method="POST" class="mt-2" style="display: none;">
-                            @csrf
-                            @method('PUT')
-                            <div class="input-group" style="max-width: 400px;">
-                                <input type="text" name="rejection_reason" class="form-control" placeholder="Lý do từ chối..." required>
-                                <button type="submit" class="btn btn-danger">
-                                    <i class="bi bi-send me-1"></i> Xác nhận
-                                </button>
-                            </div>
-                        </form>
-                    @elseif($post->status === 'approved')
-                        {{-- Chỉ Xem + Sửa + Xóa --}}
-                        <a href="{{ route('admin.posts.edit', $post->id) }}" class="btn btn-primary btn-sm me-1">
-                            <i class="fas fa-edit"></i> Sửa
-                        </a>
-                    @endif
+    @if($post->status === 'pending')
+        {{-- Sửa --}}
+        <a href="{{ route('admin.posts.edit', $post->id) }}" class="btn btn-primary btn-sm me-1" title="Sửa">
+            <i class="fas fa-edit"></i>
+        </a>
 
-                    {{-- Xóa luôn có --}}
-                    <form id="delete-form-{{ $post->id }}" action="{{ route('admin.posts.destroy', $post->id) }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete({{ $post->id }})">
-                            <i class="fas fa-trash"></i> Xóa
-                        </button>
-                    </form>
-                </td>
+        {{-- Duyệt --}}
+        <form action="{{ route('admin.posts.approve', $post->id) }}" method="POST" class="d-inline me-1">
+            @csrf
+            @method('PUT')
+            <button type="submit" class="btn btn-success btn-sm" title="Duyệt">
+                <i class="bi bi-check-circle"></i>
+            </button>
+        </form>
+
+        {{-- Từ chối --}}
+        <button type="button" class="btn btn-danger btn-sm me-1" onclick="toggleRejectForm({{ $post->id }})" title="Từ chối">
+            <i class="bi bi-x-circle"></i>
+        </button>
+        <form id="rejectForm-{{ $post->id }}" action="{{ route('admin.posts.reject', $post->id) }}" method="POST" class="mt-2" style="display: none;">
+            @csrf
+            @method('PUT')
+            <div class="input-group" style="max-width: 400px;">
+                <input type="text" name="rejection_reason" class="form-control" placeholder="Lý do từ chối..." required>
+                <button type="submit" class="btn btn-danger" title="Xác nhận từ chối">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </form>
+    @elseif($post->status === 'approved')
+        {{-- Sửa --}}
+        <a href="{{ route('admin.posts.edit', $post->id) }}" class="btn btn-primary btn-sm me-1" title="Sửa">
+            <i class="fas fa-edit"></i>
+        </a>
+    @endif
+
+    {{-- Xóa --}}
+    <form id="delete-form-{{ $post->id }}" action="{{ route('admin.posts.destroy', $post->id) }}" method="POST" class="d-inline">
+        @csrf
+        @method('DELETE')
+        <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete({{ $post->id }})" title="Xóa">
+            <i class="fas fa-trash"></i>
+        </button>
+    </form>
+</td>
+
             </tr>
             @empty
             <tr>

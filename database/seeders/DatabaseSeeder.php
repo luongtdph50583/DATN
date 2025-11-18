@@ -2,7 +2,9 @@
    namespace Database\Seeders;
 
 use App\Models\Club;
+use App\Models\ClubRequest;
 use App\Models\Member;
+use App\Models\Post;
 use Illuminate\Database\Seeder;
 
    class DatabaseSeeder extends Seeder
@@ -11,10 +13,10 @@ use Illuminate\Database\Seeder;
        {
            $this->call([
                 UserSeeder::class,
-                ClubSeeder::class,
                 MemberSeeder::class,
-              ClubMemberSeeder::class,
-               EventSeeder::class,
+                ClubSeeder::class,
+                ClubMemberSeeder::class,
+          PostAndCommentSeeder::class,
            ]);
        }
    }

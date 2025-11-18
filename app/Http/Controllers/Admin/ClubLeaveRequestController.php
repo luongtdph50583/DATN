@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\ClubLeaveRequest;
 use App\Jobs\SendNotificationJob;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+
 
 class ClubLeaveRequestController extends Controller
 {
@@ -41,7 +43,7 @@ class ClubLeaveRequestController extends Controller
 
     // Cập nhật trạng thái yêu cầu
     $leaveRequest->status = $request->action === 'approve' ? 'approved' : 'rejected';
-    $leaveRequest->handled_by = auth()->id();
+    $leaveRequest->handled_by = Auth::id();
     $leaveRequest->handled_at = now();
     $leaveRequest->note = $request->note; // lưu note
     $leaveRequest->save();

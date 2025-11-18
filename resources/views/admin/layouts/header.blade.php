@@ -137,9 +137,9 @@
                 </div>
 
                 <div class="dropdown ms-1 topbar-head-dropdown header-item">
-                    <button type="button" class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {{-- <button type="button" class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <img id="header-lang-img" src="{{ asset('assets/images/flags/us.svg')}}" alt="Header Language" height="20" class="rounded">
-                    </button>
+                    </button> --}}
                     {{-- <div class="dropdown-menu dropdown-menu-end">
 
                         <!-- item-->
