@@ -7,7 +7,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Notifications\DatabaseNotification;
 use App\Observers\DatabaseNotificationObserver; // nhớ import observer
 use Illuminate\Database\Eloquent\Relations\Relation;
-
+use App\Models\FundTransaction;
+use App\Observers\FundTransactionObserver;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -23,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        FundTransaction::observe(FundTransactionObserver::class);
         Paginator::useBootstrapFive();
 
         Relation::enforceMorphMap([

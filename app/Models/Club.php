@@ -38,16 +38,23 @@ protected $fillable = [
         return $this->belongsTo(User::class, 'manager_id');
     }
 
-    /** Thành viên CLB (qua bảng club_members) */
+
 public function members()
 {
-    return $this->belongsToMany(Member::class, 'club_members')
-                ->withPivot(['role','status','joined_at','appointed_at'])
-                ->withTimestamps();
+    return $this->belongsToMany(
+        User::class,
+        'club_members',
+        'club_id',
+        'member_id'   
+    )->withPivot('role', 'status', 'joined_at');
 }
 
-
-
+public function activeMembers()
+{
+    return $this->belongsToMany(User::class, 'club_members', 'club_id', 'member_id')
+        ->wherePivot('status', 'active')           // ← đúng cách
+        ->withPivot('role', 'status', 'joined_at');
+}
     /** Bài viết CLB */
     public function posts()
     {

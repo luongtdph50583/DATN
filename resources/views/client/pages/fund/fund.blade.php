@@ -77,11 +77,12 @@
                     <label>Số tiền dự kiến</label>
                     <input type="number" name="amount" class="form-control" step="0.01" required>
                 </div>
-
-                <div class="mb-2">
-                    <label>Ghi chú</label>
-                    <input type="text" name="description" class="form-control" required>
-                </div>
+    <div class="mb-4">
+    <label class="form-label fw-bold">Ghi chú / Nội dung</label>
+    <textarea name="description" id="editor" class="form-control" rows="8">
+        {{ old('description', $transaction?->description ?? '') }}
+    </textarea>
+</div>
 
                 <div class="mb-2">
                     <label>Danh mục thu</label>
@@ -129,11 +130,12 @@
                     <label>Số tiền chi</label>
                     <input type="number" name="amount" class="form-control" step="0.01" required>
                 </div>
-
-                <div class="mb-2">
-                    <label>Ghi chú</label>
-                    <input type="text" name="description" class="form-control" required>
-                </div>
+<div class="mb-4">
+    <label class="form-label fw-bold">Ghi chú / Nội dung</label>
+    <textarea name="description" id="editor" class="form-control" rows="8">
+        {{ old('description', $transaction?->description ?? '') }}
+    </textarea>
+</div>
 
                 <div class="mb-2">
                     <label>Loại chi</label>
@@ -180,7 +182,6 @@
                             <th>Loại</th>
                             <th>Số tiền dự kiến</th>
                             <th>Số tiền thực tế</th>
-                            <th>Ghi chú</th>
                             <th>Danh mục</th>
                             <th>Người tạo</th>
                             <th>Trạng thái</th>
@@ -195,7 +196,6 @@
                             <td>{{ $transaction->type === 'income' ? 'Thu' : 'Chi' }}</td>
                             <td>{{ number_format($transaction->amount,0,',','.') }} đ</td>
                             <td>{{ number_format($transaction->collected_amount ?? 0,0,',','.') }} đ</td>
-                            <td>{{ $transaction->description }}</td>
                             @php
 $categoryLabels = [
     'membership_fee' => 'Hội phí',
@@ -277,10 +277,10 @@ $categoryLabels = [
                 <th>Số tiền thực tế:</th>
                 <td>{{ number_format($transaction->collected_amount ?? 0,0,',','.') }} đ</td>
             </tr>
-            <tr>
-                <th>Ghi chú:</th>
-                <td>{{ $transaction->description }}</td>
-            </tr>
+           <tr>
+    <th>Ghi chú:</th>
+    <td>{{ $transaction->description }}</td>
+</tr>
             <tr>
                 <th>Danh mục:</th>
                 <td>{{ $transaction->custom_category ?? $transaction->category ?? '-' }}</td>
@@ -346,7 +346,40 @@ $categoryLabels = [
     </div>
 
 </div>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/translations/vi.js"></script>
 
+<script>
+    ClassicEditor
+        .create(document.querySelector('#editor'), {
+            language: 'vi',
+            toolbar: [
+                'heading', '|',
+                'bold', 'italic', 'underline', '|',
+                'bulletedList', 'numberedList', '|',
+                'outdent', 'indent', '|',
+                'link', 'blockQuote', 'insertTable', '|',
+                'undo', 'redo'
+            ],
+            heading: {
+                options: [
+                    { model: 'paragraph', title: 'Đoạn văn', class: 'ck-heading_paragraph' },
+                    { model: 'heading2', view: 'h2', title: 'Tiêu đề 2', class: 'ck-heading_heading2' },
+                    { model: 'heading3', view: 'h3', title: 'Tiêu đề 3', class: 'ck-heading_heading3' }
+                ]
+            },
+            table: {
+                contentToolbar: [ 'tableColumn', 'tableRow', 'mergeTableCells' ]
+            }
+            // Không có simpleUpload → không thể chèn ảnh → đúng như bạn muốn!
+        })
+        .then(editor => {
+            console.log('Editor đã sẵn sàng!');
+        })
+        .catch(error => {
+            console.error(error);
+        });
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Collapse form thu/chi

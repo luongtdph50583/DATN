@@ -15,6 +15,7 @@ use App\Exports\FundTransactionsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Notification; // nếu bạn có model notifications
 use Illuminate\Support\Facades\DB;
+use App\Notifications\IncomeTransactionApprovedNotification;
 class ClubFundController extends Controller
 {
     public function index(Request $request, $club_id)
@@ -87,35 +88,52 @@ if ($request->hasFile('receipt')) {
         return redirect()->back()->with('success','Giao dịch đã được tạo và đang chờ duyệt.');
     }
 
+
 public function approveTransaction($club_id, FundTransaction $transaction)
 {
     $user = auth()->user();
 
-    if ($transaction->type === 'income') {
-        // Duyệt thu
-        $transaction->status = 'approved';
-        $transaction->approved_by = $user->id;
-        $transaction->save();
-
-        // Lấy tất cả member active của CLB
-        $members = ClubMember::where('club_id', $club_id)
-            ->where('status', 'active')
-            ->get();
-
-
-    } else { 
-        // Với chi: duyệt = hoàn tất luôn
-        $transaction->status = 'completed';
-        $transaction->approved_by = $user->id;
-        $transaction->save();
-
-        // Trừ quỹ ngay
-        $fund = Fund::firstOrCreate(['club_id' => $club_id]);
-        $fund->balance -= $transaction->amount;
-        $fund->save();
+    // Chỉ duyệt khoản thu
+    if ($transaction->type !== 'income') {
+        return back()->with('error', 'Chỉ có thể duyệt khoản thu!');
     }
 
-    return redirect()->back()->with('success','Giao dịch đã được duyệt thành công và thông báo đã gửi.');
+    if ($transaction->status === 'approved') {
+        return back()->with('info', 'Giao dịch đã được duyệt trước đó.');
+    }
+
+    // Duyệt + cộng quỹ
+    $transaction->update([
+        'status'       => 'approved',
+        'approved_by'  => $user->id,
+        'approved_at'  => now(),
+    ]);
+
+    Fund::firstOrCreate(['club_id' => $club_id], ['balance' => 0])
+        ->increment('balance', $transaction->amount);
+
+
+    $recipients = \App\Models\ClubMember::query()
+        ->where('club_id', $club_id)
+        ->where('status', 'active')
+        ->with('user')                   
+        ->get()                           
+        ->pluck('user')                  
+        ->filter(fn($user) => $user?->email && $user?->email_verified_at)
+        ->values();
+
+   
+
+    if ($recipients->isNotEmpty()) {
+        Notification::send($recipients, new IncomeTransactionApprovedNotification($transaction));
+        
+        \Log::info('Sent income approval notification', [
+            'transaction_id' => $transaction->id,
+            'recipients' => $recipients->pluck('email')->toArray()
+        ]);
+    }
+
+    return back()->with('success', 'Khoản thu đã được duyệt và thông báo đã gửi!');
 }
 
 
