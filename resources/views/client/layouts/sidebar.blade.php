@@ -17,10 +17,17 @@
             </div>
 
             <!-- Sidebar Menu -->
-      <ul class="admin-menu list-unstyled">
+   <ul class="admin-menu list-unstyled">
     <li><a href="{{ url('admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-    <li><a href="{{ url('admin/posts') }}"><i class="fas fa-newspaper"></i> Posts</a></li>
-    <li><a href="{{ url('admin/users') }}"><i class="fas fa-users"></i> Users</a></li>
+
+    <!-- Thay Posts bằng CLB của tôi -->
+    <li>
+        <a href="{{ route('client.clubs.my') }}">
+            <i class="fas fa-users"></i> CLB của tôi
+        </a>
+    </li>
+
+    <li><a href="{{ url('admin/users') }}"><i class="fas fa-users-cog"></i> Users</a></li>
     <li><a href="{{ url('admin/settings') }}"><i class="fas fa-cogs"></i> Settings</a></li>
 
     @auth
@@ -44,6 +51,7 @@
         </li>
     @endguest
 </ul>
+
 
 
 
