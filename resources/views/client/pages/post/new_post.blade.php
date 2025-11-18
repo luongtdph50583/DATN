@@ -1,286 +1,114 @@
-<section class="club-blog-section fix section-padding bg-cover"
-    style="background-image: url('assets/img/home-1/club-blog/club-blog-bg.jpg');">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-1.jpg" alt="img">
+@extends('client.layouts.app')
+@php($isEdit = isset($post))
+@section('title', ($isEdit ? 'Chỉnh sửa' : 'Tạo') . ' bài viết - ' . ($club->name ?? 'CLB'))
+
+@section('content')
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="mb-1">{{ $isEdit ? 'Chỉnh sửa bài viết' : 'Tạo bài viết mới' }}</h2>
+                        <p class="text-muted mb-0">CLB: {{ $club->name }}</p>
                     </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Meet the Coaches Building a Winning Mentality
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
-                    </div>
+                    <a href="{{ route('club_manager.posts.index', ['club_id' => $club->id]) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Quay lại
+                    </a>
                 </div>
-            </div>
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-2.jpg" alt="img">
+
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
+                @endif
+
+                @if($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
                         </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Building Agile Teams Corporate in a Environment
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
                     </div>
-                </div>
-            </div>
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-3.jpg" alt="img">
-                    </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Meet the Coaches Building a Winning Mentality
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-4.jpg" alt="img">
-                    </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Historic Victories That Shaped Our Club
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-5.jpg" alt="img">
-                    </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Legends of the Club Honoring the Greats
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-6.jpg" alt="img">
-                    </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Behind the Scenes Training Ground Insights
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-7.jpg" alt="img">
-                    </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Women’s Team Spotlight & Achievements
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-8.jpg" alt="img">
-                    </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Club Merchandise & New Kit Launches
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-4 col-lg-6 col-md-6">
-                <div class="club-blog-items mt-0">
-                    <div class="thumb">
-                        <img src="assets/img/home-1/club-blog/blog-9.jpg" alt="img">
-                    </div>
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <span>
-                                    <i class="fa-regular fa-circle-user"></i>
-                                    By <b>Binsro</b>
-                                </span>
-                            </li>
-                            <li>
-                                <span>
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    June 28, 2025
-                                </span>
-                            </li>
-                        </ul>
-                        <h3>
-                            <a href="news-details.html">
-                                Special Anniversaries & Historic Moments
-                            </a>
-                        </h3>
-                        <a href="news-details.html" class="link-btn">
-                            VIEW MORE BLOG <i class="fa-solid fa-arrow-up-right"></i>
-                        </a>
+                @endif
+
+                <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                        <form action="{{ $isEdit ? route('club_manager.posts.update', ['club_id' => $club->id, 'post' => $post->id]) : route('club_manager.posts.store', ['club_id' => $club->id]) }}"
+                              method="POST" enctype="multipart/form-data">
+                            @csrf
+                            @if($isEdit)
+                                @method('PUT')
+                            @endif
+
+                            <div class="mb-3">
+                                <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+                                <input type="text" name="title" class="form-control"
+                                       value="{{ old('title', $post->title ?? '') }}" required>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Loại bài viết <span class="text-danger">*</span></label>
+                                    <select name="type" class="form-select" required>
+                                        <option value="">-- Chọn loại --</option>
+                                        <option value="post" {{ old('type', $post->type ?? '') === 'post' ? 'selected' : '' }}>Bài viết</option>
+                                        <option value="notice" {{ old('type', $post->type ?? '') === 'notice' ? 'selected' : '' }}>Thông báo</option>
+                                        <option value="document" {{ old('type', $post->type ?? '') === 'document' ? 'selected' : '' }}>Tài liệu</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Chế độ hiển thị <span class="text-danger">*</span></label>
+                                    <select name="visibility" class="form-select" required>
+                                        <option value="">-- Chọn chế độ --</option>
+                                        <option value="internal" {{ old('visibility', $post->visibility ?? '') === 'internal' ? 'selected' : '' }}>Nội bộ CLB</option>
+                                        <option value="public" {{ old('visibility', $post->visibility ?? '') === 'public' ? 'selected' : '' }}>Công khai</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-0">
+                                <div class="col-md-6">
+                                    <label class="form-label">Trạng thái hiển thị</label>
+                                    <select name="is_visible" class="form-select">
+                                        <option value="1" {{ (string)old('is_visible', $post->is_visible ?? '1') === '1' ? 'selected' : '' }}>Hiển thị</option>
+                                        <option value="0" {{ (string)old('is_visible', $post->is_visible ?? '1') === '0' ? 'selected' : '' }}>Ẩn</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Đánh dấu nổi bật</label>
+                                    <select name="is_featured" class="form-select">
+                                        <option value="0" {{ (string)old('is_featured', $post->is_featured ?? '0') === '0' ? 'selected' : '' }}>Không</option>
+                                        <option value="1" {{ (string)old('is_featured', $post->is_featured ?? '0') === '1' ? 'selected' : '' }}>Có</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <label class="form-label">Ảnh đại diện</label>
+                                <input type="file" name="thumbnail" class="form-control" accept="image/*">
+                                @if(!empty($post->thumbnail))
+                                    <p class="text-muted small mt-2">Ảnh hiện tại:</p>
+                                    <img src="{{ asset('storage/' . $post->thumbnail) }}" alt="thumbnail" class="img-fluid rounded" style="max-height:180px">
+                                @endif
+                            </div>
+
+                            <div class="mt-3">
+                                <label class="form-label">Nội dung <span class="text-danger">*</span></label>
+                                <textarea name="content" rows="10" class="form-control" placeholder="Nhập nội dung chi tiết" required>{{ old('content', $post->content ?? '') }}</textarea>
+                            </div>
+
+                            <div class="text-end mt-4">
+                                <button type="submit" class="theme-btn">
+                                    <i class="fa-solid fa-paper-plane me-1"></i>
+                                    {{ $isEdit ? 'Cập nhật bài viết' : 'Đăng bài viết' }}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</section>
+@endsection

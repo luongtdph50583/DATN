@@ -45,7 +45,7 @@
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
         <h4 class="mb-0">Danh sách tài liệu theo CLB & Tag</h4>
-        <a href="{{ route('admin.documentclub.create') }}" class="btn btn-outline-primary">
+        <a href="{{ route('admin.documentclub.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-circle me-1"></i> Thêm tài liệu
         </a>
     </div>
@@ -65,12 +65,12 @@
             </select>
         </div>
         <div class="col-md-3 col-lg-2 d-grid">
-            <button type="submit" class="btn btn-outline-primary">
+            <button type="submit" class="btn btn-primary">
                 <i class="bi bi-search me-1"></i> Lọc
             </button>
         </div>
         <div class="col-md-3 col-lg-2 d-grid">
-            <a href="{{ route('admin.documentclub.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('admin.documentclub.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-counterclockwise me-1"></i> Đặt lại
             </a>
         </div>

@@ -1,19 +1,34 @@
 <?php
 
-  namespace App\Http\Middleware;
+namespace App\Http\Middleware;
 
-  use Closure;
-  use Illuminate\Http\Request;
-  use Illuminate\Support\Facades\Auth;
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
-  class CheckRole
-  {
-      public function handle(Request $request, Closure $next, $role)
-      {
-          if (Auth::check() && Auth::user()->role === $role) {
-              return $next($request);
-          }
+class CheckRole
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @param  string|array  $roles
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next, ...$roles)
+    {
+        $user = Auth::user();
 
-          return redirect('/')->with('error', 'Bạn không có quyền truy cập.');
-      }
-  }
+        if (!$user) {
+            abort(403, 'Bạn chưa đăng nhập');
+        }
+
+        // Nếu roles là chuỗi: "admin", "club_manager"
+        if (!in_array($user->role, $roles)) {
+            abort(403, 'Bạn không có quyền truy cập');
+        }
+
+        return $next($request);
+    }
+}

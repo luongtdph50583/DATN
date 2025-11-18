@@ -47,6 +47,7 @@ public function members()
 }
 
 
+
     /** Bài viết CLB */
     public function posts()
     {
@@ -101,7 +102,19 @@ public function members()
         return $this->belongsTo(FacultyMember::class, 'advisor_id')->with('user');
     }
 
+    /**
+     * Câu hỏi form tuyển thành viên
+     */
+    public function joinFormQuestions()
+    {
+        return $this->hasMany(ClubJoinFormQuestion::class, 'club_id');
+    }
 
-
-
+    /**
+     * Lịch phỏng vấn
+     */
+    public function interviewSchedules()
+    {
+        return $this->hasMany(ClubInterviewSchedule::class, 'club_id');
+    }
 }

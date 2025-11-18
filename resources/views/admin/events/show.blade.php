@@ -163,11 +163,7 @@
                         <h4 class="text-info fw-bold">{{ number_format($event->budget_club ?? 0) }} VNĐ</h4>
                     </div>
 
-                    <div class="progress mb-3" style="height: 30px;">
-                        <div class="progress-bar bg-danger" style="width: {{ $percent }}%">
-                            {{ number_format($used) }}đ đã dùng
-                        </div>
-                    </div>
+              
                 </div>
             </div>
         </div>
@@ -212,77 +208,162 @@
             </div>
         </div>
 
-        <!-- Giao dịch quỹ -->
-        <div class="col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="fas fa-exchange-alt text-warning"></i> Giao dịch quỹ ({{  $event->funRequests->count() }})
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    @if ($event->funRequests->count())
-                        <div class="table-responsive mt-3">
-                            <table class="table table-bordered table-hover align-middle mb-0">
-                                <thead class="table-light">
+      <div class="row g-4 mt-2">
+    <!-- Giao dịch quỹ sự kiện -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-exchange-alt text-warning"></i> Giao dịch quỹ ({{ $event->funRequests->count() }})
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                @if ($event->funRequests->count())
+                    <div class="table-responsive mt-3">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Người tạo</th>
+                                    <th>Số tiền yêu cầu</th>
+                                    <th>Số tiền duyệt</th>
+                                    <th>Ghi chú</th>
+                                    <th>Trạng thái</th>
+                                    <th>Người duyệt</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($funRequests as $index => $req)
                                     <tr>
-                                        <th>#</th>
-                                        <th>Người tạo</th>
-                                        <th>Số tiền yêu cầu</th>
-                                        <th>Số tiền duyệt</th>
-                                        <th>Ghi chú</th>
-                                        <th>Trạng thái</th>
-                                        <th>Người duyệt</th>
-                                        <th>Ngày tạo</th>
-                                        <th>Hành động</th>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ optional($req->requestedBy)->name ?? 'Không rõ' }}</td>
+                                        <td class="text-end">{{ number_format($req->amount_requested ?? 0, 0, ',', '.') }} VNĐ</td>
+                                        <td class="text-end">{{ number_format($req->approved_amount ?? 0, 0, ',', '.') }} VNĐ</td>
+                                        <td>{{ Str::limit($req->note ?? '-', 50) }}</td>
+                                        <td>
+                                            @php
+                                                $statusMap = [
+                                                    'pending_disbursement' => ['label' => 'Chờ giải ngân', 'class' => 'bg-warning text-dark'],
+                                                    'disbursing' => ['label' => 'Đang giải ngân', 'class' => 'bg-info text-white'],
+                                                    'disbursed' => ['label' => 'Đã giải ngân', 'class' => 'bg-success text-white'],
+                                                    'rejected' => ['label' => 'Từ chối', 'class' => 'bg-danger text-white'],
+                                                ];
+                                            @endphp
+                                            <span class="badge {{ $statusMap[$req->status]['class'] ?? 'bg-secondary' }}">
+                                                {{ $statusMap[$req->status]['label'] ?? 'Không xác định' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ optional($req->approvedBy)->name ?? '-' }}</td>
+                                        <td>{{ optional($req->created_at)?->format('d/m/Y H:i') ?? '-' }}</td>
+                                        <td>
+                                            <a href="{{ route('admin.event_fund_requests.show', $req) }}" 
+                                               class="btn btn-info btn-sm" title="Xem">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($event->funRequests as $index => $req)
-                                        <tr>
-                                            <td>{{ $index + 1 }}</td>
-                                            <td>{{ optional($req->requestedBy)->name ?? 'Không rõ' }}</td>
-                                            <td class="text-end">{{ number_format($req->amount_requested ?? 0, 0, ',', '.') }} VNĐ</td>
-                                            <td class="text-end">{{ number_format($req->approved_amount ?? 0, 0, ',', '.') }} VNĐ</td>
-                                            <td>{{ Str::limit($req->note ?? '-', 50) }}</td>
-                                            <td>
-                                                @php
-                                                    $statusMap = [
-                                                        'pending_disbursement' => ['label' => 'Chờ giải ngân', 'class' => 'bg-warning text-dark'],
-                                                        'disbursing' => ['label' => 'Đang giải ngân', 'class' => 'bg-info text-white'],
-                                                        'disbursed' => ['label' => 'Đã giải ngân', 'class' => 'bg-success text-white'],
-                                                        'rejected' => ['label' => 'Từ chối', 'class' => 'bg-danger text-white'],
-                                                    ];
-                                                @endphp
-                                                <span class="badge {{ $statusMap[$req->status]['class'] ?? 'bg-secondary' }}">
-                                                    {{ $statusMap[$req->status]['label'] ?? 'Không xác định' }}
-                                                </span>
-                                            </td>
-                                            <td>{{ optional($req->approvedBy)->name ?? '-' }}</td>
-                                            <td>{{ optional($req->created_at)?->format('d/m/Y H:i') ?? '-' }}</td>
-                                            <td>
-                                                <a href="{{ route('admin.event_fund_requests.show', $req) }}" 
-                                                   class="btn btn-info btn-sm" title="Xem">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-
-                            <div class="mt-2 px-2">
-                                {{ $funRequests->links() }}
-                            </div>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        <div class="mt-2 px-2">
+                            {{ $funRequests->links() }}
                         </div>
-                    @else
-                        <div class="alert alert-secondary mt-3 text-center">
-                            <i class="fas fa-info-circle me-2"></i>Chưa có yêu cầu quỹ nào cho sự kiện này.
-                        </div>
-                    @endif
-                </div>
+                    </div>
+                @else
+                    <div class="alert alert-secondary mt-3 text-center">
+                        <i class="fas fa-info-circle me-2"></i>Chưa có yêu cầu quỹ nào cho sự kiện này.
+                    </div>
+                @endif
             </div>
         </div>
+    </div>
+
+    <!-- Giao dịch CLB liên quan sự kiện -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-exchange-alt text-warning"></i> Giao dịch CLB cho sự kiện ({{ $clubTransactions->count() }})
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                @if($clubTransactions->count())
+                    <div class="table-responsive mt-3">
+                        <table class="table table-bordered table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Người tạo</th>
+                                    <th>Loại</th>
+                                    <th>Số tiền</th>
+                                    <th>Danh mục</th>
+                                    <th>Ghi chú</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tạo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($clubTransactions as $index => $tx)
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $tx->creator->name ?? '-' }}</td>
+                                        <td>{{ $tx->type === 'income' ? 'Thu' : 'Chi' }}</td>
+                                        <td class="text-end">{{ number_format($tx->amount,0,',','.') }} đ</td>
+                                        @php
+$categoryLabels = [
+    'membership_fee' => 'Hội phí',
+    'donation' => 'Đóng góp',
+    'other' => 'Khác',
+    'event_expense' => 'Chi cho sự kiện',
+];
+@endphp
+
+<td>
+    @if($tx->custom_category)
+        {{ $tx->custom_category }}
+    @elseif($tx->category)
+        {{ $categoryLabels[$tx->category] ?? $tx->category }}
+    @else
+        -
+    @endif
+</td>
+
+                                        <td>{{ $tx->description }}</td>
+                                        <td>
+                                            @php
+                                                $statusMap = [
+                                                    'pending' => ['label' => 'Chờ duyệt', 'class' => 'bg-warning text-dark'],
+                                                    'approved' => ['label' => 'Đã duyệt', 'class' => 'bg-primary text-white'],
+                                                    'in_progress' => ['label' => 'Đang thu/chi', 'class' => 'bg-info text-dark'],
+                                                    'completed' => ['label' => 'Hoàn tất', 'class' => 'bg-success text-white'],
+                                                ];
+                                            @endphp
+                                            <span class="badge {{ $statusMap[$tx->status]['class'] ?? 'bg-secondary' }}">
+                                                {{ $statusMap[$tx->status]['label'] ?? 'Không xác định' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $tx->created_at->format('d/m/Y H:i') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        <div class="mt-2 px-2">
+                            {{-- Nếu muốn phân trang cho clubTransactions, dùng: {{ $clubTransactions->links() }} --}}
+                        </div>
+                    </div>
+                @else
+                    <div class="alert alert-secondary text-center m-3">
+                        <i class="fas fa-info-circle me-2"></i>Chưa có giao dịch nào cho sự kiện này
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+        
 
         <!-- Media -->
         <div class="col-12">

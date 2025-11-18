@@ -23,11 +23,12 @@ class ClubMemberSeeder extends Seeder
             return;
         }
 
-        // Xóa dữ liệu cũ
-        DB::table('club_members')->truncate();
+        // Xóa dữ liệu cũ (nếu cần, có thể bỏ qua để tránh lỗi foreign key)
+        // DB::table('club_members')->truncate();
 
         $records = [];
         $usedLeaderIds = []; // đảm bảo 1 người chỉ làm chủ nhiệm 1 CLB
+        $usedClubMemberPairs = []; // Lưu các cặp (club_id, member_id) đã sử dụng
 
         foreach ($clubs as $club) {
             $clubId = $club->id;
@@ -51,6 +52,13 @@ class ClubMemberSeeder extends Seeder
                 }
                 $leaderMember = $availableMembers->random();
             }
+
+            // Kiểm tra duplicate (club_id, member_id)
+            $pairKey = "$clubId-{$leaderMember->id}";
+            if (isset($usedClubMemberPairs[$pairKey])) {
+                continue; // Đã tồn tại, bỏ qua
+            }
+            $usedClubMemberPairs[$pairKey] = true;
 
             // Đánh dấu member đã làm leader
             $usedLeaderIds[] = $leaderMember->id;
@@ -76,6 +84,13 @@ class ClubMemberSeeder extends Seeder
                 : collect();
 
             foreach ($regularMembers as $member) {
+                $pairKey = "$clubId-{$member->id}";
+                // Kiểm tra duplicate trước khi thêm
+                if (isset($usedClubMemberPairs[$pairKey])) {
+                    continue; // Đã tồn tại, bỏ qua
+                }
+                $usedClubMemberPairs[$pairKey] = true;
+
                 $records[] = [
                     'club_id' => $clubId,
                     'member_id' => $member->id,
@@ -90,9 +105,18 @@ class ClubMemberSeeder extends Seeder
             }
         }
 
-        // Chèn dữ liệu
+        // Chèn dữ liệu (kiểm tra lại duplicate trước khi insert)
         if (!empty($records)) {
-            ClubMember::insert($records);
+            // Chỉ insert những record chưa tồn tại
+            foreach ($records as $record) {
+                ClubMember::firstOrCreate(
+                    [
+                        'club_id' => $record['club_id'],
+                        'member_id' => $record['member_id'],
+                    ],
+                    $record
+                );
+            }
         }
 
         $this->command->info("Seed bảng club_members thành công với " . count($records) . " bản ghi!");

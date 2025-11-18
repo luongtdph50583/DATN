@@ -4,7 +4,7 @@
             <div class="row g-4">
                 <div class="col-12 col-lg-8">
                     <div class="gt-details-image">
-                        <img src="assets/img/inner/news/details-1.jpg" alt="img">
+                        <img src="assets1/img/inner/news/details-1.jpg" alt="img">
                     </div>
                     <div class="gt-news-details-content">
                         <h3>Legends of the Club Honoring the Greats</h3>
@@ -57,12 +57,12 @@
                         <div class="row g-4 mt-3">
                             <div class="col-lg-6">
                                 <div class="gt-details-image">
-                                    <img src="assets/img/inner/news/post-4.jpg" alt="img">
+                                    <img src="assets1/img/inner/news/post-4.jpg" alt="img">
                                 </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="gt-details-image">
-                                    <img src="assets/img/inner/news/post-5.jpg" alt="img">
+                                    <img src="assets1/img/inner/news/post-5.jpg" alt="img">
                                 </div>
                             </div>
                         </div>
@@ -95,7 +95,7 @@
                             </div>
                             <div class="gt-blog-single-comment d-flex gap-4 pt-4 pb-4">
                                 <div class="image">
-                                    <img src="assets/img/inner/news/comment-1.png" alt="img">
+                                    <img src="assets1/img/inner/news/comment-1.png" alt="img">
                                 </div>
                                 <div class="gt-content">
                                     <div class="head d-flex flex-wrap gap-2 align-items-center justify-content-between">
@@ -114,7 +114,7 @@
                             </div>
                             <div class="gt-blog-single-comment d-flex gap-4 pt-4 pb-4">
                                 <div class="image">
-                                    <img src="assets/img/inner/news/comment-2.png" alt="img">
+                                    <img src="assets1/img/inner/news/comment-2.png" alt="img">
                                 </div>
                                 <div class="gt-content">
                                     <div class="head d-flex flex-wrap gap-2 align-items-center justify-content-between">
@@ -187,7 +187,7 @@
                             <div class="gt-recent-post-area">
                                 <div class="gt-recent-items">
                                     <div class="gt-recent-thumb">
-                                        <img src="assets/img/inner/news/post-1.jpg" alt="img">
+                                        <img src="assets1/img/inner/news/post-1.jpg" alt="img">
                                     </div>
                                     <div class="gt-recent-content">
                                         <h5>
@@ -204,7 +204,7 @@
                                 </div>
                                 <div class="gt-recent-items">
                                     <div class="gt-recent-thumb">
-                                        <img src="assets/img/inner/news/post-2.jpg" alt="img">
+                                        <img src="assets1/img/inner/news/post-2.jpg" alt="img">
                                     </div>
                                     <div class="gt-recent-content">
                                         <h5>
@@ -221,7 +221,7 @@
                                 </div>
                                 <div class="gt-recent-items">
                                     <div class="gt-recent-thumb">
-                                        <img src="assets/img/inner/news/post-3.jpg" alt="img">
+                                        <img src="assets1/img/inner/news/post-3.jpg" alt="img">
                                     </div>
                                     <div class="gt-recent-content">
                                         <h5>
