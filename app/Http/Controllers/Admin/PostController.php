@@ -542,10 +542,10 @@ class PostController extends Controller
             return response()->json(['error' => 'Không có ảnh'], 400);
         }
 
-        $path = $file->store('images', 'public');
-        $url = asset('storage/' . $path);
+            $path = $file->store('images', 'public');
+            $url = asset('storage/' . $path);
 
-        return response()->json(['url' => $url]);
+            return response()->json(['url' => $url]);
     }
 
     /**

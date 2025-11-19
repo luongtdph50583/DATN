@@ -149,10 +149,10 @@ $(document).ready(function() {
 @endsection
 
 @push('scripts')
-    <script>
+        <script>
         let postContentEditorInstance = null;
 
-        document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function () {
             if (typeof ClassicEditor === 'undefined') {
                 console.error('CKEditor chưa được tải.');
                 return;
@@ -187,8 +187,8 @@ $(document).ready(function() {
         async function uploadAndInsertFile() {
             if (!postContentEditorInstance) {
                 alert('Trình soạn thảo chưa sẵn sàng.');
-                return;
-            }
+                        return;
+                    }
         const fileInput = document.getElementById('fileUpload');
                 const file = fileInput.files[0];
                 const status = document.getElementById('uploadStatus');
@@ -221,8 +221,8 @@ $(document).ready(function() {
 
                 if (data.success && data.url) {
                     const html = data.type.startsWith('image')
-                        ? `<img src="${data.url}" alt="${data.name}" class="rounded shadow mb-2" style="max-width: 100%;">`
-                        : `<p><a href="${data.url}" target="_blank">📎 ${data.name}</a></p>`;
+                ? `<img src="${data.url}" alt="${data.name}" class="rounded shadow mb-2" style="max-width: 100%;">`
+                    : `<p><a href="${data.url}" target="_blank">📎 ${data.name}</a></p>`;
 
                     postContentEditorInstance.model.change(writer => {
                         const insertPosition = postContentEditorInstance.model.document.selection.getFirstPosition();
@@ -231,9 +231,9 @@ $(document).ready(function() {
                         postContentEditorInstance.model.insertContent(modelFragment, insertPosition);
                     });
 
-                    status.textContent = '✅ Đã chèn file vào nội dung.';
-                    fileInput.value = '';
-                } else {
+                status.textContent = '✅ Đã chèn file vào nội dung.';
+                fileInput.value = '';
+            } else {
                 status.textContent = '❌ ' + (data.message || 'Không thể upload file.');
             }
         } catch (err) {

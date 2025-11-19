@@ -118,7 +118,7 @@ class ClubJoinRequestController extends Controller
                 'status' => $requestModel->fresh()->status
             ]);
         }
-        
+
         return back()->with('success', $this->getSuccessMessage($action));
     }
 

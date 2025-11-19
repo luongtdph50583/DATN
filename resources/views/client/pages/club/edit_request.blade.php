@@ -38,7 +38,7 @@
             <div class="alert alert-info d-flex justify-content-between align-items-start">
                 <div>
                     Bạn đã có một đề xuất đang chờ duyệt. Vui lòng chờ admin xử lý.
-                    <br><strong>Trạng thái:</strong>
+                    <br><strong>Trạng thái:</strong> 
                     @if($pendingRequest->status === 'pending')
                         <span class="badge bg-warning">Chờ duyệt</span>
                     @elseif($pendingRequest->status === 'approved')
@@ -54,20 +54,20 @@
         @endif
 
         @php
-$managementRoles = [
-    'club_manager' => 'Chủ nhiệm',
-    'deputy_manager' => 'Phó chủ nhiệm',
-    'secretary' => 'Thư ký',
-    'treasurer' => 'Thủ quỹ',
-    'event_manager' => 'Sự kiện',
-    'communication' => 'Truyền thông',
-];
+            $managementRoles = [
+                'club_manager' => 'Chủ nhiệm',
+                'deputy_manager' => 'Phó chủ nhiệm',
+                'secretary' => 'Thư ký',
+                'treasurer' => 'Thủ quỹ',
+                'event_manager' => 'Sự kiện',
+                'communication' => 'Truyền thông',
+            ];
         @endphp
 
         @if(!$pendingRequest || $pendingRequest->status !== 'pending')
             <form action="{{ route('club_manager.edit_request.store', ['club_id' => $club->id]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
-
+                
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5 class="mb-0">Thông tin cơ bản</h5>
@@ -139,7 +139,7 @@ $managementRoles = [
                                 <select name="manager_id" class="form-select" data-select2="true">
                                     <option value="">Giữ nguyên</option>
                                     @foreach($users as $userOption)
-                                        <option value="{{ $userOption->id }}" {{ (string) old('manager_id') === (string) $userOption->id ? 'selected' : '' }}>
+                                        <option value="{{ $userOption->id }}" {{ (string)old('manager_id') === (string)$userOption->id ? 'selected' : '' }}>
                                             {{ $userOption->name }} ({{ $userOption->email }})
                                         </option>
                                     @endforeach
@@ -150,7 +150,7 @@ $managementRoles = [
                                 <select name="advisor_id" class="form-select" data-select2="true">
                                     <option value="">Giữ nguyên</option>
                                     @foreach($facultyMembers as $advisor)
-                                        <option value="{{ $advisor->id }}" {{ (string) old('advisor_id') === (string) $advisor->id ? 'selected' : '' }}>
+                                        <option value="{{ $advisor->id }}" {{ (string)old('advisor_id') === (string)$advisor->id ? 'selected' : '' }}>
                                             {{ $advisor->user->name ?? 'GV' }} - {{ $advisor->department ?? '' }}
                                         </option>
                                     @endforeach
@@ -178,11 +178,11 @@ $managementRoles = [
                                 <tbody>
                                     @foreach($managementRoles as $roleKey => $roleLabel)
                                         @php
-        $currentMember = $club->clubMembers->firstWhere('role', $roleKey);
-        $currentName = $currentMember && $currentMember->member && $currentMember->member->user
-            ? $currentMember->member->user->name
-            : 'Chưa phân công';
-        $selectedUser = old("members.$roleKey.user_id");
+                                            $currentMember = $club->clubMembers->firstWhere('role', $roleKey);
+                                            $currentName = $currentMember && $currentMember->member && $currentMember->member->user
+                                                ? $currentMember->member->user->name
+                                                : 'Chưa phân công';
+                                            $selectedUser = old("members.$roleKey.user_id");
                                         @endphp
                                         <tr>
                                             <td>{{ $roleLabel }}</td>
@@ -192,7 +192,7 @@ $managementRoles = [
                                                     <option value="">Giữ nguyên</option>
                                                     @foreach($users as $userOption)
                                                         <option value="{{ $userOption->id }}"
-                                                            {{ (string) $selectedUser === (string) $userOption->id ? 'selected' : '' }}>
+                                                            {{ (string)$selectedUser === (string)$userOption->id ? 'selected' : '' }}>
                                                             {{ $userOption->name }} ({{ $userOption->email }})
                                                         </option>
                                                     @endforeach
@@ -256,22 +256,4 @@ $managementRoles = [
         </div>
     @endif
 @endsection
-@push('scripts')
-  @push('scripts')
-<script>
-$(document).ready(function () {
-    $('select.select2').each(function () {
-        if (!$(this).hasClass('select2-hidden-accessible')) {
-            $(this).select2({
-                placeholder: $(this).data('placeholder') || 'Chọn thành viên',
-                allowClear: true,
-                width: '100%'
-            });
-        }
-    });
-});
-</script>
-@endpush
-
-@endpush
 

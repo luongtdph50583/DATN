@@ -209,38 +209,38 @@
                 return;
             }
 
-            const fileInput = document.getElementById('fileUpload');
-            const file = fileInput.files[0];
-            const status = document.getElementById('uploadStatus');
+                        const fileInput = document.getElementById('fileUpload');
+                        const file = fileInput.files[0];
+                        const status = document.getElementById('uploadStatus');
 
-            if (!file) {
-                status.textContent = '⚠️ Vui lòng chọn file trước.';
-                return;
-            }
+                        if (!file) {
+                            status.textContent = '⚠️ Vui lòng chọn file trước.';
+                            return;
+                        }
 
-            const formData = new FormData();
-            formData.append('file', file);
+                        const formData = new FormData();
+                        formData.append('file', file);
 
-            const postIdInput = document.getElementById('post_id');
-            if (postIdInput && postIdInput.value) {
-                formData.append('related_id', postIdInput.value);
-            }
+                        const postIdInput = document.getElementById('post_id');
+                        if (postIdInput && postIdInput.value) {
+                            formData.append('related_id', postIdInput.value);
+                        }
 
-            formData.append('related_type', 'post');
+                        formData.append('related_type', 'post');
 
-            try {
-                const res = await fetch("{{ route('admin.posts.uploadFile') }}", {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: formData
-                });
+                        try {
+                            const res = await fetch("{{ route('admin.posts.uploadFile') }}", {
+                                method: 'POST',
+                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                body: formData
+                            });
 
-                const data = await res.json();
+                            const data = await res.json();
 
-                if (data.success && data.url) {
+                            if (data.success && data.url) {
                     const html = data.type.startsWith('image')
-                        ? `<img src="${data.url}" alt="${data.name}" class="rounded shadow mb-2" style="max-width: 100%;">`
-                        : `<p><a href="${data.url}" target="_blank">📎 ${data.name}</a></p>`;
+                                    ? `<img src="${data.url}" alt="${data.name}" class="rounded shadow mb-2" style="max-width: 100%;">`
+                                    : `<p><a href="${data.url}" target="_blank">📎 ${data.name}</a></p>`;
 
                     postContentEditorInstance.model.change(writer => {
                         const insertPosition = postContentEditorInstance.model.document.selection.getFirstPosition();
@@ -249,16 +249,16 @@
                         postContentEditorInstance.model.insertContent(modelFragment, insertPosition);
                     });
 
-                    status.textContent = '✅ Đã chèn file vào nội dung.';
-                    fileInput.value = '';
-                } else {
-                    status.textContent = '❌ ' + (data.message || 'Không thể upload file.');
-                }
-            } catch (err) {
-                console.error(err);
-                status.textContent = '⚠️ Lỗi khi tải lên file.';
-            }
-        }
+                                status.textContent = '✅ Đã chèn file vào nội dung.';
+                                fileInput.value = '';
+                            } else {
+                                status.textContent = '❌ ' + (data.message || 'Không thể upload file.');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            status.textContent = '⚠️ Lỗi khi tải lên file.';
+                        }
+                    }
     </script>
 @endpush
 

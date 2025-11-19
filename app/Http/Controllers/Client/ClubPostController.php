@@ -47,16 +47,18 @@ class ClubPostController extends Controller
         $club = Club::findOrFail($club_id);
         $this->authorizeClubManager($club);
 
+        // Validate dữ liệu
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'type' => 'required|in:post,notice,document',
             'visibility' => 'required|in:internal,public',
-            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-            'is_visible' => 'boolean',
-            'is_featured' => 'boolean',
+            'thumbnail' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', // không bắt buộc
+            'is_visible' => 'nullable|boolean',
+            'is_featured' => 'nullable|boolean',
         ]);
 
+        // Tạo đối tượng post mới
         $post = new Post();
         $post->fill($validated);
         $post->club_id = $club_id;
@@ -65,25 +67,27 @@ class ClubPostController extends Controller
         $post->is_visible = $validated['is_visible'] ?? true;
         $post->is_featured = $validated['is_featured'] ?? false;
 
-        // Ảnh đại diện
-        if ($request->hasFile('thumbnail')) {
+        // Xử lý ảnh đại diện nếu có
+        if ($request->hasFile('thumbnail') && $request->file('thumbnail')->isValid()) {
             $file = $request->file('thumbnail');
             $path = $file->store('thumbnails', 'public');
             $post->thumbnail = $path;
         }
 
+        // Lưu bài viết
         $post->save();
 
-        // Cập nhật post_id cho media đã upload trước đó
+        // Cập nhật media đã upload trước đó (trong trường hợp upload trước khi tạo post)
         Media::where('uploaded_by', Auth::id())
             ->where('related_id', 0)
             ->where('related_type', 'post')
             ->update(['related_id' => $post->id]);
 
-        // Xử lý media từ editor
+        // Xử lý media chèn từ nội dung editor
         $this->processMediaFromContent($post, $validated['content']);
 
-        return redirect()->route('club_manager.posts.index', ['club_id' => $club_id])
+        return redirect()
+            ->route('club_manager.posts.index', ['club_id' => $club_id])
             ->with('success', 'Đã thêm bài viết thành công! Bài viết đang chờ duyệt.');
     }
 

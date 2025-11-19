@@ -119,6 +119,15 @@ class RecruitFormController extends Controller
         $club = Club::findOrFail($club_id);
         $this->authorizeClubManager($club);
 
+        // Map giá trị UI => giá trị DB
+        $typeMap = [
+            'short_text' => 'text',
+            'long_text' => 'textarea',
+            'number' => 'number',
+            'select' => 'select',
+            'checkbox' => 'checkbox',
+        ];
+
         $validated = $request->validate([
             'form_id' => 'required|exists:club_recruitment_forms,id',
             'question' => 'required|string|max:255',
@@ -129,12 +138,15 @@ class RecruitFormController extends Controller
             'is_required' => 'nullable|boolean',
         ]);
 
+        // Chuyển kiểu UI sang ENUM DB
+        $type = $typeMap[$validated['type']];
+
         $form = $club->recruitmentForms()->findOrFail($validated['form_id']);
 
         $options = null;
         if (in_array($validated['type'], ['select', 'checkbox'])) {
             $options = collect(preg_split('/\r\n|\r|\n/', $validated['options'] ?? ''))
-                ->filter(fn ($value) => filled(trim($value)))
+                ->filter(fn($value) => filled(trim($value)))
                 ->values()
                 ->all();
         }
@@ -145,17 +157,20 @@ class RecruitFormController extends Controller
         $form->questions()->create([
             'club_id' => $club->id,
             'question' => $validated['question'],
-            'description' => $validated['description'] ?? null,
-            'type' => $validated['type'],
+            'description' => $validated['description'],
+            'type' => $type,   // 👉 Lưu đúng ENUM DB
             'options' => $options,
             'order' => $nextOrder,
             'is_required' => (bool) ($validated['is_required'] ?? false),
             'is_active' => true,
         ]);
 
-        return redirect()->route('club_manager.recruit_form.create', ['club_id' => $club_id, 'form_id' => $form->id])
-            ->with('success', 'Đã thêm câu hỏi mới cho form tuyển thành viên.');
+        return redirect()
+            ->route('club_manager.recruit_form.create', ['club_id' => $club_id, 'form_id' => $form->id])
+            ->with('success', 'Đã thêm câu hỏi mới thành công');
     }
+
+
 
     /**
      * Hiển thị danh sách yêu cầu tham gia CLB (để xử lý)
