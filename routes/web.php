@@ -27,7 +27,8 @@ use App\Http\Controllers\Admin\{
     ClubLeaveRequestController,
     ClubUpdateLogController,
     ClubRequestUpdateController,
-    TrashController
+    TrashController,
+    ReportController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -124,6 +125,20 @@ Route::prefix('admin')
             ->name('events.getManagers');
         Route::get('events/club-members/{club}', [EventController::class, 'getClubMembers'])
             ->name('events.club-members');
+
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/budget/pdf', [ReportController::class, 'budgetPdf'])->name('budget');
+            Route::get('/budget/excel', [ReportController::class, 'budgetExcel'])->name('budget.excel');
+            Route::get('/events/{event}/attendance-pdf', [ReportController::class, 'attendancePdf'])
+                ->name('event.attendance.pdf');
+        });
+        Route::prefix('admin/events/{event}')->name('admin.events.')->group(function () {
+    Route::get('/budget/edit', [EventController::class, 'editBudget'])
+        ->name('edit_budget');
+    Route::post('/budget/update', [EventController::class, 'updateBudget'])
+        ->name('update_budget');
+});
+
 
         // Resource PHẢI ĐẶT CUỐI CÙNG!!!
         Route::resource('events', EventController::class);

@@ -66,40 +66,56 @@ public function store(Request $request)
         'is_public' => 'nullable|boolean',
         'status' => 'required|in:pending,approved,rejected',
         'created_by' => 'required|exists:users,id',
-
-        // 🔹 Các cột ngân sách mới
-        'budget_estimated' => 'nullable|numeric|min:0',
-        'budget_requested' => 'nullable|numeric|min:0',
-        'budget_club' => 'nullable|numeric|min:0',
+        'budget_items' => 'required|array|min:1',
+        'budget_items.*.item_name' => 'required|string|max:255',
+        'budget_items.*.estimated_cost' => 'required|numeric|min:0',
+        'budget_items.*.type' => 'required|in:club_fund,school_fund,other',
     ]);
 
-    // Mặc định nếu is_public không check thì false (0)
     $validated['is_public'] = $request->has('is_public');
 
-    // Nếu ngân sách không có, mặc định = 0
-    $validated['budget_estimated'] = $validated['budget_estimated'] ?? 0;
-    $validated['budget_requested'] = $validated['budget_requested'] ?? 0;
-    $validated['budget_club'] = $validated['budget_club'] ?? 0;
-
     DB::transaction(function () use ($validated) {
-        // 1️⃣ Tạo sự kiện
-        $event = Event::create($validated);
+        $event = Event::create([
+            'club_id' => $validated['club_id'],
+            'created_by' => $validated['created_by'],
+            'name' => $validated['name'],
+            'description' => $validated['description'],
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'location' => $validated['location'],
+            'max_participants' => $validated['max_participants'],
+            'is_public' => $validated['is_public'],
+            'status' => $validated['status'],
+        ]);
 
-        // 2️⃣ Nếu có yêu cầu xin cấp kinh phí từ nhà trường
-       if ($event->status === 'approved' && $event->budget_requested > 0) {
-    EventFundRequest::create([
-        'event_id' => $event->id,
-        'requested_by' => $validated['created_by'],
-        'amount_requested' => $event->budget_requested,
-        'status' => 'pending_disbursement',
-        'note' => 'Tự động tạo khi sự kiện được duyệt.',
-    ]);
-}
+        // 2. Tạo chi tiết ngân sách
+        foreach ($validated['budget_items'] as $index => $item) {
+            $event->budgetItems()->create([
+                'item_name' => $item['item_name'],
+                'estimated_cost' => $item['estimated_cost'],
+                'type' => $item['type'],
+                'order' => $index,
+            ]);
+        }
+
+        // 3. Nếu đã duyệt + có xin cấp trường → tạo yêu cầu quỹ
+        if ($event->status === 'approved') {
+            $schoolAmount = $event->budgetItems()->where('type', 'school_fund')->sum('estimated_cost');
+            if ($schoolAmount > 0) {
+                EventFundRequest::create([
+                    'event_id' => $event->id,
+                    'requested_by' => $validated['created_by'],
+                    'amount_requested' => $schoolAmount,
+                    'status' => 'pending_disbursement',
+                    'note' => 'Tự động tạo từ chi tiết ngân sách',
+                ]);
+            }
+        }
     });
 
     return redirect()
         ->route('admin.events.index')
-        ->with('success', 'Tạo sự kiện thành công!');
+        ->with('success', 'Tạo sự kiện + ngân sách chi tiết thành công!');
 }
 
 public function show(Event $event)
@@ -340,6 +356,38 @@ public function restore($id)
     return redirect()
         ->route('admin.events.index')
         ->with('success', "🎉 Đã khôi phục thành công sự kiện: <strong>{$event->name}</strong>");
+}
+public function editBudget(Event $event)
+{
+    $event->load('budgetItems');
+    return view('admin.events.budget_edit', compact('event'));
+}
+
+public function updateBudget(Request $request, Event $event)
+{
+    $request->validate([
+        'items' => 'required|array',
+        'items.*.item_name' => 'required|string|max:255',
+        'items.*.estimated_cost' => 'required|numeric|min:0',
+        'items.*.type' => 'required|in:club_fund,school_fund,other',
+    ]);
+
+    // Xóa cũ, thêm mới (đơn giản & an toàn)
+    $event->budgetItems()->delete();
+
+    foreach ($request->items as $index => $item) {
+        $event->budgetItems()->create([
+            'item_name'       => $item['item_name'],
+            'description'     => $item['description'] ?? null,
+            'estimated_cost'  => $item['estimated_cost'],
+            'type'            => $item['type'],
+            'order'           => $index,
+        ]);
+    }
+
+    return redirect()
+        ->route('admin.events.show', $event)
+        ->with('success', 'Cập nhật ngân sách chi tiết thành công!');
 }
 
 }

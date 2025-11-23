@@ -137,36 +137,97 @@
             </div>
         </div>
 
-        <!-- NGÂN SÁCH -->
-        <div class="col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="fas fa-money-bill-wave text-success"></i> Ngân sách
-                    </h5>
-                </div>
-                <div class="card-body text-center">
-                    @php
-                        $used = $event->transactions->sum('amount') ?? 0;
-                        $percent = $event->budget_estimated > 0 ? ($used / $event->budget_estimated) * 100 : 0;
-                    @endphp
-                    <div class="mb-2">
-                        <h6 class="text-primary">Dự kiến</h6>
-                        <h4 class="text-success fw-bold">{{ number_format($event->budget_estimated ?? 0) }} VNĐ</h4>
-                    </div>
-                    <div class="mb-2">
-                        <h6 class="text-primary">Xin cấp từ nhà trường</h6>
-                        <h4 class="text-warning fw-bold">{{ number_format($event->budget_requested ?? 0) }} VNĐ</h4>
-                    </div>
-                    <div class="mb-2">
-                        <h6 class="text-primary">Ngân sách CLB tự chi</h6>
-                        <h4 class="text-info fw-bold">{{ number_format($event->budget_club ?? 0) }} VNĐ</h4>
-                    </div>
+        <!-- NGÂN SÁCH CHI TIẾT -->
+<div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-money-bill-wave text-success"></i> Ngân sách chi tiết
+            </h5>
+            @if($event->status === 'pending')
+                <a href="{{ route('admin.events.edit_budget', $event) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-edit"></i> Chỉnh sửa
+                </a>
+            @endif
+        </div>
+        <div class="card-body">
 
-              
+            <!-- Tổng quan nhanh -->
+            <div class="row text-center mb-4 pb-3 border-bottom">
+                <div class="col-4">
+                    <small class="text-muted">Tổng dự kiến</small>
+                    <h5 class="text-primary fw-bold mb-0">{{ number_format($event->budgetItems->sum('estimated_cost')) }}đ</h5>
+                </div>
+                <div class="col-4">
+                    <small class="text-muted">Xin cấp trường</small>
+                    <h5 class="text-warning fw-bold mb-0">{{ number_format($event->budgetItems->where('type', 'school_fund')->sum('estimated_cost')) }}đ</h5>
+                </div>
+                <div class="col-4">
+                    <small class="text-muted">CLB tự chi</small>
+                    <h5 class="text-info fw-bold mb-0">{{ number_format($event->budgetItems->where('type', 'club_fund')->sum('estimated_cost')) }}đ</h5>
                 </div>
             </div>
+
+            <!-- Danh sách chi tiết -->
+            @if($event->budgetItems->count())
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Đầu mục</th>
+                                <th class="text-end">Dự kiến</th>
+                                <th class="text-center">Nguồn</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($event->budgetItems as $item)
+                                <tr>
+                                    <td>
+                                        <strong>{{ $item->item_name }}</strong>
+                                        @if($item->description)
+                                            <br><small class="text-muted">{{ Str::limit($item->description, 50) }}</small>
+                                        @endif
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        {{ number_format($item->estimated_cost) }}đ
+                                    </td>
+                                    <td class="text-center">
+                                        @if($item->type === 'school_fund')
+                                            <span class="badge bg-warning text-dark">Trường</span>
+                                        @elseif($item->type === 'club_fund')
+                                            <span class="badge bg-info">CLB</span>
+                                        @else
+                                            <span class="badge bg-secondary">Khác</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td>TỔNG CỘNG</td>
+                                <td class="text-end text-primary">
+                                    {{ number_format($event->budgetItems->sum('estimated_cost')) }}đ
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            @else
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-file-invoice-dollar fa-3x mb-3 opacity-50"></i>
+                    <p>Chưa có đầu mục chi tiêu nào</p>
+                    @if($event->status === 'pending')
+                        <a href="{{ route('admin.events.edit_budget', $event) }}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-plus"></i> Thêm ngân sách
+                        </a>
+                    @endif
+                </div>
+            @endif
         </div>
+    </div>
+</div>
     </div>
 
     <!-- NGƯỜI THAM GIA & GIAO DỊCH QUỸ -->

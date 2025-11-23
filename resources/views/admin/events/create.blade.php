@@ -110,20 +110,65 @@
                                 </select>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Ngân sách dự kiến (VNĐ)</label>
-                                <input type="number" name="budget_estimated" class="form-control" value="{{ old('budget_estimated') }}" min="0" placeholder="VD: 50000000">
-                            </div>
+                            <!-- ==================== NGÂN SÁCH CHI TIẾT (MỚI) ==================== -->
+<div class="col-12 mt-5">
+    <h5 class="fw-bold text-primary mb-4">
+        <i class="fas fa-money-bill-wave"></i> Ngân sách chi tiết (tự động tính tổng)
+    </h5>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Ngân sách xin cấp từ nhà trường (VNĐ)</label>
-                                <input type="number" name="budget_requested" class="form-control" value="{{ old('budget_requested') }}" min="0" placeholder="VD: 30000000">
-                            </div>
+    <div id="budget-items-container">
+        <!-- Mẫu 1 dòng mặc định -->
+        <div class="row g-3 mb-3 align-items-end budget-item">
+            <div class="col-md-5">
+                <input type="text" name="budget_items[0][item_name]" class="form-control" placeholder="VD: Thuê âm thanh + ánh sáng" required>
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="budget_items[0][estimated_cost]" class="form-control cost-input" placeholder="0" min="0" required>
+            </div>
+            <div class="col-md-3">
+                <select name="budget_items[0][type]" class="form-select" required>
+                    <option value="club_fund">CLB tự chi</option>
+                    <option value="school_fund" selected>Xin cấp từ trường</option>
+                    <option value="other">Khác</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-danger btn-sm remove-budget-item">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Ngân sách CLB tự chi (VNĐ)</label>
-                                <input type="number" name="budget_club" class="form-control" value="{{ old('budget_club') }}" min="0" placeholder="VD: 20000000">
-                            </div>
+    <div class="text-center mb-3">
+        <button type="button" id="add-budget-item" class="btn btn-success btn-sm">
+            <i class="fas fa-plus"></i> Thêm đầu mục
+        </button>
+    </div>
+
+    <!-- Tổng kết tự động -->
+    <div class="row g-4 border-top pt-4">
+        <div class="col-md-4">
+            <div class="bg-light p-3 rounded text-center">
+                <small class="text-muted d-block">Tổng dự kiến</small>
+                <h4 class="text-primary fw-bold mb-0" id="total-estimated">0đ</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="bg-warning bg-opacity-10 p-3 rounded text-center">
+                <small class="text-muted d-block">Xin cấp từ trường</small>
+                <h4 class="text-warning fw-bold mb-0" id="total-school">0đ</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="bg-info bg-opacity-10 p-3 rounded text-center">
+                <small class="text-muted d-block">CLB tự chi</small>
+                <h4 class="text-info fw-bold mb-0" id="total-club">0đ</h4>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ==================== END NGÂN SÁCH CHI TIẾT (MỚI) ==================== -->
                         </div>
                     </div>
 
@@ -183,5 +228,75 @@
             @endif
     });
     </script>
+    <script>
+// Ngân sách chi tiết - Tự động thêm dòng + tính tổng
+let budgetIndex = 1;
+
+document.getElementById('add-budget-item').addEventListener('click', function () {
+    const html = `
+        <div class="row g-3 mb-3 align-items-end budget-item">
+            <div class="col-md-5">
+                <input type="text" name="budget_items[${budgetIndex}][item_name]" class="form-control" placeholder="VD: In backdrop, banner" required>
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="budget_items[${budgetIndex}][estimated_cost]" class="form-control cost-input" placeholder="0" min="0" required>
+            </div>
+            <div class="col-md-3">
+                <select name="budget_items[${budgetIndex}][type]" class="form-select" required>
+                    <option value="club_fund">CLB tự chi</option>
+                    <option value="school_fund">Xin cấp từ trường</option>
+                    <option value="other">Khác</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-danger btn-sm remove-budget-item"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`;
+    document.getElementById('budget-items-container').insertAdjacentHTML('beforeend', html);
+    budgetIndex++;
+    calculateTotals();
+});
+
+// Xóa dòng
+document.addEventListener('click', function (e) {
+    if (e.target.closest('.remove-budget-item')) {
+        e.target.closest('.budget-item').remove();
+        calculateTotals();
+    }
+});
+
+// Tính tổng khi nhập
+document.addEventListener('input', function (e) {
+    if (e.target.matches('.cost-input') || e.target.matches('select[name*="type"]')) {
+        calculateTotals();
+    }
+});
+
+function calculateTotals() {
+    let total = 0;
+    let school = 0;
+    let club = 0;
+
+    document.querySelectorAll('.budget-item').forEach(item => {
+        const cost = parseInt(item.querySelector('.cost-input').value) || 0;
+        const type = item.querySelector('select').value;
+
+        total += cost;
+        if (type === 'school_fund') school += cost;
+        if (type === 'club_fund') club += cost;
+    });
+
+    document.getElementById('total-estimated').textContent = formatNumber(total) + 'đ';
+    document.getElementById('total-school').textContent = formatNumber(school) + 'đ';
+    document.getElementById('total-club').textContent = formatNumber(club) + 'đ';
+}
+
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// Tính lần đầu khi load trang (nếu có old input)
+calculateTotals();
+</script>
 
 @endsection
