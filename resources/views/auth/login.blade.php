@@ -42,4 +42,12 @@
                 {{ __('Log in') }}
             </x-primary-button>
         </div>
+        {{-- Link chuyển sang đăng ký --}}
+<div class="mt-4 text-center">
+    <a href="{{ route('register') }}"
+       class="underline text-sm text-gray-600 hover:text-gray-900">
+        Chưa có tài khoản? Đăng ký ngay
+    </a>
+</div>
+
     </form>

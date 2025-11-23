@@ -15,6 +15,8 @@ use App\Http\Controllers\Client\ClubNotificationController;
 // Trang client home — public, user vẫn vào được
 Route::name('client.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
+   Route::get('/clubs', [HomeController::class, 'showClubs'])->name('clubs.list');
+ Route::get('/clubs/{club}', [HomeController::class, 'show'])->name('clubs.show');
 });
 
 // Routes dành cho user đăng nhập
