@@ -79,3 +79,4 @@ php artisan db:seed --class=ClubSeeder
 ### Events
 - 15 sự kiện với các trạng thái khác nhau
 
+

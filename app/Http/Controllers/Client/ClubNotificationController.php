@@ -185,3 +185,4 @@ class ClubNotificationController extends Controller
     }
 }
 
+
