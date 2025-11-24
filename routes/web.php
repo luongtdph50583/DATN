@@ -27,7 +27,8 @@ use App\Http\Controllers\Admin\{
     ClubLeaveRequestController,
     ClubUpdateLogController,
     ClubRequestUpdateController,
-    TrashController
+    TrashController,
+    ReportController
 };
 use App\Http\Controllers\FundController;
 use App\Http\Middleware\CheckRole;
@@ -76,22 +77,22 @@ Route::prefix('admin')
         // 1. USER MANAGEMENT
         // =========================================================
         // USER MANAGEMENT – ĐÃ FIX 100%
-
-        Route::get('users/deleted', [UserController::class, 'deleted'])
-            ->name('users.deleted');
-        Route::delete('users/{user}/force-delete', [UserController::class, 'forceDelete'])
-            ->name('users.forceDelete');
-        Route::post('users/{id}/restore', [UserController::class, 'restore'])
-            ->name('users.restore');
-        Route::delete('users/{user}/softdelete', [UserController::class, 'softDelete'])
-            ->name('users.softdelete');
+    // Route::resource('users', UserController::class);
+    
+    Route::get('users/deleted', [UserController::class, 'deleted'])
+        ->name('users.deleted');
+    Route::delete('users/{user}/force-delete', [UserController::class, 'forceDelete'])
+        ->name('users.forceDelete');
+    Route::post('users/{id}/restore', [UserController::class, 'restore'])
+        ->name('users.restore');
+    Route::delete('users/{user}/softdelete', [UserController::class, 'softDelete'])
+        ->name('users.softdelete');
 
         Route::resource('users', UserController::class);
 
         // Toggle status
         Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
             ->name('users.toggleStatus');
-
 
         // =========================================================
         // 2. EVENT MANAGEMENT – ĐÃ HOÀN CHỈNH 100%
@@ -124,6 +125,20 @@ Route::prefix('admin')
             ->name('events.getManagers');
         Route::get('events/club-members/{club}', [EventController::class, 'getClubMembers'])
             ->name('events.club-members');
+
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/budget/pdf', [ReportController::class, 'budgetPdf'])->name('budget');
+            Route::get('/budget/excel', [ReportController::class, 'budgetExcel'])->name('budget.excel');
+            Route::get('/events/{event}/attendance-pdf', [ReportController::class, 'attendancePdf'])
+                ->name('event.attendance.pdf');
+        });
+        Route::prefix('admin/events/{event}')->name('admin.events.')->group(function () {
+    Route::get('/budget/edit', [EventController::class, 'editBudget'])
+        ->name('edit_budget');
+    Route::post('/budget/update', [EventController::class, 'updateBudget'])
+        ->name('update_budget');
+});
+
 
         // Resource PHẢI ĐẶT CUỐI CÙNG!!!
         Route::resource('events', EventController::class);
@@ -498,7 +513,47 @@ Route::post('/event-fund-requests/{id}/complete-disbursement',
         // =========================================================
         Route::get('/test-role', fn() => 'Bạn có quyền truy cập admin!');
     });
+    Route::prefix('admin')
+    ->middleware(['auth', 'role:admin'])
+    ->as('admin.')
+    ->group(function () {
 
+    Route::resource('club_requests', ClubRequestController::class);
+    // → Tạo tự động: index, create, store, show, edit, update, destroy
+    });
+    // ═══════════════════════════════════════════════════════════════════
+// CLUB MANAGER ROUTES – QUẢN LÝ SỰ KIỆN CLB (CHỦ NHIỆM CLB)
+// ═══════════════════════════════════════════════════════════════════
+Route::prefix('club-manager')
+    ->middleware(['auth', 'role:club_manager'])
+    ->as('club.')
+    ->group(function () {
+
+    // Trang chủ quản lý sự kiện
+    Route::get('/events', [App\Http\Controllers\ClubManager\EventController::class, 'index'])
+        ->name('events.index');
+
+    Route::get('/events/create', [App\Http\Controllers\ClubManager\EventController::class, 'create'])
+        ->name('events.create');
+
+    Route::post('/events', [App\Http\Controllers\ClubManager\EventController::class, 'store'])
+        ->name('events.store');
+
+    Route::get('/events/{id}/registrations', [App\Http\Controllers\ClubManager\EventController::class, 'registrations'])
+        ->name('events.registrations');
+
+    Route::post('/registrations/{id}/approve', [App\Http\Controllers\ClubManager\EventController::class, 'approveRegistration'])
+        ->name('registrations.approve');
+
+    Route::post('/registrations/{id}/reject', [App\Http\Controllers\ClubManager\EventController::class, 'rejectRegistration'])
+        ->name('registrations.reject');
+
+    Route::get('/events/{id}/attendance', [App\Http\Controllers\ClubManager\EventController::class, 'attendance'])
+        ->name('events.attendance');
+
+    Route::get('/events/{id}/checkin', [App\Http\Controllers\ClubManager\EventController::class, 'checkin'])
+        ->name('events.checkin');
+});
 // === AUTH ROUTES ===
 require __DIR__ . '/auth.php';
 // Route::prefix('manager/document')

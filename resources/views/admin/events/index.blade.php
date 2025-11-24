@@ -20,6 +20,12 @@
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#topClubsModal">
                 TOP CLB THÁNG
             </button>
+            <a href="{{ route('admin.reports.budget') }}" class="btn btn-danger me-2" target="_blank">
+    <i class="fas fa-file-pdf"></i> Báo cáo PDF
+</a>
+<a href="{{ route('admin.reports.budget.excel') }}" class="btn btn-success">
+    <i class="fas fa-file-excel"></i> Xuất Excel
+</a>
         </div>
     </div>
 

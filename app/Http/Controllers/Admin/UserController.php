@@ -91,6 +91,7 @@ class UserController extends Controller
     $validated = $request->validate([
         'role' => 'required|in:admin,club_manager,member',
         'status' => 'required|in:active,inactive',
+
     ]);
 
     // Cập nhật chỉ hai trường được phép
@@ -108,35 +109,50 @@ class UserController extends Controller
     /**
      * Xóa mềm người dùng
      */
-    public function softDelete(User $user)
-    {
-        $user->delete();
-        return redirect()
-            ->route('admin.users.index')
-            ->with('warning', 'Người dùng đã được đưa vào thùng rác.');
-    }
+    public function softDelete(Request $request, User $user)
+{
+    $request->validate([
+        'delete_reason' => 'required|string|max:1000'
+    ]);
+
+    $user->update([
+        'deleted_by' => auth()->id(),
+        'delete_reason' => $request->delete_reason
+    ]);
+
+    $user->delete();
+
+    return redirect()->route('admin.users.index')
+        ->with('success', 'Đã xóa tài khoản thành công! Đã lưu lý do.');
+}
 
     /**
      * Danh sách người dùng đã xóa
      */
     public function deleted()
-    {
-        $users = User::onlyTrashed()->paginate(10);
-        return view('admin.users.deleted', compact('users'));
-    }
+{
+    $users = User::onlyTrashed()->paginate(10);
 
-    /**
-     * Khôi phục người dùng bị xóa
-     */
-    public function restore($id)
-    {
-        $user = User::onlyTrashed()->findOrFail($id);
-        $user->restore();
+    return view('admin.users.deleted', compact('users'));
+}
 
-        return redirect()
-            ->route('admin.users.index')
-            ->with('success', 'Khôi phục người dùng thành công!');
-    }
+// public function destroy(User $user)
+// {
+//     return $this->softDelete(request(), $user);
+// }
+
+//     /**
+//      * Khôi phục người dùng bị xóa
+//      */
+//     public function restore($id)
+//     {
+//         $user = User::onlyTrashed()->findOrFail($id);
+//         $user->restore();
+
+//         return redirect()
+//             ->route('admin.users.index')
+//             ->with('success', 'Khôi phục người dùng thành công!');
+//     }
 
     /**
      * Xóa vĩnh viễn người dùng

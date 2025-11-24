@@ -15,20 +15,35 @@ class HomeController extends Controller
     }
 
     // Hiển thị danh sách CLB
-    public function showClubs(Request $request)
-    {
-        $query = Club::query()->where('status', 'active');
+ public function showClubs(Request $request)
+{
+    $user = $request->user();
+    $member = $user->member; // quan hệ 1-1 với bảng members
 
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('field', 'like', "%{$search}%");
-        }
+    $query = Club::query()->where('status', 'active');
 
-        $clubs = $query->orderBy('name')->paginate(12);
-
-        return view('client.pages.member.index', compact('clubs'));
+    // Lọc theo từ khóa search
+    if ($request->has('search') && $request->search) {
+        $search = $request->input('search');
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('field', 'like', "%{$search}%");
+        });
     }
+
+    // Lọc những CLB mà member đã tham gia
+    if ($member) {
+        $joinedClubIds = $member->clubs()->pluck('clubs.id')->toArray();
+        if (!empty($joinedClubIds)) {
+            $query->whereNotIn('id', $joinedClubIds);
+        }
+    }
+
+    $clubs = $query->orderBy('name')->paginate(12);
+
+    return view('client.pages.member.index', compact('clubs'));
+}
+
 
 
 

@@ -46,26 +46,37 @@
                 </tr>
             </table>
 
-            <!-- Form cập nhật giải ngân -->
-          <form action="{{ route('admin.event_fund_requests.updateDisbursement', $request->id) }}" method="POST" enctype="multipart/form-data">
+    <!-- Form cập nhật giải ngân -->
+<form action="{{ route('admin.event_fund_requests.updateDisbursement', $request->id) }}" 
+      method="POST" 
+      enctype="multipart/form-data">
+
     @csrf
+
     <div class="mb-3">
         <label>Số tiền giải ngân lần này</label>
-        <input type="number" name="disbursement_amount" class="form-control" min="0" max="{{ $request->approved_amount - $request->amount_disbursed }}" step="1000" required>
+        <input type="number" 
+               name="disbursement_amount" 
+               class="form-control" 
+               min="0" 
+               max="{{ $request->approved_amount - $request->amount_disbursed }}" 
+               step="1000" 
+               required>
     </div>
+
     <div class="mb-3">
-        <label>Minh chứng giải ngân</label>
-        <input type="file" name="disbursement_proof[]" class="form-control" multiple>
+        <label>Minh chứng giải ngân <span class="text-danger">*</span></label>
+        <input type="file" 
+               name="disbursement_proof[]" 
+               class="form-control" 
+               multiple 
+               required>
     </div>
+
     <div class="d-flex gap-2">
         <!-- Cập nhật lần này -->
         <button type="submit" name="action" value="update" class="btn btn-warning">
             <i class="fas fa-save me-2"></i>Cập nhật giải ngân
-        </button>
-
-        <!-- Hoàn tất -->
-        <button type="submit" name="action" value="complete" class="btn btn-success">
-            <i class="fas fa-check me-2"></i>Hoàn thành giải ngân
         </button>
 
         <a href="{{ route('admin.event_fund_requests.index') }}" class="btn btn-secondary">
@@ -73,6 +84,7 @@
         </a>
     </div>
 </form>
+
 
 
             <!-- Lịch sử giải ngân -->

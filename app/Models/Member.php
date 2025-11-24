@@ -51,7 +51,12 @@ public function clubs()
     )->withPivot('created_at', 'updated_at', 'role'); 
 }
   
-
+ public function clubMemberships()
+    {
+        return $this->belongsToMany(Club::class, 'club_members', 'member_id', 'club_id')
+                    ->withPivot('role', 'status')
+                    ->withTimestamps();
+    }
     // Bài viết của member (hasMany)
     // Bài viết của thành viên thông qua user
     public function posts()

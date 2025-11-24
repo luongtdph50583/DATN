@@ -50,9 +50,22 @@
                                 <a href="{{ route('client.clubs.list') }}" class="btn btn-secondary">
                                     Quay lại danh sách CLB
                                 </a>
-                                <a href="#" class="btn btn-primary">
-                                    Đăng ký tham gia CLB
-                                </a>
+               @php
+    $hasActiveForm = \App\Models\ClubJoinFormQuestion::where('club_id', $club->id)
+                        ->where('is_active', true)
+                        ->exists();
+@endphp
+
+@if($hasActiveForm)
+    <a href="{{ route('clubs.join.form', $club->id) }}" class="btn btn-primary">
+        Đăng ký tham gia CLB
+    </a>
+@else
+    <button class="btn btn-secondary" disabled>
+        Hiện tại chưa có form đăng ký
+    </button>
+@endif
+
                             </div>
                         </div>
                     </div>
