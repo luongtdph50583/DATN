@@ -560,77 +560,96 @@ public function fundRequests(Request $request)
         return redirect()->route('admin.stats.funds');
     }
 
+    // Lấy input filter, mặc định từ đầu năm tới cuối năm
     $startDate = $request->input('start_date') ?: now()->startOfYear()->toDateString();
     $endDate   = $request->input('end_date') ?: now()->endOfYear()->toDateString();
-    $status    = $request->input('status'); // pending_disbursement, disbursing, disbursed, rejected
-    $selectedClub = $request->input('club'); // filter theo CLB
+    $status    = $request->input('status');        // pending_disbursement, disbursing, disbursed, rejected
+    $selectedClub = $request->input('club');      // CLB lọc
 
     $allClubs = Club::orderBy('name')->get();
 
-    // Build query
-    $query = EventFundRequest::with(['event.club', 'requestedBy'])
-        ->whereBetween('created_at', [$startDate, $endDate]);
+    // -------------------------
+    // 1️⃣ Query cơ bản (build 1 lần)
+    // -------------------------
+    $baseQuery = EventFundRequest::with(['event.club', 'requestedBy'])
+        ->whereBetween('created_at', [$startDate, $endDate])
+        ->when($status, fn($q) => $q->where('status', $status))
+        ->when($selectedClub, fn($q) =>
+            $q->whereHas('event', fn($e) => $e->where('club_id', $selectedClub))
+        );
 
-    if ($status) {
-        $query->where('status', $status);
-    }
+    // Clone query để không ảnh hưởng paginate
+    $statsQuery = clone $baseQuery;
+    $chartQuery = clone $baseQuery;
 
-    if ($selectedClub) {
-        $query->whereHas('event', fn($q) => $q->where('club_id', $selectedClub));
-    }
+    // -------------------------
+    // 2️⃣ Pagination
+    // -------------------------
+    $fundRequests = $baseQuery
+        ->orderByDesc('created_at')
+        ->paginate(10)
+        ->appends($request->all());
 
-    // Pagination + preserve filters
-    $fundRequests = $query->orderByDesc('created_at')->paginate(10)->appends($request->all());
+    // -------------------------
+    // 3️⃣ Tổng quan
+    // -------------------------
+    $totalRequests       = $statsQuery->count();
+    $totalRequestedAmount = $statsQuery->sum('amount_requested');
+    $totalApprovedAmount  = $statsQuery->sum('approved_amount');
+    $totalDisbursedAmount = $statsQuery->sum('amount_disbursed');
+    $disbursingCount      = $statsQuery->where('status', 'disbursing')->count();
 
-    // Tổng quan
-    $totalRequests = $query->count();
-    $totalRequestedAmount = $query->sum('amount_requested');
-    $totalApprovedAmount  = $query->sum('approved_amount');
-    $totalDisbursedAmount = $query->sum('amount_disbursed'); // ✅ Tổng số tiền đã giải ngân
-    $disbursingCount = $query->where('status', 'disbursing')->count(); // ✅ Số lượng đang giải ngân
+    // -------------------------
+    // 4️⃣ Biểu đồ theo tháng
+    // -------------------------
+    $start = Carbon::parse($startDate)->startOfMonth();
+    $end   = Carbon::parse($endDate)->endOfMonth();
+    $period = CarbonPeriod::create($start, '1 month', $end);
 
-    // Biểu đồ theo tháng
     $labels = [];
     $requestsPerMonth = [];
-    $period = CarbonPeriod::create($startDate, '1 month', $endDate);
 
-    foreach ($period as $date) {
-        $labels[] = "Tháng {$date->month}/{$date->year}";
-        $requestsPerMonth[] = EventFundRequest::whereYear('created_at', $date->year)
-            ->whereMonth('created_at', $date->month)
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($selectedClub, fn($q) => $q->whereHas('event', fn($q2) => $q2->where('club_id', $selectedClub)))
+    foreach ($period as $month) {
+        $labels[] = "Tháng {$month->month}/{$month->year}";
+
+        $requestsPerMonth[] = $chartQuery
+            ->whereYear('created_at', $month->year)
+            ->whereMonth('created_at', $month->month)
             ->count();
     }
 
+    // -------------------------
+    // 5️⃣ Trả về view
+    // -------------------------
     return view('admin.statistics-and-reports.fund-requests', compact(
-        'fundRequests', 'totalRequests', 'totalRequestedAmount', 'totalApprovedAmount',
-        'totalDisbursedAmount', 'disbursingCount', // ✅ truyền sang view
-        'startDate', 'endDate', 'status', 'allClubs', 'selectedClub', 'labels', 'requestsPerMonth'
+        'fundRequests',
+        'totalRequests', 'totalRequestedAmount', 'totalApprovedAmount',
+        'totalDisbursedAmount', 'disbursingCount',
+        'startDate', 'endDate', 'status', 'allClubs', 'selectedClub',
+        'labels', 'requestsPerMonth'
     ));
 }
+
+
 
 
     /**
      * Xuất PDF
      */
- public function fundsPdf(Request $request)
+public function fundsPdf(Request $request)
 {
     $startDate = $request->get('start_date') ?: now()->startOfYear()->toDateString();
     $endDate   = $request->get('end_date') ?: now()->endOfYear()->toDateString();
     $status    = $request->get('status');
     $selectedClub = $request->get('club');
 
+    // Build lại query giống trang chính
     $query = EventFundRequest::with(['event.club', 'requestedBy'])
-        ->whereBetween('created_at', [$startDate, $endDate]);
-
-    if ($status) {
-        $query->where('status', $status);
-    }
-
-    if ($selectedClub) {
-        $query->whereHas('event', fn($q) => $q->where('club_id', $selectedClub));
-    }
+        ->whereBetween('created_at', [$startDate, $endDate])
+        ->when($status, fn($q) => $q->where('status', $status))
+        ->when($selectedClub, fn($q) =>
+            $q->whereHas('event', fn($e) => $e->where('club_id', $selectedClub))
+        );
 
     $fundRequests = $query->orderByDesc('created_at')->get();
 
@@ -638,42 +657,34 @@ public function fundRequests(Request $request)
     $totalRequests = $fundRequests->count();
     $totalRequestedAmount = $fundRequests->sum('amount_requested');
     $totalApprovedAmount  = $fundRequests->sum('approved_amount');
-    $totalDisbursedAmount = $fundRequests->sum('amount_disbursed'); // ✅ Tổng số tiền đã giải ngân
-    $disbursingCount = $fundRequests->where('status', 'disbursing')->count(); // ✅ Số lượng đang giải ngân
+    $totalDisbursedAmount = $fundRequests->sum('amount_disbursed');
+    $disbursingCount      = $fundRequests->where('status', 'disbursing')->count();
 
     // Biểu đồ theo tháng
     $start = Carbon::parse($startDate)->startOfMonth();
     $end   = Carbon::parse($endDate)->endOfMonth();
     $period = CarbonPeriod::create($start, '1 month', $end);
 
-    $monthlyData = $fundRequests->groupBy(fn($item) => Carbon::parse($item->created_at)->format('Y-m'));
-
     $labels = [];
     $requestsPerMonth = [];
-    foreach ($period as $date) {
-        $key = $date->format('Y-m');
-        $labels[] = 'Tháng '.$date->month.'/'.$date->year;
-        $requestsPerMonth[] = isset($monthlyData[$key]) ? count($monthlyData[$key]) : 0;
+
+    foreach ($period as $month) {
+        $labels[] = "Tháng {$month->month}/{$month->year}";
+        $requestsPerMonth[] = $fundRequests->filter(function($item) use ($month){
+            return Carbon::parse($item->created_at)->year == $month->year
+                && Carbon::parse($item->created_at)->month == $month->month;
+        })->count();
     }
 
-    // Xuất PDF
-    $pdf = Pdf::loadView('admin.statistics-and-reports.funds_pdf', [
-        'fundRequests' => $fundRequests,
-        'totalRequests' => $totalRequests,
-        'totalRequestedAmount' => $totalRequestedAmount,
-        'totalApprovedAmount' => $totalApprovedAmount,
-        'totalDisbursedAmount' => $totalDisbursedAmount, // ✅ thêm
-        'disbursingCount' => $disbursingCount,           // ✅ thêm
-        'labels' => $labels,
-        'requestsPerMonth' => $requestsPerMonth,
-        'startDate' => $startDate,
-        'endDate' => $endDate,
-        'status' => $status,
-        'selectedClub' => $selectedClub
-    ]);
-
-    return $pdf->download('fund_requests.pdf');
+    return view('admin.statistics-and-reports.fund-requests-pdf', compact(
+        'fundRequests',
+        'totalRequests', 'totalRequestedAmount', 'totalApprovedAmount',
+        'totalDisbursedAmount', 'disbursingCount',
+        'labels', 'requestsPerMonth',
+        'startDate','endDate','status','selectedClub'
+    ));
 }
+
 
 
 public function posts(Request $request)

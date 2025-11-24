@@ -192,66 +192,35 @@
 
     {{-- ==================== MODAL XÓA MỀM – SIÊU ĐẸP ==================== --}}
     @foreach($users as $user)
-    <div class="modal fade" id="deleteUserModal-{{ $user->id }}" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <form action="{{ route('admin.users.destroy', $user) }}" method="POST">
-                @csrf @method('DELETE')
-                <div class="modal-content border-0 shadow-lg">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title fw-bold">Xóa tài khoản người dùng</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center mb-4">
-                            <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                                 style="width: 80px; height: 80px;">
-                                <i class="fas fa-user-slash fa-3x text-danger"></i>
-                            </div>
-                            <h5>Bạn có chắc chắn muốn xóa?</h5>
-                            <p class="text-muted">Tài khoản sẽ được chuyển vào thùng rác</p>
-                        </div>
+    <!-- Modal Xóa -->
+<div class="modal fade" id="deleteUserModal-{{ $user->id }}" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteUserModalLabel">Xác nhận xóa người dùng</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ route('admin.users.softdelete', $user->id) }}" method="POST">
+          @csrf
+          @method('DELETE')
 
-                        <div class="bg-light p-4 rounded border mb-4">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="flex-shrink-0">
-                                    @if($user->avatar)
-                                        <img src="{{ Storage::url($user->avatar) }}" class="rounded-circle" width="60" height="60">
-                                    @else
-                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                                             style="width:60px;height:60px;font-weight:bold;font-size:24px;">
-                                            {{ substr($user->name, 0, 1) }}
-                                        </div>
-                                    @endif
-                                </div>
-                                <div>
-                                    <div class="fw-bold fs-5">{{ $user->name }}</div>
-                                    <div class="small text-muted">{{ $user->email }}</div>
-                                    <div class="small text-muted">
-                                        Vai trò: 
-                                        <span class="badge bg-{{ $user->role == 'admin' ? 'warning' : ($user->role == 'club_manager' ? 'info' : 'secondary') }}">
-                                            {{ $user->role == 'admin' ? 'Admin' : ($user->role == 'club_manager' ? 'Quản lý CLB' : 'Thành viên') }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+          <p>Bạn có chắc muốn xóa <strong>{{ $user->name }}</strong> không?</p>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-danger">Lý do xóa <span class="text-danger">*</span></label>
-                            <textarea name="delete_reason" class="form-control" rows="3" 
-                                      placeholder="VD: Vi phạm nội quy, tài khoản giả mạo, không hoạt động..." required></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger px-4">
-                            Xóa tài khoản
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+          <div class="mb-3">
+            <label for="reason" class="form-label">Lý do xóa (tùy chọn)</label>
+            <textarea name="reason" id="reason" class="form-control" rows="2" placeholder="Nhập lý do xóa..."></textarea>
+          </div>
+
+          <div class="text-end">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="submit" class="btn btn-danger">Xóa</button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
+</div>
     @endforeach
 </div>
 @endsection

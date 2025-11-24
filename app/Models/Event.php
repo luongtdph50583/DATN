@@ -186,4 +186,8 @@ class Event extends Model
     {
         return $this->has_participant_limit && $this->registered_count >= $this->max_participants;
     }
+    public function budgetItems()
+{
+    return $this->hasMany(EventBudgetItem::class)->orderBy('order');
+}
 }

@@ -11,11 +11,13 @@ use App\Models\ClubJoinRequest;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
     use Notifiable;
     use SoftDeletes;
+    use HasFactory;
 
 
     protected $fillable = [

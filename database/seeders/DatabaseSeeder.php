@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             PostAndCommentSeeder::class,
             // Các seeders khác nếu có
             EventSeeder::class,
+            ClubEventSeeder::class,
             EventRegistrationSeeder::class,
             FundTransactionSeeder::class,
             NotificationSeeder::class,

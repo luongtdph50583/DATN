@@ -151,25 +151,29 @@ public function updateDisbursement(Request $request, $id)
 
     $request->validate([
         'disbursement_amount' => 'required|numeric|min:0|max:' . ($fundRequest->approved_amount - $fundRequest->amount_disbursed),
-        'disbursement_proof.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        'disbursement_proof' => 'required', // Bắt buộc phải có minh chứng
+        'disbursement_proof.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
     ]);
 
     $amount = $request->disbursement_amount;
 
     // Upload minh chứng
     $files = $fundRequest->disbursement_proof ? json_decode($fundRequest->disbursement_proof, true) : [];
-    if($request->hasFile('disbursement_proof')) {
-        foreach($request->file('disbursement_proof') as $file) {
-            $files[] = $file->store('disbursement_proofs', 'public');
-        }
+    
+    foreach($request->file('disbursement_proof') as $file) {
+        $files[] = $file->store('disbursement_proofs', 'public');
     }
+    
     $fundRequest->disbursement_proof = json_encode($files);
 
     // Cập nhật số tiền đã giải ngân
     $fundRequest->amount_disbursed += $amount;
 
     // Lưu vào lịch sử giải ngân
-    $history = $fundRequest->disbursement_history ? json_decode($fundRequest->disbursement_history, true) : [];
+    $history = $fundRequest->disbursement_history 
+        ? json_decode($fundRequest->disbursement_history, true) 
+        : [];
+
     $history[] = [
         'amount' => $amount,
         'date' => now(),
@@ -177,13 +181,16 @@ public function updateDisbursement(Request $request, $id)
         'disbursed_by_name' => auth()->user()->name,
         'proof' => $files,
     ];
+
     $fundRequest->disbursement_history = json_encode($history);
 
-    // Kiểm tra action
-    if($request->action === 'complete' || $fundRequest->amount_disbursed >= $fundRequest->approved_amount) {
+    // Cập nhật trạng thái
+    if ($fundRequest->amount_disbursed >= $fundRequest->approved_amount) {
+        // Giải ngân đủ → hoàn tất tự động
         $fundRequest->status = 'disbursed';
         $fundRequest->disbursement_date = now();
     } else {
+        // Giải ngân đợt 1, 2, 3...
         $fundRequest->status = 'disbursing';
     }
 
@@ -192,6 +199,7 @@ public function updateDisbursement(Request $request, $id)
     return redirect()->route('admin.event_fund_requests.index')
                      ->with('success', 'Cập nhật giải ngân thành công.');
 }
+
 
 // Hoàn tất giải ngân (nếu vẫn muốn giữ riêng)
 public function completeDisbursement($id)

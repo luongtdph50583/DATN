@@ -17,8 +17,16 @@
             </div>
 
             <!-- Sidebar Menu -->
-            <ul class="admin-menu list-unstyled">
-                <li><a href="{{ url('/') }}"><i class="fas fa-home"></i> Home</a></li>
+      <ul class="admin-menu list-unstyled">
+    <li><a href="{{ url('admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+    <li><a href="{{ url('admin/posts') }}"><i class="fas fa-newspaper"></i> Posts</a></li>
+    <li><a href="{{ url('admin/users') }}"><i class="fas fa-users"></i> Users</a></li>
+    <li><a href="{{ url('admin/settings') }}"><i class="fas fa-cogs"></i> Settings</a></li>
+    <li>
+    <a href="{{ route('club.events.index') }}">
+        Quản lý sự kiện
+    </a>
+</li>
 
                 @auth
                     @php

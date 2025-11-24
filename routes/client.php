@@ -12,6 +12,8 @@ use App\Http\Controllers\Client\ClubMemberController;
 use App\Http\Controllers\Client\NotificationController;
 use App\Http\Controllers\Client\ClubNotificationController;
 use App\Http\Controllers\Client\ClubFormationRequestController;
+use App\Http\Controllers\Client\JoinClubController;
+
 // Trang client home — public, user vẫn vào được
 Route::name('client.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -21,6 +23,7 @@ Route::name('client.')->group(function () {
 
 // Routes dành cho user đăng nhập
 Route::middleware(['auth'])->group(function () {
+
     Route::prefix('club')->name('club.member.')->group(function () {
         Route::get('/{club_id}/view', [ClubMemberController::class, 'view'])->name('view');
         Route::get('/{club_id}/join', [ClubMemberController::class, 'showJoinForm'])->name('join');
@@ -38,6 +41,10 @@ Route::middleware(['auth'])->group(function () {
 
  Route::get('/formation-request', [ClubFormationRequestController::class, 'index'])->name('formation-request.index');
     Route::get('/formation-request/{request}', [ClubFormationRequestController::class, 'show'])->name('formation-request.show');
+    // Đăng ký tham gia CLB
+ Route::get('clubs/{club}/join', [JoinClubController::class, 'showForm'])->name('clubs.join.form');
+Route::post('clubs/{club}/join', [JoinClubController::class, 'submitForm'])->name('clubs.join.submit');
+
 });
 
 // Dashboard user bình thường — chỉ client mới vào được

@@ -3,22 +3,50 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClubJoinRequest;
 use Illuminate\Http\Request;
 use App\Models\ClubRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-
+ use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 class ClubFormationRequestController extends Controller
 {
-     public function index()
-    {
-        $user = Auth::user();
-        $requests = ClubRequest::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+   
+public function index()
+{
+    $user = Auth::user();
 
-        return view('client.pages.member.MyRequests', compact('requests'));
-    }
+    $formationRequests = ClubRequest::where('user_id', $user->id)
+        ->get()
+        ->map(fn($r) => $r->setAttribute('type', 'formation'));
+
+    $joinRequests = ClubJoinRequest::where('user_id', $user->id)
+        ->with('club')
+        ->get()
+        ->map(fn($r) => $r->setAttribute('type', 'join'));
+
+    $allRequests = $formationRequests->concat($joinRequests)
+        ->sortByDesc('created_at');
+
+    // Phân trang thủ công
+    $page = request()->get('page', 1);
+    $perPage = 10;
+    $paginated = new LengthAwarePaginator(
+        $allRequests->forPage($page, $perPage)->values(),
+        $allRequests->count(),
+        $perPage,
+        $page,
+        ['path' => request()->url(), 'query' => request()->query()]
+    );
+
+    return view('client.pages.member.MyRequests', [
+        'requests' => $paginated
+    ]);
+}
+
+
+
 
     // Xem chi tiết 1 yêu cầu thành lập CLB
     public function show(ClubRequest $request)
@@ -40,45 +68,66 @@ class ClubFormationRequestController extends Controller
     /**
      * Lưu yêu cầu thành lập CLB
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'slogan' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'purpose' => 'nullable|string',
-            'field' => 'nullable|string|max:255',
-            'plan' => 'nullable|string',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'logo' => 'nullable|image|max:2048',
-            'advisor_id' => 'nullable|exists:users,id',
-            'rule' => 'nullable|string',
-            'member_limit' => 'nullable|integer|min:1',
-        ]);
+  public function store(Request $request)
+{
+    $user = Auth::user();
+    $member = $user->member;
 
-        $clubRequest = new ClubRequest();
-        $clubRequest->user_id = Auth::id();
-        $clubRequest->name = $request->name;
-        $clubRequest->slogan = $request->slogan;
-        $clubRequest->description = $request->description;
-        $clubRequest->purpose = $request->purpose;
-        $clubRequest->field = $request->field;
-        $clubRequest->plan = $request->plan;
-        $clubRequest->email = $request->email;
-        $clubRequest->phone = $request->phone;
-        $clubRequest->advisor_id = $request->advisor_id;
-        $clubRequest->rule = $request->rule;
-        $clubRequest->member_limit = $request->member_limit;
-
-        if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('club_logos', 'public');
-            $clubRequest->logo = $path;
-        }
-
-        $clubRequest->save();
-
-        return redirect()->route('formation_request.create')
-            ->with('success', 'Yêu cầu thành lập CLB đã được gửi thành công! Chúng tôi sẽ xem xét và liên hệ với bạn.');
+    if (!$member) {
+        return redirect()->back()->with('error', 'Bạn chưa có hồ sơ thành viên.');
     }
+
+    // Các role quản lý không được gửi yêu cầu thành lập CLB mới
+    $managerRoles = ['club_manager', 'deputy_manager', 'secretary', 'treasurer', 'event_manager', 'communication'];
+
+    $existingRoles = $member->clubMemberships() // Quan hệ ClubMember
+        ->whereIn('role', $managerRoles)
+        ->exists();
+
+    if ($existingRoles) {
+        return redirect()->back()->with('error', 'Bạn đang giữ một chức vụ quản lý trong CLB khác, không thể gửi yêu cầu thành lập CLB mới.');
+    }
+
+    // Validate form
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'slogan' => 'nullable|string|max:255',
+        'description' => 'nullable|string',
+        'purpose' => 'nullable|string',
+        'field' => 'nullable|string|max:255',
+        'plan' => 'nullable|string',
+        'email' => 'nullable|email|max:255',
+        'phone' => 'nullable|string|max:20',
+        'logo' => 'nullable|image|max:2048',
+        'advisor_id' => 'nullable|exists:users,id',
+        'rule' => 'nullable|string',
+        'member_limit' => 'nullable|integer|min:1',
+    ]);
+
+    // Tạo yêu cầu thành lập CLB
+    $clubRequest = new ClubRequest();
+    $clubRequest->user_id = $user->id;
+    $clubRequest->name = $request->name;
+    $clubRequest->slogan = $request->slogan;
+    $clubRequest->description = $request->description;
+    $clubRequest->purpose = $request->purpose;
+    $clubRequest->field = $request->field;
+    $clubRequest->plan = $request->plan;
+    $clubRequest->email = $request->email;
+    $clubRequest->phone = $request->phone;
+    $clubRequest->advisor_id = $request->advisor_id;
+    $clubRequest->rule = $request->rule;
+    $clubRequest->member_limit = $request->member_limit;
+
+    if ($request->hasFile('logo')) {
+        $path = $request->file('logo')->store('club_logos', 'public');
+        $clubRequest->logo = $path;
+    }
+
+    $clubRequest->save();
+
+    return redirect()->route('formation_request.create')
+        ->with('success', 'Yêu cầu thành lập CLB đã được gửi thành công! Chúng tôi sẽ xem xét và liên hệ với bạn.');
+}
+
 }

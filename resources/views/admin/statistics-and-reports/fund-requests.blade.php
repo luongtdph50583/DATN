@@ -12,6 +12,7 @@
     <i class="fas fa-file-pdf"></i> Xuất PDF
 </a>
 
+
     <!-- Tổng quan -->
   <!-- Tổng quan -->
 <div class="row mb-4">
@@ -103,6 +104,22 @@
             </div>
         </div>
     </div>
+    <form method="GET" action="{{ route('admin.stats.funds') }}" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label>Từ ngày:</label>
+        <input type="date" name="from" value="{{ request('from') }}" class="form-control">
+    </div>
+
+    <div class="col-md-4">
+        <label>Đến ngày:</label>
+        <input type="date" name="to" value="{{ request('to') }}" class="form-control">
+    </div>
+
+    <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-primary w-100">Lọc</button>
+    </div>
+</form>
+
 
     <!-- Biểu đồ -->
     <div class="card mb-4">
