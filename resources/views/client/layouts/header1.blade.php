@@ -195,6 +195,7 @@
                                     {{ __('Vai trò:') }} {{ __(Auth::user()->role ?? 'member') }}
                                 </span>
                               <a class="dropdown-item" href="{{ route('profile.show') }}">{{ __('Trang cá nhân') }}</a>
+                              <a class="dropdown-item" href="{{ route('formation-request.index') }}">{{ __('Yêu cầu của bạn ') }}</a>
 
                                 @php($managedClub = Auth::user()->getManagedClubs()->first())
                                 @if($managedClub)

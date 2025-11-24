@@ -40,5 +40,12 @@
     <div class="d-flex justify-content-center">
         {{ $clubs->links() }}
     </div>
+      <p>
+    <a href="{{ route('formation_request.create') }}" style="color: #007bff; text-decoration: underline;">
+        Bạn muốn thành lập một câu lạc bộ mới?
+    </a>
+</p>
+
+
 </div>
 @endsection

@@ -109,8 +109,7 @@ public function approveTransaction($club_id, FundTransaction $transaction)
         'approved_at'  => now(),
     ]);
 
-    Fund::firstOrCreate(['club_id' => $club_id], ['balance' => 0])
-        ->increment('balance', $transaction->amount);
+ 
 
 
     $recipients = \App\Models\ClubMember::query()
@@ -136,6 +135,38 @@ public function approveTransaction($club_id, FundTransaction $transaction)
     return back()->with('success', 'Khoản thu đã được duyệt và thông báo đã gửi!');
 }
 
+public function approveExpense($club_id, FundTransaction $transaction)
+{
+    $user = auth()->user();
+
+    // Chỉ duyệt khoản chi
+    if ($transaction->type !== 'expense') {
+        return back()->with('error', 'Đây không phải khoản chi!');
+    }
+
+    // Không duyệt nếu đã duyệt
+    if ($transaction->status === 'approved') {
+        return back()->with('info', 'Khoản chi này đã được duyệt trước đó.');
+    }
+
+    // Cập nhật trạng thái duyệt
+    $transaction->update([
+        'status'       => 'approved',
+        'approved_by'  => $user->id,
+        'approved_at'  => now(),
+    ]);
+
+    // Trừ quỹ CLB
+    $fund = Fund::firstOrCreate(['club_id' => $club_id], ['balance' => 0]);
+    if ($fund->balance < $transaction->amount) {
+        return back()->with('error', 'Quỹ CLB không đủ để thực hiện khoản chi này!');
+    }
+    $fund->decrement('balance', $transaction->amount);
+
+
+
+    return back()->with('success', 'Khoản chi đã được duyệt, trừ quỹ và thông báo đã gửi!');
+}
 
 
     public function edit($club_id, FundTransaction $transaction)
