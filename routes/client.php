@@ -11,10 +11,12 @@ use App\Http\Controllers\Client\RecruitFormController;
 use App\Http\Controllers\Client\ClubMemberController;
 use App\Http\Controllers\Client\NotificationController;
 use App\Http\Controllers\Client\ClubNotificationController;
-
+use App\Http\Controllers\Client\ClubFormationRequestController;
 // Trang client home — public, user vẫn vào được
 Route::name('client.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
+   Route::get('/clubs', [HomeController::class, 'showClubs'])->name('clubs.list');
+ Route::get('/clubs/{club}', [HomeController::class, 'show'])->name('clubs.show');
 });
 
 // Routes dành cho user đăng nhập
@@ -26,6 +28,16 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+     Route::get('/formation-request/create', [ClubFormationRequestController::class, 'create'])
+        ->name('formation_request.create');
+
+    // Xử lý gửi yêu cầu
+    Route::post('/formation-request/store', [ClubFormationRequestController::class, 'store'])
+        ->name('formation_request.store');
+
+ Route::get('/formation-request', [ClubFormationRequestController::class, 'index'])->name('formation-request.index');
+    Route::get('/formation-request/{request}', [ClubFormationRequestController::class, 'show'])->name('formation-request.show');
 });
 
 // Dashboard user bình thường — chỉ client mới vào được

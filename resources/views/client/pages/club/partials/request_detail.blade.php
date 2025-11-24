@@ -1,11 +1,11 @@
 @php
-    $status = $request->status;
-    // Xác định các hành động có thể thực hiện dựa trên trạng thái mới
-    $canSchedule = $status === 'pending_interview';
-    $canCompleteInterview = $status === 'waiting_attendance';
-    $canDecide = $status === 'waiting_approval';
-    $canCancel = in_array($status, ['pending_interview', 'waiting_attendance', 'waiting_approval']);
-    $latestSchedule = $request->interviewSchedules->sortByDesc('scheduled_at')->first();
+$status = $request->status;
+// Xác định các hành động có thể thực hiện dựa trên trạng thái mới
+$canSchedule = $status === 'pending_interview';
+$canCompleteInterview = $status === 'waiting_attendance';
+$canDecide = $status === 'waiting_approval';
+$canCancel = in_array($status, ['pending_interview', 'waiting_attendance', 'waiting_approval']);
+$latestSchedule = $request->interviewSchedules->sortByDesc('scheduled_at')->first();
 @endphp
 
 <div class="container py-3">
@@ -37,33 +37,50 @@
 
     <div class="row g-4">
         <div class="col-lg-8">
-            <div class="card mb-4 shadow-sm">
-                <div class="card-header bg-light fw-semibold">Thông tin ứng viên</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Họ tên:</strong> {{ $request->user->name }}</p>
-                            <p class="mb-1"><strong>Email:</strong> {{ $request->user->email }}</p>
-                            <p class="mb-1"><strong>SĐT:</strong> {{ $request->user->member->phone ?? '—' }}</p>
-                            <p class="mb-1"><strong>MSSV:</strong> {{ $request->user->member->student_code ?? '—' }}</p>
-                            <p class="mb-1"><strong>Giới tính:</strong> {{ $request->user->member->gender ?? '—' }}</p>
-                            <p class="mb-1"><strong>Ngày sinh:</strong> {{ $request->user->member->date_of_birth ? \Carbon\Carbon::parse($request->user->member->date_of_birth)->format('d/m/Y') : '—' }}</p>
-                            <p class="mb-1"><strong>Khóa:</strong> {{ $request->user->member->course ?? '—' }}</p>
-                            <p class="mb-1"><strong>Chuyên ngành:</strong> {{ $request->user->member->major ?? '—' }}</p>
-                            <p class="mb-0"><strong>Địa chỉ:</strong> {{ $request->user->member->address ?? '—' }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p class="mb-1"><strong>Lý do tham gia:</strong></p>
-                            <p class="text-muted">{{ $request->reason ?? '—' }}</p>
-                            <p class="mb-1"><strong>Thời gian gửi:</strong>
-                                {{ optional($request->requested_at)->format('d/m/Y H:i') }}</p>
-                            <p class="mb-0"><strong>Trạng thái hiện tại:</strong>
-                                <span class="badge bg-primary-subtle text-primary text-uppercase">{{ $status }}</span>
-                            </p>
-                        </div>
+        @php
+$statusMap = [
+    'pending_interview' => 'Chờ phỏng vấn',
+    'waiting_attendance' => 'Chờ điểm danh',
+    'waiting_approval' => 'Chờ duyệt',
+    'approved' => 'Đã duyệt',
+    'rejected' => 'Bị từ chối',
+    'cancelled' => 'Đã hủy',
+];
+        @endphp
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-light fw-semibold">Thông tin ứng viên</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Họ tên:</strong> {{ $request->user->name }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ $request->user->email }}</p>
+                        <p class="mb-1"><strong>SĐT:</strong> {{ $request->user->member->phone ?? '—' }}</p>
+                        <p class="mb-1"><strong>MSSV:</strong> {{ $request->user->member->student_code ?? '—' }}</p>
+                        <p class="mb-1"><strong>Giới tính:</strong> {{ $request->user->member->gender ?? '—' }}</p>
+                        <p class="mb-1"><strong>Ngày sinh:</strong>
+                            {{ $request->user->member->date_of_birth ? \Carbon\Carbon::parse($request->user->member->date_of_birth)->format('d/m/Y') : '—' }}
+                        </p>
+                        <p class="mb-1"><strong>Khóa:</strong> {{ $request->user->member->course ?? '—' }}</p>
+                        <p class="mb-1"><strong>Chuyên ngành:</strong> {{ $request->user->member->major ?? '—' }}</p>
+                        <p class="mb-0"><strong>Địa chỉ:</strong> {{ $request->user->member->address ?? '—' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Lý do tham gia:</strong></p>
+                        <p class="text-muted">{{ $request->reason ?? '—' }}</p>
+                        <p class="mb-1"><strong>Thời gian gửi:</strong>
+                            {{ optional($request->requested_at)->format('d/m/Y H:i') }}
+                        </p>
+                        <p class="mb-0"><strong>Trạng thái hiện tại:</strong>
+                            <span class="badge bg-primary-subtle text-primary text-uppercase">
+                                {{ $statusMap[$request->status] ?? '—' }}
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>
+        </div>
+
 
             @if($request->formAnswers->count())
                 <div class="card mb-4 shadow-sm">
@@ -100,12 +117,13 @@
         </div>
 
         <div class="col-lg-4">
+        @if($request->interview_scheduled_at)
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-light fw-semibold">Thông tin phỏng vấn</div>
                 <div class="card-body">
                     <p class="mb-1"><strong>Người phỏng vấn:</strong> {{ $request->interviewer?->name ?? '—' }}</p>
                     <p class="mb-1"><strong>Thời gian:</strong>
-                        {{ optional($request->interview_scheduled_at)->format('d/m/Y H:i') ?? '—' }}
+                        {{ optional($request->interview_scheduled_at)->format('d/m/Y H:i') }}
                     </p>
                     <p class="mb-1"><strong>Địa điểm:</strong> {{ $request->interview_location ?? '—' }}</p>
                     <p class="mb-1"><strong>Kết quả:</strong>
@@ -115,6 +133,8 @@
                     <p class="mb-0"><strong>Ghi chú:</strong> {{ $request->interview_note ?? '—' }}</p>
                 </div>
             </div>
+        @endif
+
 
             @if($canSchedule)
                 <div class="card mb-4 shadow-sm">

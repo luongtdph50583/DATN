@@ -401,9 +401,9 @@ class ClubMemberRequestController extends Controller
             'interview_feedback' => 'nullable|string|max:1000',
         ]);
 
-        // Chuyển từ waiting_attendance → waiting_approval (sau khi điểm danh pass/fail)
+        // Chuyển request sang giai đoạn duyệt
         $request->status = 'waiting_approval';
-        $request->interview_result = $data['interview_result']; // pass hoặc fail
+        $request->interview_result = $data['interview_result']; // pass | fail
         $request->interview_score = $data['interview_score'];
         $request->interview_note = $data['interview_feedback'] ?? $request->interview_note;
         $request->interview_completed_at = now();
@@ -411,10 +411,22 @@ class ClubMemberRequestController extends Controller
         $request->handled_by = Auth::id();
         $request->save();
 
+        // Mapping status hợp lệ cho schedule
+        $scheduleStatusMap = [
+            'pass' => 'completed',
+            'fail' => 'completed',
+            'completed' => 'completed',
+            'no_show' => 'no_show',
+            'cancelled' => 'cancelled',
+        ];
+
+        $scheduleStatus = $scheduleStatusMap[$data['interview_result']] ?? 'completed';
+
+        // Update lịch phỏng vấn
         $schedule = $request->interviewSchedules()->latest('scheduled_at')->first();
         if ($schedule) {
             $schedule->update([
-                'status' => $data['interview_result'],
+                'status' => $scheduleStatus, // giá trị hợp lệ cho ENUM
                 'score' => $data['interview_score'],
                 'note' => $data['interview_feedback'] ?? $schedule->note,
                 'completed_at' => now(),
@@ -525,7 +537,7 @@ class ClubMemberRequestController extends Controller
 
         $requestIdsJson = $req->input('request_ids');
         $requestIds = json_decode($requestIdsJson, true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($requestIds) || empty($requestIds)) {
             \Log::error('Batch schedule error', [
                 'request_ids' => $requestIdsJson,
@@ -601,7 +613,7 @@ class ClubMemberRequestController extends Controller
 
         $requestIdsJson = $req->input('request_ids');
         $requestIds = json_decode($requestIdsJson, true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($requestIds) || empty($requestIds)) {
             \Log::error('Batch complete error', [
                 'request_ids' => $requestIdsJson,

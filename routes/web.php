@@ -51,16 +51,16 @@ Route::get('/test-role', fn() => 'Middleware role test OK')
 Route::get('/', [HomeController::class, 'index'])->name('dashboard');
 
 // === AUTHENTICATED USER ROUTES ===
-Route::middleware(['auth'])->group(function () {
-    Route::controller(ProfileController::class)
-        ->prefix('profile')
-        ->name('profile.')
-        ->group(function () {
-            Route::get('/', 'edit')->name('edit');
-            Route::patch('/', 'update')->name('update');
-            Route::delete('/', 'destroy')->name('destroy');
-        });
+Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function () {
+    Route::get('/view', [ProfileController::class, 'show'])->name('show'); // xem profile
+    Route::get('/edit', [ProfileController::class, 'edit'])->name('edit'); // chỉnh sửa profile
+    Route::patch('/edit', [ProfileController::class, 'update'])->name('update'); 
+    Route::delete('/', [ProfileController::class, 'destroy'])->name('destroy'); 
+    Route::get('/avatar', [ProfileController::class, 'editAvatar'])->name('avatar');
+Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('avatar.update');
+
 });
+
 
 Route::get('/', [ClientHomeController::class, 'index'])->name('client.home');
 Route::prefix('admin')->middleware([CheckRole::class . ':admin'])->group(function () {

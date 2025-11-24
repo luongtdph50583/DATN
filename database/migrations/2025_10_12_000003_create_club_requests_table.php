@@ -36,11 +36,11 @@ return new class extends Migration {
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete()
-                ->comment('Giảng viên đỡ đầu được mời');
+                ->comment('Giảng viên phụ trách được mời');
 
             $table->enum('advisor_status', ['pending', 'approved', 'rejected'])
                 ->default('pending')
-                ->comment('Trạng thái chấp thuận của giảng viên đỡ đầu');
+                ->comment('Trạng thái chấp thuận của giảng viên phụ trách');
 
             // Trạng thái xử lý yêu cầu & người duyệt
             $table->enum('status', ['pending', 'approved', 'rejected'])

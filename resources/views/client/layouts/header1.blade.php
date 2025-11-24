@@ -115,7 +115,7 @@
                                         </ul>
                                     </li>
                                     <li>
-                                        <a href="sponsor.html">Sponsors</a>
+                                        <a href="{{ route('client.clubs.list') }}">Các Câu Lạc Bộ </a>
                                     </li>
                                     <li>
                                         <a href="news-details.html">
@@ -144,6 +144,7 @@
                             JOIN NOW <i class="fa-solid fa-arrow-up-right"></i>
                         </a>
                     </div> --}}
+
 
                     @auth
                         <div class="dropdown header-notification">
@@ -201,7 +202,9 @@
                                 <span class="dropdown-item-text text-muted">
                                     {{ __('Vai trò:') }} {{ __(Auth::user()->role ?? 'member') }}
                                 </span>
-                                <a class="dropdown-item" href="{{ route('client.home') }}">{{ __('Trang cá nhân') }}</a>
+                              <a class="dropdown-item" href="{{ route('profile.show') }}">{{ __('Trang cá nhân') }}</a>
+                              <a class="dropdown-item" href="{{ route('formation-request.index') }}">{{ __('Yêu cầu của bạn ') }}</a>
+
                                 @php($managedClub = Auth::user()->getManagedClubs()->first())
                                 @if($managedClub)
                                     <a class="dropdown-item" href="{{ route('club_manager.posts.index', ['club_id' => $managedClub->id]) }}">
