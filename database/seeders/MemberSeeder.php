@@ -48,10 +48,9 @@ class MemberSeeder extends Seeder
                 'ethnicity' => $faker->randomElement(['Kinh', 'Tày', 'Thái', 'Mường', 'Hoa', 'Khmer', 'Nùng']),
 
                 // Trạng thái
-                'status' => $faker->randomElement(['active', 'inactive']),
+                'status' => ('active')
             ]);
         }
 
-        // Nếu muốn tạo thêm member không gắn user (không khuyến khích), bỏ qua
     }
 }

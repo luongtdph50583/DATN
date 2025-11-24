@@ -5,104 +5,101 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Club;
 use App\Models\User;
-use App\Models\Member;
-use Faker\Factory as Faker;
-use Illuminate\Support\Facades\Hash;
 
 class ClubSeeder extends Seeder
 {
     public function run()
     {
-        $faker = Faker::create('vi_VN');
-
-        // Lấy danh sách user role = 'member'
+        // Lấy danh sách member sẵn có
         $members = User::where('role', 'member')->get();
 
         if ($members->isEmpty()) {
-            // Tạo tạm member nếu không có
             $tempMember = User::create([
-                'name' => 'Member Tạm Thời',
+                'name' => 'Thành viên tạm thời',
                 'email' => 'temp.member@club.com',
-                'password' => Hash::make('123456'),
+                'password' => bcrypt('123456'),
                 'role' => 'member',
                 'status' => 'active',
             ]);
             $members = collect([$tempMember]);
         }
 
-        $clubNames = [
-            'Tin Học', 'Tiếng Anh', 'Bóng Đá', 'Khiêu Vũ', 'Tình Nguyện',
-            'Nghiên Cứu Khoa Học', 'Âm Nhạc', 'Mỹ Thuật', 'Kinh Doanh Trẻ',
-            'Robot', 'Marketing', 'Truyền Thông', 'Môi Trường', 'Cờ Vua',
-            'Bóng Chuyền', 'Cầu Lông', 'Nhiếp Ảnh', 'Múa', 'Đàn Guitar'
+        $clubs = [
+            [
+                'name' => 'Câu Lạc Bộ Tin Học',
+                'slogan' => 'Nâng tầm tri thức công nghệ cho sinh viên',
+                'field' => 'Công nghệ',
+                'description' => 'CLB Tin Học là nơi trao đổi kiến thức lập trình, công nghệ mới, và tổ chức các cuộc thi về IT cho sinh viên.',
+                'logo' => 'club_logos/tinhoc.png',
+                'location' => 'TP. Hồ Chí Minh',
+                'email' => 'tinhoc@club.edu.vn',
+                'phone' => '0901234567',
+                'member_limit' => 100,
+            ],
+            [
+                'name' => 'Câu Lạc Bộ Tiếng Anh',
+                'slogan' => 'Cùng nhau chinh phục ngoại ngữ',
+                'field' => 'Ngoại ngữ',
+                'description' => 'CLB Tiếng Anh tạo môi trường thực hành, giao tiếp và học hỏi kỹ năng tiếng Anh cho sinh viên.',
+                'logo' => 'club_logos/tienganh.png',
+                'location' => 'Hà Nội',
+                'email' => 'tienganh@club.edu.vn',
+                'phone' => '0912345678',
+                'member_limit' => 80,
+            ],
+            [
+                'name' => 'Câu Lạc Bộ Bóng Đá',
+                'slogan' => 'Nơi kết nối những trái tim đam mê bóng đá',
+                'field' => 'Thể thao',
+                'description' => 'CLB Bóng Đá tổ chức các buổi tập luyện, giải đấu nội bộ và tham gia các giải đấu sinh viên.',
+                'logo' => 'club_logos/bongda.png',
+                'location' => 'Đà Nẵng',
+                'email' => 'bongda@club.edu.vn',
+                'phone' => '0923456789',
+                'member_limit' => 120,
+            ],
+            [
+                'name' => 'Câu Lạc Bộ Âm Nhạc',
+                'slogan' => 'Gắn kết đam mê và sáng tạo âm nhạc',
+                'field' => 'Nghệ thuật',
+                'description' => 'CLB Âm Nhạc phát triển kỹ năng chơi nhạc, hát và tổ chức các buổi biểu diễn nghệ thuật cho sinh viên.',
+                'logo' => 'club_logos/amnhac.png',
+                'location' => 'Cần Thơ',
+                'email' => 'amnhac@club.edu.vn',
+                'phone' => '0934567890',
+                'member_limit' => 60,
+            ],
+            [
+                'name' => 'Câu Lạc Bộ Tình Nguyện',
+                'slogan' => 'Lan tỏa yêu thương, kết nối cộng đồng',
+                'field' => 'Tình nguyện',
+                'description' => 'CLB Tình Nguyện tổ chức các hoạt động từ thiện, chương trình giúp đỡ cộng đồng và nâng cao tinh thần xã hội cho sinh viên.',
+                'logo' => 'club_logos/tinhnguyen.png',
+                'location' => 'Hải Phòng',
+                'email' => 'tinhnguyen@club.edu.vn',
+                'phone' => '0945678901',
+                'member_limit' => 50,
+            ],
         ];
 
-        $createdNames = [];
-
-        // Tạo 10 CLB
-        for ($i = 0; $i < 10; $i++) {
-            do {
-                $baseName = 'CLB ' . $clubNames[array_rand($clubNames)];
-                $name = $baseName . ($faker->boolean(30) ? ' ' . $faker->numberBetween(1, 99) : '');
-            } while (in_array($name, $createdNames) || Club::where('name', $name)->exists());
-
-            $createdNames[] = $name;
-            $field = $this->mapFieldFromName($name);
-            $manager = $members->random();
-
+        foreach ($clubs as $clubData) {
             Club::create([
-                'name' => $name,
-                'slogan' => $faker->optional(0.7)->sentence(6),
-                'field' => $field,
-                'description' => $faker->paragraphs(3, true),
-                'logo' => null, // Có thể thêm sau
+                'name' => $clubData['name'],
+                'slogan' => $clubData['slogan'],
+                'field' => $clubData['field'],
+                'description' => $clubData['description'],
+                'logo' => $clubData['logo'],
                 'status' => 'active',
-                'manager_id' => $manager->id,
-                'advisor_id' => null, // Có thể gán sau
+                'manager_id' => $members->random()->id,
+                'advisor_id' => null,
                 'advisor_status' => 'pending',
-                'email' => strtolower(str_replace(' ', '', $name)) . '@club.edu.vn',
-                'phone' => '0' . $faker->numberBetween(300000000, 999999999),
-                'member_limit' => $faker->numberBetween(15, 150),
-                'founded_at' => $faker->dateTimeBetween('-5 years', 'now')->format('Y-m-d'),
-                'location' => $faker->randomElement([
-                    'TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Hải Phòng',
-                    'Trường ĐH Bách Khoa', 'Trường ĐH Sư Phạm', 'Ký túc xá Khu A'
-                ]),
-                'rules' => $faker->paragraphs(2, true),
+                'email' => $clubData['email'],
+                'phone' => $clubData['phone'],
+                'member_limit' => $clubData['member_limit'],
+                'founded_at' => now()->subYears(rand(1, 5))->format('Y-m-d'),
+                'location' => $clubData['location'],
+                'rules' => 'Thành viên phải tham gia đầy đủ các hoạt động của CLB và tôn trọng nội quy chung.',
             ]);
         }
-    }
-
-    private function mapFieldFromName($name)
-    {
-        $mapping = [
-            'Tin Học' => 'Công nghệ',
-            'Tiếng Anh' => 'Ngoại ngữ',
-            'Bóng Đá' => 'Thể thao',
-            'Khiêu Vũ' => 'Nghệ thuật',
-            'Tình Nguyện' => 'Tình nguyện',
-            'Nghiên Cứu Khoa Học' => 'Khoa học',
-            'Âm Nhạc' => 'Nghệ thuật',
-            'Mỹ Thuật' => 'Nghệ thuật',
-            'Kinh Doanh Trẻ' => 'Kinh doanh',
-            'Robot' => 'Công nghệ',
-            'Marketing' => 'Kinh doanh',
-            'Truyền Thông' => 'Truyền thông',
-            'Môi Trường' => 'Môi trường',
-            'Cờ Vua' => 'Trí tuệ',
-            'Bóng Chuyền' => 'Thể thao',
-            'Cầu Lông' => 'Thể thao',
-            'Nhiếp Ảnh' => 'Nghệ thuật',
-            'Múa' => 'Nghệ thuật',
-            'Đàn Guitar' => 'Nghệ thuật',
-        ];
-
-        foreach ($mapping as $keyword => $field) {
-            if (strpos($name, $keyword) !== false) {
-                return $field;
-            }
-        }
-
-        return 'Khác';
     }
 }

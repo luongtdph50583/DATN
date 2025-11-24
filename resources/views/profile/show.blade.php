@@ -66,78 +66,75 @@
             </div>
         </div>
 
-        <!-- Cột phải: Thông tin chi tiết từ bảng members -->
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">Thông tin cá nhân</h5>
-                </div>
-                <div class="card-body">
-                    @php
-                        $gender = match($member->gender) {
-                            'male' => 'Nam',
-                            'female' => 'Nữ',
-                            default => 'Khác'
-                        };
-                    @endphp
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label">Họ và tên:</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext">{{ $user->name }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label">Mã sinh viên:</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext">{{ $member->student_code ?? '-' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label">Giới tính:</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext">{{ $gender }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label">Ngày sinh:</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext">{{ $member->date_of_birth ?? '-' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label">Địa chỉ:</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext">{{ $member->address ?? '-' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label">Số CCCD:</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext">{{ $member->citizen_id ?? '-' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="mb-3 row">
-                        <label class="col-sm-4 col-form-label">Số điện thoại:</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext">{{ $member->phone ?? '-' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end">
-                        <a href="{{ route('profile.edit') }}" class="btn btn-success">
-                            <i class="fas fa-edit me-1"></i> Chỉnh sửa thông tin
-                        </a>
-                    </div>
+       <!-- Cột phải: Thông tin chi tiết từ bảng members -->
+<div class="col-md-8">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Thông tin cá nhân</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3 row">
+                <label class="col-sm-4 col-form-label">Họ và tên:</label>
+                <div class="col-sm-8">
+                    <p class="form-control-plaintext">{{ $user->name }}</p>
                 </div>
             </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-4 col-form-label">Mã sinh viên:</label>
+                <div class="col-sm-8">
+                    <p class="form-control-plaintext">{{ $member?->student_code ?? '-' }}</p>
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-4 col-form-label">Giới tính:</label>
+                <div class="col-sm-8">
+                    <p class="form-control-plaintext">
+                        {{ $member?->gender
+                            ? ($member->gender === 'male' ? 'Nam' : ($member->gender === 'female' ? 'Nữ' : 'Khác'))
+                            : '-' }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-4 col-form-label">Ngày sinh:</label>
+                <div class="col-sm-8">
+                    <p class="form-control-plaintext">{{ $member?->date_of_birth ?? '-' }}</p>
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-4 col-form-label">Địa chỉ:</label>
+                <div class="col-sm-8">
+                    <p class="form-control-plaintext">{{ $member?->address ?? '-' }}</p>
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-4 col-form-label">Số CCCD:</label>
+                <div class="col-sm-8">
+                    <p class="form-control-plaintext">{{ $member?->citizen_id ?? '-' }}</p>
+                </div>
+            </div>
+
+            <div class="mb-3 row">
+                <label class="col-sm-4 col-form-label">Số điện thoại:</label>
+                <div class="col-sm-8">
+                    <p class="form-control-plaintext">{{ $member?->phone ?? '-' }}</p>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <a href="{{ route('profile.edit') }}" class="btn btn-success">
+                    <i class="fas fa-edit me-1"></i> Chỉnh sửa thông tin
+                </a>
+            </div>
         </div>
+    </div>
+</div>
+
 
     </div>
 </div>

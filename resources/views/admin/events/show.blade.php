@@ -144,11 +144,7 @@
             <h5 class="mb-0 fw-bold">
                 <i class="fas fa-money-bill-wave text-success"></i> Ngân sách chi tiết
             </h5>
-            @if($event->status === 'pending')
-                <a href="{{ route('admin.events.edit_budget', $event) }}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-edit"></i> Chỉnh sửa
-                </a>
-            @endif
+          
         </div>
         <div class="card-body">
 

@@ -25,24 +25,11 @@ class DatabaseSeeder extends Seeder
             MemberSeeder::class,
             ClubSeeder::class,
             ClubMemberSeeder::class,
-            ClubJoinFormQuestionSeeder::class,
-            ClubJoinRequestSeeder::class,
-            ClubInterviewScheduleSeeder::class,
-            ClubJoinFormAnswerSeeder::class,
             PostAndCommentSeeder::class,
             // Các seeders khác nếu có
-            EventSeeder::class,
-            ClubEventSeeder::class,
-            EventRegistrationSeeder::class,
-            FundTransactionSeeder::class,
-            NotificationSeeder::class,
         ]);
 
         $this->command->info('✅ Seed dữ liệu hoàn tất!');
-        $this->command->info('');
-        $this->command->info('📧 Thông tin đăng nhập:');
-        $this->command->info('   - Admin: admin@gmail.com / 123456');
-        $this->command->info('   - Member: member@gmail.com / 123456');
-        $this->command->info('   - Manager 1-5: manager1@gmail.com đến manager5@gmail.com / 123456');
+      
     }
 }

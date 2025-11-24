@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
             ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin System',
-                'password' => Hash::make('123456'),
+                'password' => Hash::make('12345678'), // mật khẩu cố định
                 'role' => 'admin',
                 'status' => 'active',
                 'avatar' => null,
@@ -27,45 +27,31 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // 2. Member cố định để test
-        User::firstOrCreate(
-            ['email' => 'member@gmail.com'],
-            [
-                'name' => 'Member User',
-                'password' => Hash::make('123456'),
-                'role' => 'member',
+        // 2. Tạo thêm 5 Club Managers với tên giả
+        for ($i = 0; $i < 5; $i++) {
+            User::create([
+                'name' => $faker->name(),
+                'email' => $faker->unique()->safeEmail(),
+             'password' => Hash::make('12345678'),
+                'role' => 'member', // sẽ được gán role manager qua ClubMember
                 'status' => 'active',
                 'avatar' => null,
                 'remember_token' => Str::random(10),
-            ]
-        );
-
-        // 3. Tạo thêm một số Club Managers
-        for ($i = 1; $i <= 5; $i++) {
-            User::firstOrCreate(
-                ['email' => "manager{$i}@gmail.com"],
-                [
-                    'name' => 'Club Manager ' . $i,
-                    'password' => Hash::make('123456'),
-                    'role' => 'member', // Sẽ được gán làm manager qua ClubMember
-                    'status' => 'active',
-                    'avatar' => null,
-                    'remember_token' => Str::random(10),
-                ]
-            );
+            ]);
         }
 
-        // 4. Tạo thêm 30 thành viên (member) ngẫu nhiên
+        // 3. Tạo thêm 30 thành viên (member) ngẫu nhiên
         for ($i = 0; $i < 30; $i++) {
             User::create([
                 'name' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
-                'password' => Hash::make('123456'), // Mật khẩu chung cho dễ test
+             'password' => Hash::make('12345678'),
                 'role' => 'member',
-                'status' => $faker->randomElement(['active', 'inactive']),
+               'status' => 'active',
                 'avatar' => null,
                 'remember_token' => Str::random(10),
             ]);
         }
     }
+
 }

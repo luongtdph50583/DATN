@@ -201,21 +201,20 @@ public function update(Request $request, Event $event)
         return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được xóa thành công!');
     }
 
- public function approve(Event $event)
+public function approve(Event $event)
 {
-    // 1️⃣ Chỉ duyệt khi sự kiện đang ở trạng thái chờ duyệt
     if ($event->status !== 'pending') {
         return redirect()->back()->with('error', 'Chỉ có thể duyệt sự kiện đang ở trạng thái chờ duyệt!');
     }
 
     DB::beginTransaction();
     try {
-        // 2️⃣ Cập nhật trạng thái sự kiện
+        // 1️⃣ Cập nhật trạng thái sự kiện
         $event->update([
             'status' => 'approved',
         ]);
 
-        // 3️⃣ Nếu sự kiện có ngân sách yêu cầu thì tạo yêu cầu cấp kinh phí
+        // 2️⃣ Nếu có ngân sách yêu cầu thông thường
         if ($event->budget_requested > 0 && !$event->fundRequest) {
             EventFundRequest::create([
                 'event_id' => $event->id,
@@ -226,13 +225,41 @@ public function update(Request $request, Event $event)
             ]);
         }
 
+        // 3️⃣ Nếu có chi phí loại school_fund, tạo yêu cầu quỹ và 1 giao dịch tổng
+        $schoolFundItems = $event->budgetItems()->where('type', 'school_fund')->get();
+
+        if ($schoolFundItems->isNotEmpty()) {
+            $totalAmount = $schoolFundItems->sum('estimated_cost');
+
+            // Tạo yêu cầu quỹ tổng cho nhà trường
+            EventFundRequest::create([
+                'event_id' => $event->id,
+                'requested_by' => Auth::id(),
+                'amount_requested' => $totalAmount,
+                'status' => 'pending_disbursement',
+                'note' => 'Yêu cầu cấp kinh phí từ tất cả chi phí loại school_fund.',
+            ]);
+
+            // Tạo 1 giao dịch quỹ tổng
+            EventFundRequest::create([
+                'fund_id' => $event->club->fund->id ?? null,
+                'event_id' => $event->id,
+                'amount' => $totalAmount,
+                'category' => 'school_fund',
+                'description' => 'Tổng chi phí loại school_fund của sự kiện.',
+                'status' => 'pending_disbursement',
+                'created_by' => Auth::id(),
+            ]);
+        }
+
         DB::commit();
-        return redirect()->back()->with('success', 'Duyệt sự kiện thành công và yêu cầu cấp kinh phí đã được tạo!');
+        return redirect()->back()->with('success', 'Duyệt sự kiện thành công và yêu cầu quỹ đã được tạo!');
     } catch (\Exception $e) {
         DB::rollBack();
         return redirect()->back()->with('error', 'Đã xảy ra lỗi khi duyệt sự kiện: ' . $e->getMessage());
     }
 }
+
 
 
 

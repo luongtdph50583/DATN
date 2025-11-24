@@ -58,7 +58,7 @@ $statusMap = [
                         <p class="mb-1"><strong>SĐT:</strong> {{ $request->user->member->phone ?? '—' }}</p>
                         <p class="mb-1"><strong>MSSV:</strong> {{ $request->user->member->student_code ?? '—' }}</p>
                         <p class="mb-1"><strong>Giới tính:</strong> {{ $request->user->member->gender ?? '—' }}</p>
-                        <p class="mb-1"><strong>Ngày sinh:</strong>
+<p class="mb-1"><strong>Ngày sinh:</strong>
                             {{ $request->user->member->date_of_birth ? \Carbon\Carbon::parse($request->user->member->date_of_birth)->format('d/m/Y') : '—' }}
                         </p>
                         <p class="mb-1"><strong>Khóa:</strong> {{ $request->user->member->course ?? '—' }}</p>
@@ -66,8 +66,8 @@ $statusMap = [
                         <p class="mb-0"><strong>Địa chỉ:</strong> {{ $request->user->member->address ?? '—' }}</p>
                     </div>
                     <div class="col-md-6">
-                        <p class="mb-1"><strong>Lý do tham gia:</strong></p>
-                        <p class="text-muted">{{ $request->reason ?? '—' }}</p>
+                        {{-- <p class="mb-1"><strong>Lý do tham gia:</strong></p>
+                        <p class="text-muted">{{ $request->reason ?? '—' }}</p> --}}
                         <p class="mb-1"><strong>Thời gian gửi:</strong>
                             {{ optional($request->requested_at)->format('d/m/Y H:i') }}
                         </p>
@@ -111,7 +111,7 @@ $statusMap = [
             @if($membership)
                 <div class="alert alert-success">
                     Thành viên đã có trong danh sách CLB (tham gia ngày
-                    {{ optional($membership->joined_at)->format('d/m/Y') }}).
+{{ optional($membership->joined_at)->format('d/m/Y') }}).
                 </div>
             @endif
         </div>
@@ -158,11 +158,13 @@ $statusMap = [
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="mb-2">
-                                <label class="form-label">Thời gian phỏng vấn <span class="text-danger">*</span></label>
-                                <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm"
-                                    value="{{ optional($request->interview_scheduled_at)->format('Y-m-d\TH:i') }}" required>
-                            </div>
+                        <div class="mb-2">
+<label class="form-label">Thời gian phỏng vấn <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm"
+                                value="{{ optional($request->interview_scheduled_at)->format('Y-m-d\TH:i') }}"
+                                min="{{ now()->format('Y-m-d\TH:i') }}" required>
+                        </div>
+
                             <div class="mb-2">
                                 <label class="form-label">Địa điểm <span class="text-danger">*</span></label>
                                 <input type="text" name="location" class="form-control form-control-sm"
@@ -200,7 +202,7 @@ $statusMap = [
                             <div class="mb-2">
                                 <label class="form-label">Kết quả phỏng vấn <span class="text-danger">*</span></label>
                                 <select name="interview_result" class="form-select form-select-sm" required>
-                                    <option value="pass" @selected($request->interview_result === 'pass')>Đạt (Pass)
+<option value="pass" @selected($request->interview_result === 'pass')>Đạt (Pass)
                                     </option>
                                     <option value="fail" @selected($request->interview_result === 'fail')>Không đạt (Fail)
                                     </option>
@@ -244,7 +246,7 @@ $statusMap = [
                             class="ajax-form" data-reload="true">
                             @csrf
                             <div class="mb-3">
-                                <label class="form-label">Ghi chú gửi ứng viên</label>
+<label class="form-label">Ghi chú gửi ứng viên</label>
                                 <textarea name="note" class="form-control" rows="3"
                                     placeholder="Nhập ghi chú gửi cho ứng viên (nếu có)">{{ $request->note }}</textarea>
                                 <small class="text-muted">Ghi chú này sẽ được gửi cho ứng viên qua thông báo.</small>
@@ -291,7 +293,7 @@ $statusMap = [
             @if(in_array($status, ['approved', 'rejected', 'cancelled']))
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
-                    Yêu cầu đã được xử lý với trạng thái <strong class="text-uppercase">{{ $status }}</strong>.
+Yêu cầu đã được xử lý với trạng thái <strong class="text-uppercase">{{ $status }}</strong>.
                     @if($request->handled_at)
                         <br><small>Thời gian xử lý: {{ $request->handled_at->format('d/m/Y H:i') }}</small>
                     @endif
@@ -303,4 +305,3 @@ $statusMap = [
         </div>
     </div>
 </div>
-
