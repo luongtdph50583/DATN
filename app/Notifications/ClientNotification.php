@@ -6,7 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\DatabaseMessage;
 
-class CustomNotification extends Notification
+class ClientNotification extends Notification
 {
     use Queueable;
 

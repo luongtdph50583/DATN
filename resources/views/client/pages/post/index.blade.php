@@ -58,20 +58,20 @@
                                    class="btn btn-sm btn-info me-1" title="Xem">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                @if($post->status === 'pending')
                                     <a href="{{ route('club_manager.posts.edit', ['club_id' => $club->id, 'post' => $post->id]) }}"
                                        class="btn btn-sm btn-primary me-1" title="Sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                @endif
-                                <form action="{{ route('club_manager.posts.destroy', ['club_id' => $club->id, 'post' => $post->id]) }}"
-                                      method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                            <form action="{{ route('club_manager.posts.destroy', ['club_id' => $club->id, 'post' => $post->id]) }}" method="POST"
+                                class="d-inline" onsubmit="return confirmDeleteWithReason(this);">
+                                @csrf
+                                @method('DELETE')
+                                <input type="hidden" name="delete_reason" value="">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+
                             </td>
                         </tr>
                     @empty
@@ -86,3 +86,21 @@
         {{ $posts->links() }}
     </div>
 @endsection
+@push('scripts')
+    <script>
+        function confirmDeleteWithReason(form) {
+            const reason = prompt("Nhập lý do xóa bài viết:");
+            if (reason === null) {
+                // Người dùng bấm Cancel
+                return false;
+            }
+            if (reason.trim() === "") {
+                alert("Bạn phải nhập lý do xóa.");
+                return false;
+            }
+            form.querySelector('input[name="delete_reason"]').value = reason;
+            return true;
+        }
+    </script>
+@endpush
+

@@ -11,19 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('event_registrations', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('event_id')->constrained('club_events')->onDelete('cascade');
-    $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-    $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-    $table->timestamp('registered_at')->useCurrent();
-    
-    
-    $table->enum('attendance_status', ['pending', 'attended', 'absent'])->default('pending');
+//         Schema::create('event_registrations', function (Blueprint $table) {
+//     $table->id();
+//     $table->foreignId('event_id')->constrained('club_events')->onDelete('cascade');
+//     $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+//     $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+//     $table->timestamp('registered_at')->useCurrent();
 
-    $table->unique(['event_id', 'user_id']);
-    $table->timestamps();
-});
+
+//     $table->enum('attendance_status', ['pending', 'attended', 'absent'])->default('pending');
+
+//     $table->unique(['event_id', 'user_id']);
+//     $table->timestamps();
+// });
 
     }
 

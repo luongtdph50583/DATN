@@ -25,7 +25,7 @@ class Post extends Model
         'approved_by',
         'approved_at',
         'rejection_reason'
-        
+
     ];
 
     protected $casts = [
@@ -48,6 +48,7 @@ class Post extends Model
     {
         return $this->belongsTo(Club::class);
     }
+
     // Trong Post.php
     public function approver()
     {
@@ -83,4 +84,9 @@ class Post extends Model
     {
         return $this->morphMany(Media::class, 'related')->withTrashed();
     }
+    public function updateLogs()
+    {
+        return $this->hasMany(PostUpdateLog::class);
+    }
+
 }

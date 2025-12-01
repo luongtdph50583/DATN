@@ -1,18 +1,20 @@
 <?php
 
-use App\Http\Controllers\Client\ClubFundController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Client\HomeController;
+use App\Http\Controllers\Client\ClubFundController;
 use App\Http\Controllers\Client\ClubPostController;
-use App\Http\Controllers\Client\ClubRequestController;
-use App\Http\Controllers\Client\ClubMemberRequestController;
+use App\Http\Controllers\Client\JoinClubController;
 use App\Http\Controllers\Client\InterviewController;
-use App\Http\Controllers\Client\RecruitFormController;
 use App\Http\Controllers\Client\ClubMemberController;
+use App\Http\Controllers\Client\ClubRequestController;
+use App\Http\Controllers\Client\RecruitFormController;
+use App\Http\Controllers\Client\ClubDocumentController;
 use App\Http\Controllers\Client\NotificationController;
 use App\Http\Controllers\Client\ClubNotificationController;
+use App\Http\Controllers\Client\ClubMemberRequestController;
+use App\Http\Controllers\Client\DocumentUpdateLogController;
 use App\Http\Controllers\Client\ClubFormationRequestController;
-use App\Http\Controllers\Client\JoinClubController;
 
 // Trang client home — public, user vẫn vào được
 Route::name('client.')->group(function () {
@@ -49,6 +51,20 @@ Route::post('clubs/{club}/join', [JoinClubController::class, 'submitForm'])->nam
 
 // Dashboard user bình thường — chỉ client mới vào được
 Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_manager'])->group(function () {
+
+    Route::prefix('/{club_id}/documents')->middleware('auth')->name('club.documents.')->group(function () {
+        Route::get('/', [ClubDocumentController::class, 'index'])->name('index');
+        Route::get('/create', [ClubDocumentController::class, 'create'])->name('create');
+        Route::get('/{id}', [ClubDocumentController::class, 'view'])->name('view');
+        Route::get('/{id}/edit', [ClubDocumentController::class, 'edit'])->name('edit');
+        Route::post('/store', [ClubDocumentController::class, 'store'])->name('store');
+        Route::put('/{id}', [ClubDocumentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ClubDocumentController::class, 'destroy'])->name('destroy');
+    });
+
+    // ✅ Thêm route cho logs
+  
+
 
     // Dashboard CLB
     // Route::get('/dashboard/{club_id}', [ClubManagerController::class, 'dashboard'])->name('dashboard');
@@ -130,6 +146,9 @@ Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
     // Export Excel
     Route::get('/export', [ClubFundController::class, 'export'])->name('fund.export');
 });
+    // Document routes for client
+ 
+
 
 
 });

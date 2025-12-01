@@ -30,13 +30,16 @@ class NotificationController extends Controller
         $fromDate = $request->filled('from_date') ? Carbon::parse($request->input('from_date'))->startOfDay() : null;
         $toDate = $request->filled('to_date') ? Carbon::parse($request->input('to_date'))->endOfDay() : null;
 
+        // Email vẫn lấy bình thường
         $sentEmails = SentEmail::with('user')
             ->when($fromDate, fn($q) => $q->where('created_at', '>=', $fromDate))
             ->when($toDate, fn($q) => $q->where('created_at', '<=', $toDate))
             ->latest()
             ->get();
 
+        // Chỉ lấy in-app notifications của admin (CustomNotification)
         $inAppNotifications = DatabaseNotification::with('notifiable')
+            ->where('type', 'App\\Notifications\\CustomNotification') // ✅ lọc admin
             ->when($fromDate, fn($q) => $q->where('created_at', '>=', $fromDate))
             ->when($toDate, fn($q) => $q->where('created_at', '<=', $toDate))
             ->latest()
@@ -67,7 +70,7 @@ class NotificationController extends Controller
             $grouped[$key]['channels']['Email'] = $email->status ?? '(không rõ)';
         }
 
-        // Xử lý in-app
+        // Xử lý in-app (chỉ admin)
         foreach ($inAppNotifications as $n) {
             $userId = $n->notifiable?->id;
             $batchId = $n->batch_id ?? 'inapp-' . $n->id;
@@ -76,7 +79,7 @@ class NotificationController extends Controller
             if (!isset($grouped[$key])) {
                 $grouped[$key] = [
                     'id' => $n->id,
-                    'source' => 'notification',
+                    'source' => 'admin', // ✅ gán rõ ràng là admin
                     'batch_id' => $batchId,
                     'title' => $n->data['title'] ?? '(Không có tiêu đề)',
                     'content' => $n->data['message'] ?? '(Không có nội dung)',
@@ -101,6 +104,11 @@ class NotificationController extends Controller
 
         return view('admin.notifications.index', compact('activities', 'filters'));
     }
+
+
+
+
+
 
 
 
@@ -586,4 +594,45 @@ class NotificationController extends Controller
             'member',
         ], true);
     }
+    public function markRead($id)
+    {
+        $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+
+        if (is_null($notification->read_at)) {
+            $notification->markAsRead();
+        }
+
+        return response()->json([
+            'success' => true,
+            'id' => $notification->id,
+            'read_at' => $notification->read_at,
+        ]);
+    }
+
+    public function show($id)
+    {
+        $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+
+        if (is_null($notification->read_at)) {
+            $notification->markAsRead();
+        }
+
+        $data = $notification->data ?? [];
+
+        return view('admin.notifications.show', compact('notification', 'data'));
+    }
+
+
+    public function destroy($id)
+    {
+        $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+        $notification->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+
+
+
+
 }

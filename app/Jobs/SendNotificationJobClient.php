@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Notifications\DatabaseNotification;
 
-class SendNotificationJob implements ShouldQueue
+class SendNotificationJobClient implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -99,7 +99,7 @@ class SendNotificationJob implements ShouldQueue
                     // -------------------------------
                     // SEND NOTIFICATION
                     // -------------------------------
-                    $user->notify(new CustomNotification(
+                    $user->notify(new \App\Notifications\ClientNotification(
                         $this->title,
                         $this->contentHtml,
                         $this->contentText,
@@ -108,6 +108,7 @@ class SendNotificationJob implements ShouldQueue
                         $relatedId,
                         $relatedModel
                     ));
+
 
                     // -------------------------------
                     // UPDATE STATUS

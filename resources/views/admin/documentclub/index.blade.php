@@ -9,7 +9,7 @@
 @push('scripts')
     <script>
         function rejectDocument(docId, docTitle) {
-            const reason = prompt(`Nhập lý do từ chối tài liệu "${docTitle}":`);
+            const reason = prompt('Nhập lý do từ chối tài liệu "' + docTitle + '":');
 
             if (reason === null || reason.trim() === '') {
                 return;
@@ -17,7 +17,7 @@
 
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = `{{ url('admin/documentclub') }}/${docId}/reject`;
+            form.action = '{{ url("admin/documentclub") }}/' + docId + '/reject';
             form.classList.add('d-none');
 
             const csrf = document.createElement('input');
@@ -25,6 +25,44 @@
             csrf.name = '_token';
             csrf.value = '{{ csrf_token() }}';
             form.appendChild(csrf);
+
+            const reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'reason';
+            reasonInput.value = reason.trim();
+            form.appendChild(reasonInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function deleteDocument(docId, docTitle) {
+            const reason = prompt('Nhập lý do xóa tài liệu "' + docTitle + '":');
+
+            if (reason === null || reason.trim() === '') {
+                return;
+            }
+
+            if (!confirm('Bạn có chắc chắn muốn xóa tài liệu "' + docTitle + '"?')) {
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url("admin/documentclub") }}/' + docId;
+            form.classList.add('d-none');
+
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+            form.appendChild(csrf);
+
+            const method = document.createElement('input');
+            method.type = 'hidden';
+            method.name = '_method';
+            method.value = 'DELETE';
+            form.appendChild(method);
 
             const reasonInput = document.createElement('input');
             reasonInput.type = 'hidden';
@@ -113,54 +151,53 @@
                                                     @endphp
                                                     <td>{{ $statusLabels[$doc->status] ?? ucfirst($doc->status) }}</td>
                                                     <td>{{ strtoupper($doc->file_type) }}</td>
-                                                  <td class="text-nowrap">
-    <div class="d-flex flex-wrap gap-2">
-        <!-- Xem -->
-        <a href="{{ route('admin.documentclub.show', $doc->id) }}"
-            class="btn btn-sm btn-primary" title="Xem">
-            <i class="bi bi-eye">xem</i>
-        </a>
+                                                    <td class="text-nowrap">
+                                                        {{-- Xem --}}
+                                                        <a href="{{ route('admin.documentclub.show', $doc->id) }}"
+                                                            class="btn btn-warning btn-sm me-1" title="Xem">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
 
-        @if($doc->status === 'pending')
-            <!-- Duyệt -->
-            <form action="{{ route('admin.documentclub.approve', $doc->id) }}" method="POST" class="d-inline">
-                @csrf
-                <button class="btn btn-sm btn-success" title="Duyệt">
-                    <i class="bi bi-check-circle">duyệt</i>
-                </button>
-            </form>
+                                                        {{-- Nếu đang chờ duyệt --}}
+                                                        @if($doc->status === 'pending')
+                                                            {{-- Duyệt --}}
+                                                            <form action="{{ route('admin.documentclub.approve', $doc->id) }}" method="POST"
+                                                                class="d-inline me-1">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-success btn-sm" title="Duyệt">
+                                                                    <i class="fas fa-check-circle"></i>
+                                                                </button>
+                                                            </form>
 
-            <!-- Từ chối -->
-            <button class="btn btn-sm btn-danger" title="Từ chối"
-                onclick="rejectDocument({{ $doc->id }}, @json($doc->title))">
-                <i class="bi bi-x-circle">từ chối</i>
-            </button>
-        @elseif($doc->status === 'approved')
-            <!-- Sửa -->
-            <a href="{{ route('admin.documentclub.edit', $doc->id) }}"
-                class="btn btn-sm btn-warning" title="Sửa">
-                <i class="bi bi-pencil-square">sửa</i>
-            </a>
-        @endif
+                                                            {{-- Từ chối --}}
+                                                            <button type="button" class="btn btn-danger btn-sm me-1"
+                                                                onclick="rejectDocument({{ $doc->id }}, '{{ addslashes($doc->title) }}')"
+                                                                title="Từ chối">
+                                                                <i class="fas fa-times-circle"></i>
+                                                            </button>
+                                                        @endif
 
-        <!-- Tải xuống -->
-        <a href="{{ route('admin.documentclub.download', $doc->id) }}"
-            class="btn btn-sm btn-success" title="Tải xuống">
-            <i class="bi bi-download">tải xuống</i>
-        </a>
+                                                        {{-- Chỉ hiển thị nút Sửa khi status = approved --}}
+                                                        @if($doc->status === 'approved')
+                                                            <a href="{{ route('admin.documentclub.edit', $doc->id) }}"
+                                                                class="btn btn-primary btn-sm me-1" title="Sửa">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                        @endif
 
-        <!-- Xóa -->
-        <form action="{{ route('admin.documentclub.destroy', $doc->id) }}" method="POST"
-            class="d-inline" onsubmit="return confirm('Xóa tài liệu này?')">
-            @csrf
-            @method('DELETE')
-            <button class="btn btn-sm btn-danger" title="Xóa">
-                <i class="bi bi-trash">xóa</i>
-            </button>
-        </form>
-    </div>
-</td>
+                                                        {{-- Tải xuống --}}
+                                                        <a href="{{ route('admin.documentclub.download', $doc->id) }}"
+                                                            class="btn btn-info btn-sm me-1" title="Tải xuống">
+                                                            <i class="fas fa-download"></i>
+                                                        </a>
 
+                                                        {{-- Xóa --}}
+                                                        <button type="button" class="btn btn-danger btn-sm"
+                                                            onclick="deleteDocument({{ $doc->id }}, '{{ addslashes($doc->title) }}')"
+                                                            title="Xóa">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>

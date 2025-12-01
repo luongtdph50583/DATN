@@ -392,89 +392,157 @@
                         <i class='bx bx-moon fs-22'></i>
                     </button>
                 </div>
+@php
+    $adminHeaderNotifications = $headerNotifications ?? collect();
+    $adminHeaderUnread = $headerUnreadCount ?? 0;
+@endphp
 
-                @php
-                    $adminHeaderNotifications = $headerNotifications ?? collect();
-                    $adminHeaderUnread = $headerUnreadCount ?? 0;
-                @endphp
-                <div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
-                    <button type="button"
-                            class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle"
-                            id="page-header-notifications-dropdown"
-                            data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside"
-                            aria-haspopup="true"
-                            aria-expanded="false">
-                        <i class='bx bx-bell fs-22'></i>
-                        @if($adminHeaderUnread > 0)
-                            <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger">
-                                {{ $adminHeaderUnread }}
-                                <span class="visually-hidden">unread notifications</span>
-                            </span>
-                        @endif
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0"
-                         aria-labelledby="page-header-notifications-dropdown">
-                        <div class="dropdown-head bg-primary bg-pattern rounded-top">
-                            <div class="p-3">
-                                <div class="row align-items-center">
-                                    <div class="col">
-                                        <h6 class="m-0 fs-16 fw-semibold text-white">Thông báo</h6>
-                                    </div>
-                                    <div class="col-auto dropdown-tabs">
-                                        <span class="badge bg-light text-body fs-13">
-                                            {{ $adminHeaderUnread }} mới
-                                        </span>
+<div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
+
+    <button type="button" class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle"
+        id="page-header-notifications-dropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+        aria-haspopup="true" aria-expanded="false">
+
+        <i class='bx bx-bell fs-22'></i>
+
+        @if($adminHeaderUnread > 0)
+            <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger">
+                {{ $adminHeaderUnread }}
+            </span>
+        @endif
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0">
+
+        <div class="dropdown-head bg-primary bg-pattern rounded-top">
+            <div class="p-3 d-flex justify-content-between">
+                <h6 class="m-0 fs-16 fw-semibold text-white">Thông báo</h6>
+                <span class="badge bg-light text-body fs-13">{{ $adminHeaderUnread }} mới</span>
+            </div>
+        </div>
+
+        <div class="px-2 pt-2">
+            <div data-simplebar style="max-height: 360px;" class="px-2">
+
+                @forelse($adminHeaderNotifications as $notification)
+                    @php
+                        $data = $notification->data ?? [];
+
+                        // Đọc cả camelCase và snake_case
+                        $actionType = $data['actionType'] ?? $data['action_type'] ?? 'general';
+                        $relatedId = $data['relatedId'] ?? $data['related_id'] ?? null;
+                        $relatedModel = $data['relatedModel'] ?? $data['related_model'] ?? null;
+
+                        // Xác định link chi tiết
+                        $targetLink = route('admin.notifications.index');
+                        if ($relatedModel === 'PostUpdateLog' && $relatedId) {
+                            $targetLink = route('admin.post_update_logs.show', $relatedId);
+                        } elseif ($relatedModel === 'Post' && $relatedId) {
+                            $targetLink = route('admin.posts.show', $relatedId);
+                        } elseif ($relatedModel === 'DocumentUpdateLog' && $relatedId) {
+                            $targetLink = route('admin.document_update_logs.show', $relatedId);
+                        } elseif ($relatedModel === 'Document' && $relatedId) {
+                            $targetLink = route('admin.documentclub.show', $relatedId);
+                        }
+
+                        $isUnread = is_null($notification->read_at);
+                        $typeLabel = match ($actionType) {
+                            'post_update' => 'Cập nhật nội dung',
+                            'document_update' => 'Cập nhật tài liệu',
+                            default => 'Thông báo'
+                        };
+                    @endphp
+
+                    <div class="notification-item-wrapper position-relative" id="notification-item-{{ $notification->id }}">
+                        <a href="javascript:void(0)"
+                            class="text-reset notification-item d-block dropdown-item position-relative {{ $isUnread ? 'bg-light-subtle' : '' }}"
+                            onclick="readAndGo('{{ $notification->id }}', '{!! $targetLink !!}')">
+
+                            <div class="d-flex">
+                                <div class="avatar-xs me-3 flex-shrink-0">
+                                    <span class="avatar-title bg-info-subtle text-info rounded-circle fs-16">
+                                        <i class="bx bx-bell"></i>
+                                    </span>
+                                </div>
+
+                                <div class="flex-grow-1">
+                                    <h6 class="mt-0 mb-1 fs-13 fw-semibold">
+                                        {{ $data['title'] ?? 'Thông báo' }}
+                                    </h6>
+                                    <p class="mb-1 text-muted small">
+                                        {{ $data['message'] ?? $data['content'] ?? '' }}
+                                    </p>
+                                    <div class="d-flex flex-wrap gap-2 text-muted fs-11 text-uppercase">
+                                        <span><i class="mdi mdi-shape me-1"></i>{{ $typeLabel }}</span>
+                                        <span><i
+                                                class="mdi mdi-clock-outline me-1"></i>{{ $notification->created_at->diffForHumans() }}</span>
                                     </div>
                                 </div>
+
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2"
+                                    onclick="deleteNotification(event, '{{ $notification->id }}')">
+                                    <i class="mdi mdi-close-circle fs-16"></i>
+                                </button>
                             </div>
-                        </div>
-                        <div class="px-2 pt-2">
-                            <div data-simplebar style="max-height: 320px;" class="px-2">
-                                @forelse($adminHeaderNotifications as $notification)
-                                    @php
-                                        $context = $notification->data['context'] ?? [];
-                                        $sender = $context['sender']['name'] ?? 'Hệ thống';
-                                        $clubName = $context['club']['name'] ?? null;
-                                        $link = $context['link'] ?? route('admin.notifications.index');
-                                        $isUnread = is_null($notification->read_at);
-                                    @endphp
-                                    <a href="{{ $link }}"
-                                       class="text-reset notification-item d-block dropdown-item position-relative {{ $isUnread ? 'bg-light-subtle' : '' }}">
-                                        <div class="d-flex">
-                                            <div class="avatar-xs me-3 flex-shrink-0">
-                                                <span class="avatar-title bg-info-subtle text-info rounded-circle fs-16">
-                                                    <i class="bx bx-bell"></i>
-                                                </span>
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <h6 class="mt-0 mb-1 fs-13 fw-semibold">{{ $notification->data['title'] ?? 'Thông báo' }}</h6>
-                                                <p class="mb-1 text-muted small">
-                                                    {{ $notification->data['message'] ?? '' }}
-                                                </p>
-                                                <div class="d-flex flex-wrap gap-2 text-muted fs-11 text-uppercase">
-                                                    <span><i class="mdi mdi-account-circle me-1"></i>{{ $sender }}</span>
-                                                    @if($clubName)
-                                                        <span><i class="mdi mdi-account-group me-1"></i>{{ $clubName }}</span>
-                                                    @endif
-                                                    <span><i class="mdi mdi-clock-outline me-1"></i>{{ optional($notification->created_at)->diffForHumans() }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                @empty
-                                    <div class="text-center py-4 text-muted">
-                                        Không có thông báo nào.
-                                    </div>
-                                @endforelse
-                            </div>
-                            <div class="border-top text-center py-2">
-                                <a class="btn btn-link btn-sm text-decoration-none" href="{{ route('admin.notifications.index') }}">
-                                    Xem tất cả thông báo <i class="ri-arrow-right-line align-middle"></i>
-                                </a>
-                            </div>
-                        </div>
+                        </a>
                     </div>
+                @empty
+                    <div class="text-center py-4 text-muted">
+                        Không có thông báo nào.
+                    </div>
+                @endforelse
+            </div>
+
+            <div class="border-top text-center py-2">
+                <a class="btn btn-link btn-sm text-decoration-none" href="{{ route('admin.notifications.index') }}">
+                    Xem tất cả thông báo <i class="ri-arrow-right-line align-middle"></i>
+                </a>
+            </div>
+        </div>
+
+        @push('scripts')
+            <script>
+                async function readAndGo(id, link) {
+                    try {
+                        await fetch("{{ route('admin.notifications.markRead', ':id') }}".replace(':id', id), {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                "Accept": "application/json"
+                            }
+                        });
+                    } catch (error) {
+                        console.error("Lỗi khi đánh dấu đã đọc:", error);
+                    } finally {
+                        window.location.href = link;
+                    }
+                }
+
+                function deleteNotification(event, id) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    if (!confirm("Xóa thông báo này?")) return;
+
+                    fetch("{{ route('admin.notifications.delete', ':id') }}".replace(':id', id), {
+                        method: "DELETE",
+                        headers: {
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                            "Accept": "application/json"
+                        }
+                    }).then(() => {
+                        const item = document.getElementById('notification-item-' + id);
+                        if (item) item.remove();
+                    });
+                }
+            </script>
+        @endpush
+    </div>
+</div>
+
+
+
+
+
                 </div>
 
                 <div class="dropdown ms-sm-3 header-item topbar-user">

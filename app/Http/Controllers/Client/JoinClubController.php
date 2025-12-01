@@ -58,13 +58,14 @@ class JoinClubController extends Controller
     $validated = $request->validate($rules);
 
     // --- Tạo request tham gia ---
-    $joinRequest = ClubJoinRequest::create([
-        'club_id' => $clubId,
-        'user_id' => $request->user()->id,
-        'status' => 'pending', // pending, approved, rejected
-    ]);
+        $joinRequest = ClubJoinRequest::create([
+            'club_id' => $clubId,
+            'user_id' => $request->user()->id,
+            'status' => 'pending_interview', // đúng với enum hiện tại
+        ]);
 
-    // --- Lưu câu trả lời ---
+
+        // --- Lưu câu trả lời ---
     $questionsData = $validated['questions'] ?? [];
 
     foreach ($questions as $q) {

@@ -66,8 +66,8 @@ $statusMap = [
                         <p class="mb-0"><strong>Địa chỉ:</strong> {{ $request->user->member->address ?? '—' }}</p>
                     </div>
                     <div class="col-md-6">
-                        <p class="mb-1"><strong>Lý do tham gia:</strong></p>
-                        <p class="text-muted">{{ $request->reason ?? '—' }}</p>
+                        {{-- <p class="mb-1"><strong>Lý do tham gia:</strong></p>
+                        <p class="text-muted">{{ $request->reason ?? '—' }}</p> --}}
                         <p class="mb-1"><strong>Thời gian gửi:</strong>
                             {{ optional($request->requested_at)->format('d/m/Y H:i') }}
                         </p>
@@ -158,11 +158,13 @@ $statusMap = [
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="mb-2">
-                                <label class="form-label">Thời gian phỏng vấn <span class="text-danger">*</span></label>
-                                <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm"
-                                    value="{{ optional($request->interview_scheduled_at)->format('Y-m-d\TH:i') }}" required>
-                            </div>
+                        <div class="mb-2">
+                            <label class="form-label">Thời gian phỏng vấn <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm"
+                                value="{{ optional($request->interview_scheduled_at)->format('Y-m-d\TH:i') }}"
+                                min="{{ now()->format('Y-m-d\TH:i') }}" required>
+                        </div>
+
                             <div class="mb-2">
                                 <label class="form-label">Địa điểm <span class="text-danger">*</span></label>
                                 <input type="text" name="location" class="form-control form-control-sm"

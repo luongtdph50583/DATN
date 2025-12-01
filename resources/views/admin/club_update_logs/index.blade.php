@@ -85,11 +85,14 @@
 
 
                             {{-- Xem chi tiết --}}
+                            {{-- Xem chi tiết --}}
                             <td>
-                                <a href="{{ route('admin.club_update_logs.show', $log->id) }}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i> Xem chi tiết
+                                <a href="{{ route('admin.club_update_logs.show', $log->id) }}" class="btn btn-warning btn-sm me-1"
+                                    title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
                                 </a>
                             </td>
+
                         </tr>
                     @endforeach
                 </tbody>

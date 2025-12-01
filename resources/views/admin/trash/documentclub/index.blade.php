@@ -19,35 +19,97 @@
         <a href="{{ route('admin.documentclub.index') }}" class="btn btn-secondary">Quay lại danh sách</a>
     </div>
 
-    @forelse($trashedDocuments as $doc)
-        <div class="card mb-3 shadow-sm">
-            <div class="card-header bg-light">
-                <strong>{{ $doc->title }}</strong>
-                <span class="badge bg-dark ms-2">{{ strtoupper($doc->file_type) }}</span>
+    {{-- Form lọc --}}
+    <form method="GET" action="{{ route('admin.documentclub.trash') }}" class="mb-3">
+        <div class="row">
+            <div class="col-md-3">
+                <input type="text" name="keyword" value="{{ request('keyword') }}" class="form-control"
+                    placeholder="Tìm theo tên tài liệu...">
             </div>
-            <div class="card-body">
-                <p><strong>CLB:</strong> {{ $doc->club->name ?? '-' }}</p>
-                <p><strong>Người tải lên:</strong> {{ $doc->uploader->name ?? '-' }}</p>
-                <p><strong>Tags:</strong> {{ $doc->tags ?? 'Không có tag' }}</p>
-                <p><strong>Mô tả:</strong> {{ $doc->description ?? 'Không có mô tả' }}</p>
-
-                <div class="d-flex gap-2">
-                    <form action="{{ route('admin.documentclub.restore', $doc->id) }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <button class="btn btn-info btn-sm">Khôi phục</button>
-                    </form>
-
-                    <form action="{{ route('admin.documentclub.forceDelete', $doc->id) }}" method="POST"
-                        onsubmit="return confirm('Xóa vĩnh viễn tài liệu này?')">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-danger btn-sm">Xóa vĩnh viễn</button>
-                    </form>
-                </div>
+            <div class="col-md-3">
+                <select name="club_id" class="form-control">
+                    <option value="">-- Chọn CLB --</option>
+                    @foreach($clubs as $club)
+                        <option value="{{ $club->id }}" {{ request('club_id') == $club->id ? 'selected' : '' }}>
+                            {{ $club->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="uploader" value="{{ request('uploader') }}" class="form-control"
+                    placeholder="Người tải lên...">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a href="{{ route('admin.documentclub.trash') }}" class="btn btn-secondary">Reset</a>
             </div>
         </div>
-    @empty
-        <p class="text-muted">Thùng rác trống. Không có tài liệu nào đã bị xóa.</p>
-    @endforelse
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>STT</th>
+                    <th>Tiêu đề</th>
+                    <th>Loại file</th>
+                    <th>CLB</th>
+                    <th>Người tải lên</th>
+                    <th>Tags</th>
+                    <th>Mô tả</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($trashedDocuments as $index => $doc)
+                            <tr>
+                                <td>{{ ($trashedDocuments->currentPage() - 1) * $trashedDocuments->perPage() + $index + 1 }}</td>
+                                <td>{{ $doc->title }}</td>
+                                <td><span class="badge bg-dark">{{ strtoupper($doc->file_type) }}</span></td>
+                                <td>{{ $doc->club->name ?? '-' }}</td>
+                                <td>{{ $doc->uploader->name ?? '-' }}</td>
+                                <td>{{ $doc->tags ?? 'Không có tag' }}</td>
+                                <td>{{ $doc->description ?? 'Không có mô tả' }}</td>
+                    <td>
+                        {{-- Xem chi tiết --}}
+                        <a href="{{ route('admin.documentclub.showTrash', $doc->id) }}" class="btn btn-warning btn-sm me-1" title="Xem">
+                            <i class="fas fa-eye"></i>
+                        </a>
+
+                        {{-- Khôi phục --}}
+                        <form action="{{ route('admin.documentclub.restore', $doc->id) }}" method="POST" class="d-inline me-1">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="btn btn-info btn-sm" title="Khôi phục">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </form>
+
+                        {{-- Xoá vĩnh viễn --}}
+                        <form action="{{ route('admin.documentclub.forceDelete', $doc->id) }}" method="POST" class="d-inline"
+                            onsubmit="return confirm('Xóa vĩnh viễn tài liệu này?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger btn-sm" title="Xóa vĩnh viễn">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+
+
+                            </tr>
+                @empty
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">Thùng rác trống. Không có tài liệu nào đã bị xóa.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- Phân trang --}}
+    <div class="d-flex justify-content-center">
+        {{ $trashedDocuments->appends(request()->query())->links() }}
+    </div>
 @endsection

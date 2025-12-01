@@ -11,7 +11,7 @@
             </span>
         </a>
         <!-- Light Logo-->
-      
+
         <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
             id="vertical-hover">
             <i class="ri-record-circle-line"></i>
@@ -163,37 +163,56 @@
                         </li>
                         <li class="nav-item">
                             <a href="{{ route('admin.documentclub.trash') }}" class="nav-link">
-                                <i class="ri-add-box-line"></i> Tài liệu đã xóa
+                                <i class="ri-delete-bin-line"></i> Tài liệu đã xóa
+                            </a>
+                        </li>
+                        {{-- ✅ thêm mục lịch sử cập nhật --}}
+                        <li class="nav-item">
+                            <a href="{{ route('admin.document_update_logs.index') }}" class="nav-link">
+                                <i class="ri-history-line"></i> Lịch sử cập nhật
                             </a>
                         </li>
                     </ul>
                 </div>
+
             </li>
 
             <!-- Nội dung -->
             <li class="menu-title"><i class="ri-article-line"></i> <span data-key="t-components">Nội dung</span></li>
 
             <!-- Bài viết -->
-            <li class="nav-item">
-                <a class="nav-link menu-link collapsed" data-bs-toggle="collapse" href="#sidebartintuc" role="button"
-                    aria-expanded="false" aria-controls="sidebartintuc">
-                    <i class="ri-newspaper-line"></i> <span data-key="t-advance-ui">Bài viết</span>
-                </a>
-                <div class="collapse" id="sidebartintuc">
-                    <ul class="nav nav-sm flex-column">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.posts.index') }}" class="nav-link" data-key="t-nestable-list">
-                                <i class="ri-file-edit-line"></i> Danh sách
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.posts.trash') }}" class="nav-link" data-key="t-sweet-alerts">
-                                <i class="ri-file-copy-2-line"></i> Bài viết đã xóa
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
+        <li class="nav-item">
+            <a class="nav-link menu-link collapsed" data-bs-toggle="collapse" href="#sidebartintuc" role="button"
+                aria-expanded="false" aria-controls="sidebartintuc">
+                <i class="ri-newspaper-line"></i>
+                <span data-key="t-advance-ui">Bài viết</span>
+            </a>
+
+            <div class="collapse" id="sidebartintuc">
+                <ul class="nav nav-sm flex-column">
+
+                    <li class="nav-item">
+                        <a href="{{ route('admin.posts.index') }}" class="nav-link" data-key="t-nestable-list">
+                            <i class="ri-file-edit-line"></i> Danh sách
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="{{ route('admin.posts.trash') }}" class="nav-link" data-key="t-sweet-alerts">
+                            <i class="ri-file-copy-2-line"></i> Bài viết đã xóa
+                        </a>
+                    </li>
+
+                    {{-- ⭐ NEW: Lịch sử thay đổi bài viết --}}
+                    <li class="nav-item">
+                        <a href="{{ route('admin.post_update_logs.index') }}" class="nav-link" data-key="t-history">
+                            <i class="ri-history-line"></i> Lịch sử cập nhật
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+        </li>
 
                 <!-- Bình luận -->
                 <li class="nav-item">
