@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Models\User;
 use App\Models\SentEmail;
 use App\Mail\GenericNotificationMail;
-use App\Notifications\CustomNotification;
+use App\Notifications\ClientNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -57,27 +57,28 @@ class SendNotificationJobClient implements ShouldQueue
     {
         $user = User::find($this->userId);
         if (!$user) {
-            Log::warning("SendNotificationJob: User {$this->userId} not found.");
+            Log::warning("SendNotificationJobClient: User {$this->userId} not found.");
             return;
         }
 
-        Log::info('SendNotificationJob start', [
+        Log::info('SendNotificationJobClient start', [
             'user_id' => $user->id,
             'batchId' => $this->batchId,
             'sendVia' => $this->sendVia,
             'force' => $this->force,
         ]);
 
-        // ====================================================
-        // EXTRACT ACTION-TYPE / RELATED MODEL / RELATED ID
-        // ====================================================
+        // === NEW: Extract sender_id ===
+        $senderId = $this->context['sender_id'] ?? null;
+
+        // Extract context
         $actionType = $this->context['action_type'] ?? 'general';
         $relatedId = $this->context['related_id'] ?? null;
         $relatedModel = $this->context['related_model'] ?? null;
 
-        // ====================================================
+        // ===================================================================
         // IN-APP NOTIFICATION
-        // ====================================================
+        // ===================================================================
         if (in_array($this->sendVia, ['database', 'both'])) {
 
             $notification = DatabaseNotification::where('batch_id', $this->batchId)
@@ -85,36 +86,31 @@ class SendNotificationJobClient implements ShouldQueue
                 ->latest()
                 ->first();
 
-            $shouldSendInApp = $this->force || !$notification || ($notification->data['status'] ?? 'sent') === 'failed';
-
-            Log::info("In-App check", [
-                'has_record' => (bool) $notification,
-                'status' => $notification->data['status'] ?? null,
-                'should_send' => $shouldSendInApp,
-            ]);
+            $shouldSendInApp =
+                $this->force ||
+                !$notification ||
+                ($notification->data['status'] ?? 'sent') === 'failed';
 
             if ($shouldSendInApp) {
                 try {
-
-                    // -------------------------------
-                    // SEND NOTIFICATION
-                    // -------------------------------
-                    $user->notify(new \App\Notifications\ClientNotification(
+                    // --- SEND CLIENT NOTIFICATION ---
+                    $user->notify(new ClientNotification(
                         $this->title,
                         $this->contentHtml,
                         $this->contentText,
                         $this->batchId,
                         $actionType,
                         $relatedId,
-                        $relatedModel
+                        $relatedModel,
+                        $senderId // <-- NEW
                     ));
 
-
-                    // -------------------------------
-                    // UPDATE STATUS
-                    // -------------------------------
+                    // --- UPDATE STATUS ---
                     if ($notification) {
-                        $notification->data = array_merge($notification->data, ['status' => 'sent']);
+                        $notification->data = array_merge($notification->data, [
+                            'status' => 'sent',
+                            'sender_id' => $senderId
+                        ]);
                         $notification->save();
                     } else {
                         sleep(1);
@@ -122,41 +118,42 @@ class SendNotificationJobClient implements ShouldQueue
                             ->where('notifiable_id', $user->id)
                             ->latest()
                             ->first();
+
                         if ($latest) {
-                            $latest->data = array_merge($latest->data, ['status' => 'sent']);
+                            $latest->data = array_merge($latest->data, [
+                                'status' => 'sent',
+                                'sender_id' => $senderId
+                            ]);
                             $latest->save();
                         }
                     }
 
-                    Log::info("In-App notification sent to user {$user->id}");
-
                 } catch (\Exception $e) {
-                    Log::error("Error sending In-App notification to user {$user->id}: " . $e->getMessage());
+                    Log::error("Error sending Client In-App notification to user {$user->id}: " . $e->getMessage());
 
                     if ($notification) {
-                        $notification->data = array_merge($notification->data, ['status' => 'failed']);
+                        $notification->data = array_merge($notification->data, [
+                            'status' => 'failed'
+                        ]);
                         $notification->save();
                     }
                 }
             }
         }
 
-        // ====================================================
+        // ===================================================================
         // EMAIL NOTIFICATION
-        // ====================================================
+        // ===================================================================
         if (in_array($this->sendVia, ['mail', 'both'])) {
 
             $emailRecord = SentEmail::where('batch_id', $this->batchId)
                 ->where('user_id', $user->id)
                 ->first();
 
-            $shouldSendMail = $this->force || !$emailRecord || ($emailRecord->status === 'failed');
-
-            Log::info("Email check", [
-                'has_record' => (bool) $emailRecord,
-                'status' => $emailRecord->status ?? null,
-                'should_send' => $shouldSendMail,
-            ]);
+            $shouldSendMail =
+                $this->force ||
+                !$emailRecord ||
+                ($emailRecord->status === 'failed');
 
             if ($shouldSendMail) {
                 try {
@@ -175,13 +172,11 @@ class SendNotificationJobClient implements ShouldQueue
                             'title' => $this->title,
                             'content' => $this->contentHtml,
                             'status' => 'sent',
+                            'sender_id' => $senderId // <-- NEW (optional nếu bạn muốn)
                         ]
                     );
 
-                    Log::info("Email sent to user {$user->id}");
-
                 } catch (\Exception $e) {
-                    Log::error("Error sending email to user {$user->id}: " . $e->getMessage());
 
                     SentEmail::updateOrCreate(
                         ['batch_id' => $this->batchId, 'user_id' => $user->id],
@@ -189,6 +184,7 @@ class SendNotificationJobClient implements ShouldQueue
                             'title' => $this->title,
                             'content' => $this->contentHtml,
                             'status' => 'failed',
+                            'sender_id' => $senderId
                         ]
                     );
                 }

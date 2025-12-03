@@ -27,6 +27,7 @@ class SendNotificationJob implements ShouldQueue
     public string $batchId;
     public bool $force;
     public array $context;
+    public ?int $senderId;
 
     public function __construct(
         int $userId,
@@ -36,7 +37,8 @@ class SendNotificationJob implements ShouldQueue
         string $batchId,
         bool $force = false,
         ?string $contentText = null,
-        array $context = []
+        array $context = [],
+        ?int $senderId = null
     ) {
         $this->userId = $userId;
         $this->title = $title;
@@ -46,6 +48,7 @@ class SendNotificationJob implements ShouldQueue
         $this->force = $force;
         $this->contentText = $contentText ?? $this->fallbackPlain($content);
         $this->context = $context;
+        $this->senderId = $senderId;
     }
 
     protected function fallbackPlain(string $html): string
@@ -61,11 +64,16 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
+        // Lấy thông tin người gửi nếu có
+        $sender = $this->senderId ? User::find($this->senderId) : null;
+
         Log::info('SendNotificationJob start', [
             'user_id' => $user->id,
             'batchId' => $this->batchId,
             'sendVia' => $this->sendVia,
             'force' => $this->force,
+            'sender_id' => $this->senderId,
+            'sender_name' => $sender?->name ?? 'System',
         ]);
 
         // ====================================================
@@ -100,13 +108,14 @@ class SendNotificationJob implements ShouldQueue
                     // SEND NOTIFICATION
                     // -------------------------------
                     $user->notify(new CustomNotification(
-                        $this->title,
-                        $this->contentHtml,
-                        $this->contentText,
-                        $this->batchId,
-                        $actionType,
-                        $relatedId,
-                        $relatedModel
+                        $this->title,           // title
+                        $this->contentHtml,     // contentHtml
+                        $this->contentText,     // contentText
+                        $this->batchId,         // batchId
+                        $this->senderId,        // senderId
+                        $actionType,            // actionType
+                        $relatedId,             // relatedId
+                        $relatedModel           // relatedModel
                     ));
 
                     // -------------------------------
@@ -164,7 +173,8 @@ class SendNotificationJob implements ShouldQueue
                             $this->title,
                             $this->contentHtml,
                             $this->contentText,
-                            $this->batchId
+                            $this->batchId,
+                            $sender?->name
                         )
                     );
 
@@ -174,6 +184,7 @@ class SendNotificationJob implements ShouldQueue
                             'title' => $this->title,
                             'content' => $this->contentHtml,
                             'status' => 'sent',
+                            'sender_id' => $this->senderId,
                         ]
                     );
 
@@ -188,6 +199,7 @@ class SendNotificationJob implements ShouldQueue
                             'title' => $this->title,
                             'content' => $this->contentHtml,
                             'status' => 'failed',
+                            'sender_id' => $this->senderId,
                         ]
                     );
                 }

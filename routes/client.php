@@ -134,11 +134,13 @@ Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_
         Route::post('/approve/{member_id}', [RecruitFormController::class, 'approve'])->name('recruit.approve');
     });
 
-    Route::prefix('{club_id}/notifications')->name('notifications.')->group(function () {
-        Route::get('/create', [ClubNotificationController::class, 'create'])->name('create');
-        Route::post('/', [ClubNotificationController::class, 'store'])->name('store');
-    });
-
+    Route::prefix('{club_id}/notifications')
+        ->name('notifications.')
+        ->group(function () {
+            Route::get('/create', [ClubNotificationController::class, 'create'])->name('create');
+            Route::post('/', [ClubNotificationController::class, 'store'])->name('store');
+            Route::get('/fetch-club-members', [ClubNotificationController::class, 'fetchClubMembers'])->name('fetchClubMembers');
+        });
     // Quỹ CLB
 Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
     // Trang tổng quỹ + lịch sử giao dịch

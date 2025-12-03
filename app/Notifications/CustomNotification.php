@@ -4,7 +4,6 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\DatabaseMessage;
 
 class CustomNotification extends Notification
 {
@@ -17,12 +16,14 @@ class CustomNotification extends Notification
     public string $actionType;
     public ?string $relatedModel;
     public ?int $relatedId;
+    public int $senderId; // ⭐ thêm senderId
 
     public function __construct(
         string $title,
         string $contentHtml,
         string $contentText,
         string $batchId,
+        int $senderId,                     // ⭐ thêm
         string $actionType = 'general',
         ?int $relatedId = null,
         ?string $relatedModel = null
@@ -32,6 +33,7 @@ class CustomNotification extends Notification
         $this->contentText = $contentText;
         $this->batchId = $batchId;
 
+        $this->senderId = $senderId;       // ⭐ lưu sender
         $this->actionType = $actionType;
         $this->relatedId = $relatedId;
         $this->relatedModel = $relatedModel;
@@ -50,6 +52,9 @@ class CustomNotification extends Notification
             'message_html' => $this->contentHtml,
             'status' => 'sent',
             'batch_id' => $this->batchId,
+
+            // ⭐ Ghi lại người gửi
+            'sender_id' => $this->senderId,
 
             // ⭐ Trường phân loại
             'action_type' => $this->actionType,

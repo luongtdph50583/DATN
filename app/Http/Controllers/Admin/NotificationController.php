@@ -29,19 +29,34 @@ class NotificationController extends Controller
     {
         $fromDate = $request->filled('from_date') ? Carbon::parse($request->input('from_date'))->startOfDay() : null;
         $toDate = $request->filled('to_date') ? Carbon::parse($request->input('to_date'))->endOfDay() : null;
+        $senderId = $request->input('sender_id');
 
-        // Email vẫn lấy bình thường
-        $sentEmails = SentEmail::with('user')
+        // ✅ Lấy danh sách admin IDs
+        $adminIds = User::where('role', 'admin')->pluck('id');
+
+        // Email với sender (chỉ từ admin)
+        $sentEmails = SentEmail::with(['user.member', 'sender.member'])
+            ->whereIn('sender_id', $adminIds) // ✅ Chỉ lấy email từ admin
             ->when($fromDate, fn($q) => $q->where('created_at', '>=', $fromDate))
             ->when($toDate, fn($q) => $q->where('created_at', '<=', $toDate))
+            ->when($senderId, fn($q) => $q->where('sender_id', $senderId))
             ->latest()
             ->get();
 
-        // Chỉ lấy in-app notifications của admin (CustomNotification)
-        $inAppNotifications = DatabaseNotification::with('notifiable')
-            ->where('type', 'App\\Notifications\\CustomNotification') // ✅ lọc admin
+        // In-app notifications (chỉ từ admin)
+        $inAppNotifications = DatabaseNotification::with('notifiable.member')
+            ->where('type', 'App\\Notifications\\CustomNotification')
+            ->where(function ($query) use ($adminIds) {
+                // ✅ Lọc notifications có sender_id là admin
+                $query->where(function ($q) use ($adminIds) {
+                    foreach ($adminIds as $adminId) {
+                        $q->orWhereJsonContains('data->sender_id', $adminId);
+                    }
+                });
+            })
             ->when($fromDate, fn($q) => $q->where('created_at', '>=', $fromDate))
             ->when($toDate, fn($q) => $q->where('created_at', '<=', $toDate))
+            ->when($senderId, fn($q) => $q->whereJsonContains('data->sender_id', (int) $senderId))
             ->latest()
             ->get();
 
@@ -53,6 +68,9 @@ class NotificationController extends Controller
             $batchId = $email->batch_id ?? 'email-' . $email->id;
             $key = $batchId . '-' . ($userId ?? 'unknown-' . $email->id);
 
+            $userName = $email->user?->member?->name ?? $email->user?->name ?? $email->user?->email ?? '---';
+            $senderName = $email->sender?->member?->name ?? $email->sender?->name ?? null;
+
             if (!isset($grouped[$key])) {
                 $grouped[$key] = [
                     'id' => $email->id,
@@ -61,8 +79,10 @@ class NotificationController extends Controller
                     'title' => $email->title,
                     'content' => $email->content,
                     'created_at' => $email->created_at,
-                    'user' => $email->user?->ho_ten ?? $email->user?->email ?? '---',
+                    'user' => $userName,
                     'user_id' => $userId,
+                    'sender' => $senderName,
+                    'sender_id' => $email->sender_id,
                     'channels' => [],
                 ];
             }
@@ -70,41 +90,89 @@ class NotificationController extends Controller
             $grouped[$key]['channels']['Email'] = $email->status ?? '(không rõ)';
         }
 
-        // Xử lý in-app (chỉ admin)
+        // Xử lý in-app
         foreach ($inAppNotifications as $n) {
             $userId = $n->notifiable?->id;
             $batchId = $n->batch_id ?? 'inapp-' . $n->id;
             $key = $batchId . '-' . ($userId ?? 'unknown-' . $n->id);
 
+            $senderIdFromData = $n->data['sender_id'] ?? null;
+            $senderName = null;
+
+            if ($senderIdFromData) {
+                $sender = User::with('member')->find($senderIdFromData);
+                $senderName = $sender?->member?->name ?? $sender?->name ?? null;
+            }
+
+            $userName = $n->notifiable?->member?->name ?? $n->notifiable?->name ?? $n->notifiable?->email ?? '---';
+
             if (!isset($grouped[$key])) {
                 $grouped[$key] = [
                     'id' => $n->id,
-                    'source' => 'admin', // ✅ gán rõ ràng là admin
+                    'source' => 'admin',
                     'batch_id' => $batchId,
                     'title' => $n->data['title'] ?? '(Không có tiêu đề)',
                     'content' => $n->data['message'] ?? '(Không có nội dung)',
                     'created_at' => $n->created_at,
-                    'user' => $n->notifiable?->ho_ten ?? $n->notifiable?->email ?? '---',
+                    'user' => $userName,
                     'user_id' => $userId,
+                    'sender' => $senderName,
+                    'sender_id' => $senderIdFromData,
                     'channels' => [],
                 ];
+            } else {
+                // Nếu đã tồn tại (từ email), cập nhật sender nếu in-app có thông tin tốt hơn
+                if ($senderName && !$grouped[$key]['sender']) {
+                    $grouped[$key]['sender'] = $senderName;
+                    $grouped[$key]['sender_id'] = $senderIdFromData;
+                }
             }
 
-            $grouped[$key]['channels']['In-App'] = $n->status ?? '(không rõ)';
+            $grouped[$key]['channels']['In-App'] = $n->data['status'] ?? '(không rõ)';
+        }
+
+        // Sau khi xử lý xong, set 'System' cho những record không có sender
+        foreach ($grouped as &$item) {
+            if (!$item['sender']) {
+                $item['sender'] = 'Admin System';
+            }
         }
 
         $activities = collect($grouped)
             ->sortByDesc('created_at')
             ->values();
 
+        // ✅ Lấy danh sách admin để hiển thị trong dropdown filter
+        $senders = User::with('member')
+            ->where('role', 'admin') // ✅ Chỉ lấy admin
+            ->where(function ($query) {
+                $query->whereIn('id', function ($subQuery) {
+                    $subQuery->select('sender_id')
+                        ->from('sent_emails')
+                        ->whereNotNull('sender_id');
+                })
+                    ->orWhereIn('id', function ($subQuery) {
+                        $subQuery->selectRaw('CAST(JSON_EXTRACT(data, "$.sender_id") AS UNSIGNED)')
+                            ->from('notifications')
+                            ->where('type', 'App\\Notifications\\CustomNotification')
+                            ->whereNotNull(DB::raw('JSON_EXTRACT(data, "$.sender_id")'));
+                    });
+            })
+            ->get()
+            ->map(function ($user) {
+                $user->display_name = $user->member?->name ?? $user->name ?? $user->email;
+                return $user;
+            })
+            ->sortBy('display_name');
+
         $filters = [
             'from_date' => $fromDate?->format('Y-m-d'),
             'to_date' => $toDate?->format('Y-m-d'),
+            'sender_id' => $senderId,
         ];
 
-        return view('admin.notifications.index', compact('activities', 'filters'));
+        return view('admin.notifications.index', compact('activities', 'filters', 'senders'));
     }
-
 
 
 
@@ -526,16 +594,19 @@ class NotificationController extends Controller
         }
 
         $batchId = \Str::uuid()->toString();
+        $senderId = auth()->id(); // Lấy ID người gửi hiện tại
 
         foreach ($recipients as $userId) {
             SendNotificationJob::dispatch(
-                $userId,
-                $data['title'],
-                $htmlContent,
-                $data['send_via'],
-                $batchId,
-                false,
-                $plainContent
+                $userId,                // user_id (người nhận)
+                $data['title'],         // title
+                $htmlContent,           // content (HTML)
+                $data['send_via'],      // send_via
+                $batchId,               // batch_id
+                false,                  // force
+                $plainContent,          // content_text
+                [],                     // context
+                $senderId               // sender_id (người gửi) - THÊM VÀO CUỐI
             );
         }
 

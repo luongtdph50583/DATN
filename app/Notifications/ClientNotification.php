@@ -4,7 +4,6 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\DatabaseMessage;
 
 class ClientNotification extends Notification
 {
@@ -17,6 +16,7 @@ class ClientNotification extends Notification
     public string $actionType;
     public ?string $relatedModel;
     public ?int $relatedId;
+    public ?int $senderId; // ⭐ thêm vào
 
     public function __construct(
         string $title,
@@ -25,7 +25,8 @@ class ClientNotification extends Notification
         string $batchId,
         string $actionType = 'general',
         ?int $relatedId = null,
-        ?string $relatedModel = null
+        ?string $relatedModel = null,
+        ?int $senderId = null // ⭐ thêm vào
     ) {
         $this->title = $title;
         $this->contentHtml = $contentHtml;
@@ -35,6 +36,8 @@ class ClientNotification extends Notification
         $this->actionType = $actionType;
         $this->relatedId = $relatedId;
         $this->relatedModel = $relatedModel;
+
+        $this->senderId = $senderId; // ⭐ save sender
     }
 
     public function via($notifiable)
@@ -51,10 +54,12 @@ class ClientNotification extends Notification
             'status' => 'sent',
             'batch_id' => $this->batchId,
 
-            // ⭐ Trường phân loại
             'action_type' => $this->actionType,
             'related_model' => $this->relatedModel,
             'related_id' => $this->relatedId,
+
+            // ⭐ người gửi
+            'sender_id' => $this->senderId,
         ];
     }
 

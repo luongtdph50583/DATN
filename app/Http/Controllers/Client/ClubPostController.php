@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Jobs\SendNotificationJobClient;
 use Illuminate\Support\Facades\Storage;
 
 class ClubPostController extends Controller
@@ -225,16 +226,24 @@ class ClubPostController extends Controller
                         ucfirst($typeText) . " '{$post->title}' của CLB {$club->name} đã được cập nhật.";
 
                     foreach ($adminUsers as $admin) {
-                        $admin->notify(new \App\Notifications\ClientNotification(
-                            title: "Cập nhật {$typeText} trong CLB {$club->name}",
-                            contentHtml: $htmlMessage,
-                            contentText: $textMessage,
-                            batchId: $batchId,
-                            actionType: 'post_update',
-                            relatedId: $log?->id,
-                            relatedModel: 'PostUpdateLog'
-                        ));
+                        SendNotificationJobClient::dispatch(
+                            $admin->id,                                       // người nhận
+                            "Cập nhật {$typeText} trong CLB {$club->name}",   // tiêu đề
+                            $htmlMessage,                                     // nội dung HTML
+                            'database',                                       // gửi qua in-app notification
+                            md5('post_update_' . $log?->id . '_' . now()->timestamp), // batch_id
+                            false,                                            // force
+                            $textMessage,                                     // contentText
+                            [
+                                'sender_id' => auth()->id(),               // người gửi
+                                'action_type' => 'post_update',              // giống notify cũ
+                                'related_id' => $log?->id,
+                                'related_model' => 'PostUpdateLog',
+                            ]
+                        );
                     }
+
+
                 } catch (\Exception $notifyErr) {
                     // bỏ qua lỗi notify
                 }

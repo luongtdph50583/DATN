@@ -549,14 +549,17 @@ class ClubRequestUpdateController extends Controller
             $update->status = 'approved';
             $update->save();
 
-            SendNotificationJob::dispatch(
-                $creatorUser->id,
-                "Yêu cầu cập nhật CLB được duyệt",
-                "Yêu cầu cập nhật CLB '{$club->name}' được duyệt.",
-                'both',
-                uniqid(),
-                false
-            );
+           SendNotificationJob::dispatch(
+    $creatorUser->id,           // user_id (người nhận)
+    "Yêu cầu cập nhật CLB được duyệt",  // title
+    "Yêu cầu cập nhật CLB '{$club->name}' được duyệt.",  // content (HTML)
+    'both',                     // send_via
+    uniqid(),                   // batch_id
+    false,                      // force
+    null,                       // content_text (null = tự động convert)
+    [],                         // context
+    auth()->id()                // sender_id (người gửi - người duyệt)
+);
         }
 
         /* ====================================================================
@@ -567,12 +570,15 @@ class ClubRequestUpdateController extends Controller
             $update->save();
 
             SendNotificationJob::dispatch(
-                $creatorUser->id,
-                "Yêu cầu cập nhật CLB bị từ chối",
-                "Lý do: {$rejectedReason}",
-                'both',
-                uniqid(),
-                false
+                $creatorUser->id,           // user_id (người nhận)
+                "Yêu cầu cập nhật CLB bị từ chối",  // title
+                "Lý do: {$rejectedReason}",  // content (HTML)
+                'both',                     // send_via
+                uniqid(),                   // batch_id
+                false,                      // force
+                null,                       // content_text (null = tự động convert)
+                [],                         // context
+                auth()->id()                // sender_id (người gửi - người từ chối)
             );
         }
 

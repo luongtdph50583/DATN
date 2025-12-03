@@ -12,7 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Jobs\SendNotificationJob;
+use App\Jobs\SendNotificationJobClient
+;
 use Carbon\Carbon;
 
 class ClubMemberRequestController extends Controller
@@ -285,14 +286,17 @@ class ClubMemberRequestController extends Controller
             ]);
 
             // Gửi thông báo
-            SendNotificationJob::dispatch(
+            SendNotificationJobClient::dispatch(
+
                 $user->id,
                 "Yêu cầu tham gia CLB được duyệt",
                 "Yêu cầu tham gia CLB '{$joinRequest->club->name}' của bạn đã được duyệt.",
-                'both',
-                uniqid(),
-                false
+                'both',                              // gửi cả email + database
+                uniqid(),                            // key duy nhất
+                false,                               // có gửi email hay không
+                auth()->id()                         // 👉 thêm sender_id
             );
+
         });
 
         return back()->with('success', 'Duyệt yêu cầu thành công!');
@@ -325,13 +329,15 @@ class ClubMemberRequestController extends Controller
 
         // Gửi thông báo
         $batchId = uniqid();
-        SendNotificationJob::dispatch(
+        SendNotificationJobClient::dispatch(
+
             $joinRequest->user->id,
             "Yêu cầu tham gia CLB bị từ chối",
             "Yêu cầu tham gia CLB '{$joinRequest->club->name}' của bạn đã bị từ chối. Lý do: {$joinRequest->note}",
             'both',
             $batchId,
-            false
+            false,
+            auth()->id() // 👉 thêm sender_id
         );
 
         return redirect()->back()
@@ -380,14 +386,20 @@ class ClubMemberRequestController extends Controller
             $message .= ' Ghi chú: ' . $data['interview_note'];
         }
 
-        SendNotificationJob::dispatch(
+        SendNotificationJobClient::dispatch(
+
             $request->user_id,
             'Thông báo lịch phỏng vấn',
             $message,
             'database',
             'club_join_request_' . $request->id . '_schedule_' . now()->timestamp,
-            false
+            false,
+            null,
+            [
+                'sender_id' => auth()->id()
+            ]
         );
+
     }
 
     /**
@@ -468,14 +480,20 @@ class ClubMemberRequestController extends Controller
         $request->save();
 
         $message = "Chúc mừng! Bạn đã trở thành thành viên của CLB {$request->club->name}.";
-        SendNotificationJob::dispatch(
+        SendNotificationJobClient::dispatch(
+
             $request->user_id,
             'Yêu cầu tham gia được duyệt',
             $message,
             'both',
             md5('approved_' . $request->id . '_' . now()->timestamp),
-            false
+            false,
+            null, // contentText (giữ null để job tự tạo)
+            [
+                'sender_id' => auth()->id()
+            ]
         );
+
     }
 
     /**
@@ -494,14 +512,20 @@ class ClubMemberRequestController extends Controller
             $message .= ' Lý do: ' . $request->note;
         }
 
-        SendNotificationJob::dispatch(
+        SendNotificationJobClient::dispatch(
+
             $request->user_id,
             'Yêu cầu tham gia bị từ chối',
             $message,
             'both',
             md5('rejected_' . $request->id . '_' . now()->timestamp),
-            false
+            false,        // force
+            null,         // contentText -> để job tự convert từ HTML
+            [
+                'sender_id' => auth()->id()
+            ]
         );
+
     }
 
     /**
@@ -517,14 +541,20 @@ class ClubMemberRequestController extends Controller
 
         $message = "Yêu cầu tham gia CLB {$request->club->name} đã bị hủy.";
 
-        SendNotificationJob::dispatch(
+        SendNotificationJobClient::dispatch(
+
             $request->user_id,
             'Yêu cầu tham gia bị hủy',
             $message,
             'database',
             md5('cancelled_' . $request->id . '_' . now()->timestamp),
-            false
+            false,        // force
+            null,         // contentText -> job sẽ tự generate từ HTML
+            [
+                'sender_id' => auth()->id()
+            ]
         );
+
     }
 
     /**
@@ -587,14 +617,21 @@ class ClubMemberRequestController extends Controller
                 $request->save();
 
                 $message = "CLB {$request->club->name} đã lên lịch phỏng vấn cho bạn vào {$scheduledAt->format('d/m/Y H:i')} tại {$data['location']}.";
-                SendNotificationJob::dispatch(
-                    $request->user_id,
-                    'Thông báo lịch phỏng vấn',
-                    $message,
-                    'database',
-                    md5('schedule_' . $request->id . '_' . now()->timestamp),
-                    false
+
+                SendNotificationJobClient::dispatch(
+
+                    $request->user_id,                                   // người nhận
+                    'Thông báo lịch phỏng vấn',                          // tiêu đề
+                    $message,                                            // nội dung html/text
+                    'database',                                          // gửi qua database notification
+                    md5('schedule_' . $request->id . '_' . now()->timestamp), // batch_id
+                    false,                                               // force
+                    null,                                                // contentText -> để job tự chuyển html => plain text
+                    [
+                        'sender_id' => auth()->id()                      // <-- người gửi đúng vị trí
+                    ]
                 );
+
 
                 $count++;
             }

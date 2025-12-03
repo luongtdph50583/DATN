@@ -393,8 +393,26 @@
                     </button>
                 </div>
 @php
-    $adminHeaderNotifications = $headerNotifications ?? collect();
-    $adminHeaderUnread = $headerUnreadCount ?? 0;
+    $currentAdminId = auth()->id();
+
+    // ✅ Lọc ClientNotification - sửa type cho đúng
+    $adminHeaderNotifications = \Illuminate\Support\Facades\DB::table('notifications')
+        ->where('type', 'App\Notifications\ClientNotification') // ✅ CHỈ 1 dấu \ (hoặc không escape)
+        ->where('notifiable_id', $currentAdminId)
+        ->orderBy('created_at', 'desc')
+        ->limit(10)
+        ->get()
+        ->map(function ($notification) {
+            $notification->data = json_decode($notification->data, true);
+            $notification->created_at = \Carbon\Carbon::parse($notification->created_at);
+            return $notification;
+        });
+
+    $adminHeaderUnread = \Illuminate\Support\Facades\DB::table('notifications')
+        ->where('type', 'App\Notifications\ClientNotification') // ✅ CHỈ 1 dấu \
+        ->where('notifiable_id', $currentAdminId)
+        ->whereNull('read_at')
+        ->count();
 @endphp
 
 <div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
@@ -499,7 +517,7 @@
                 </a>
             </div>
         </div>
-
+    
         @push('scripts')
             <script>
                 async function readAndGo(id, link) {
