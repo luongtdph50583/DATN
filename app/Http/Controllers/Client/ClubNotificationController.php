@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Client;
 
-use App\Http\Controllers\Controller;
-use App\Jobs\SendNotificationJob;
 use App\Models\Club;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Jobs\SendNotificationJob;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use App\Jobs\SendNotificationJobClient;
 
 class ClubNotificationController extends Controller
 {
@@ -85,7 +86,7 @@ class ClubNotificationController extends Controller
         $batchId = Str::uuid()->toString();
 
         foreach ($recipientIds as $userId) {
-            SendNotificationJob::dispatch(
+            SendNotificationJobClient::dispatch(
                 $userId,
                 $validated['title'],
                 $htmlContent,
@@ -98,7 +99,7 @@ class ClubNotificationController extends Controller
 
         return redirect()
             ->route('club_manager.notifications.create', ['club_id' => $club_id])
-            ->with('success', 'Thông báo đang được gửi đến các thành viên CLB.');
+            ->with('success', 'Thông báo đang được gửi đến .');
     }
 
     protected function resolveRecipients(int $clubId, string $target, ?string $role, array $userIds): Collection

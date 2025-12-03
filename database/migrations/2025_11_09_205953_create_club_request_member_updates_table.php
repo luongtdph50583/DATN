@@ -13,15 +13,32 @@ return new class extends Migration
     {
         Schema::create('club_request_member_updates', function (Blueprint $table) {
             $table->id();
+
             $table->foreignId('club_request_update_id')
                 ->constrained('club_request_updates')
                 ->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // đổi từ member_id
-            $table->enum('role', ['club_manager', 'deputy_manager', 'event_manager', 'communication', 'secretary', 'treasurer', 'member']);
+
+            // CHO PHÉP NULL + SET NULL
+            $table->foreignId('user_id')
+                ->nullable() // ⭐ Cho phép null
+                ->constrained('users')
+                ->nullOnDelete(); // ⭐ Auto set null nếu user bị xóa
+
+            $table->enum('role', [
+                'club_manager',
+                'deputy_manager',
+                'event_manager',
+                'communication',
+                'secretary',
+                'treasurer',
+                'member'
+            ]);
+
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('note')->nullable();
             $table->timestamps();
         });
+
     }
 
 

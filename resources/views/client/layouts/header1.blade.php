@@ -117,16 +117,25 @@
                                     <li>
                                         <a href="{{ route('client.clubs.list') }}">Các Câu Lạc Bộ </a>
                                     </li>
-                                    <li>
-                                        <a href="news-details.html">
-                                            Blog
-                                        </a>
-                                        <ul class="submenu">
-                                            <li><a href="news-grid.html">Blog Grid</a></li>
-                                            <li><a href="news.html">Blog Standard</a></li>
-                                            <li><a href="news-details.html">Blog Details</a></li>
-                                        </ul>
-                                    </li>
+                              <li>
+    <a href="{{ route('client.postpublic.index') }}">
+        Blog
+    </a>
+    @php
+        $clubs = \App\Models\Club::all();
+    @endphp
+    <ul class="submenu {{ $clubs->count() > 7 ? 'submenu-horizontal' : '' }}">
+        @foreach($clubs as $club)
+            <li>
+                <a href="{{ route('client.postpublic.by_club', $club->id) }}">
+                    {{ $club->name }}
+                </a>
+            </li>
+        @endforeach
+    </ul>
+</li>
+
+
                                     <li>
                                         <a href="contact.html">Contact Us</a>
                                     </li>

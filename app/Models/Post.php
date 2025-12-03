@@ -48,6 +48,11 @@ class Post extends Model
     {
         return $this->belongsTo(Club::class);
     }
+    public function comments()
+{
+    return $this->hasMany(Comment::class);
+}
+
 
     // Trong Post.php
     public function approver()

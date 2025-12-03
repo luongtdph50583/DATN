@@ -9,7 +9,9 @@ class ClubRequestMemberUpdate extends Model
     protected $fillable = [
         'club_request_update_id',
         'user_id',
+        'old_user_id',  // ← THÊM
         'role',
+        'action',       // ← THÊM
         'status',
         'note',
     ];
@@ -28,5 +30,9 @@ class ClubRequestMemberUpdate extends Model
     public function memberInfo()
     {
         return $this->hasOne(Member::class, 'user_id', 'user_id');
+    }
+    public function oldUser()
+    {
+        return $this->belongsTo(User::class, 'old_user_id');
     }
 }

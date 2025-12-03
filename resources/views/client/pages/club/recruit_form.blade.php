@@ -27,11 +27,11 @@
                     class="btn btn-outline-primary">
                     <i class="fas fa-list me-1"></i> Quản lý forms
                 </a>
-                <a href="{{ route('club_manager.recruit.index', ['club_id' => $club->id]) }}"
+                {{-- <a href="{{ route('club_manager.recruit.index', ['club_id' => $club->id]) }}"
                     class="btn btn-outline-secondary">
                     <i class="fas fa-users me-1"></i> Danh sách yêu cầu
-                </a>
-                <a href="{{ route('club_manager.posts.index', ['club_id' => $club->id]) }}" class="btn btn-secondary">
+                </a> --}}
+                <a href="{{ route('club_manager.recruit_forms.list', ['club_id' => $club->id]) }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Quay lại
                 </a>
             </div>

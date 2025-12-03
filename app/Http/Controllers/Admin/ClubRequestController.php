@@ -30,7 +30,7 @@ class ClubRequestController extends Controller
         $request = ClubRequest::with([
             'user',                        // Người đề xuất
             'clubRequestMembers.user.member', // Thành viên/ban quản lý + thông tin member
-            'advisorFaculty.user',            // Giảng viên đỡ đầu + thông tin user
+            // 'advisorFaculty.user',            // Giảng viên đỡ đầu + thông tin user
         ])->findOrFail($id);
 
         return view('admin.club_requests.show', compact('request'));
@@ -129,7 +129,7 @@ public function handleRequest(Request $request, $id)
         });
 
         return redirect()->route('admin.club_requests.index')
-            ->with('success', 'Yêu cầu đã được duyệt và chuyển thành CLB.');
+            ->with('success', 'Yêu cầu đã được duyệt .');
 
     } else {
         // rejected
@@ -149,7 +149,7 @@ public function handleRequest(Request $request, $id)
         );
 
         return redirect()->route('admin.club_requests.index')
-            ->with('success', 'Yêu cầu đã bị từ chối và lưu lại.');
+            ->with('success', 'Yêu cầu đã bị từ chối.');
     }
 }
 

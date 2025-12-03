@@ -22,16 +22,21 @@ class ClubPostController extends Controller
      */
     public function index($club_id)
     {
+        // Lấy thông tin CLB
         $club = Club::findOrFail($club_id);
+
+        // Kiểm tra quyền (chỉ quản lý CLB hoặc admin mới xem trang này)
         $this->authorizeClubManager($club);
 
+        // Lấy danh sách bài viết của CLB - sort theo bài mới nhất
         $posts = Post::where('club_id', $club_id)
             ->with(['user', 'media'])
-            ->latest()
+            ->orderBy('created_at', 'desc')  // 👈 sort theo created_at mới nhất
             ->paginate(15);
 
         return view('client.pages.post.index', compact('club', 'posts'));
     }
+
 
     /**
      * Hiển thị form tạo bài viết

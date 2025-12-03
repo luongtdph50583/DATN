@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Client\PostPublicController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\ClubFundController;
 use App\Http\Controllers\Client\ClubPostController;
@@ -16,12 +17,27 @@ use App\Http\Controllers\Client\ClubMemberRequestController;
 use App\Http\Controllers\Client\DocumentUpdateLogController;
 use App\Http\Controllers\Client\ClubFormationRequestController;
 
+
 // Trang client home — public, user vẫn vào được
 Route::name('client.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
-   Route::get('/clubs', [HomeController::class, 'showClubs'])->name('clubs.list');
- Route::get('/clubs/{club}', [HomeController::class, 'show'])->name('clubs.show');
+    Route::get('/clubs', [HomeController::class, 'showClubs'])->name('clubs.list');
+    Route::get('/clubs/{club}', [HomeController::class, 'show'])->name('clubs.show');
+
+    Route::prefix('postpublic')->name('postpublic.')->group(function () {
+
+        // Hiển thị danh sách bài viết (random CLB nếu chưa chọn)
+        Route::get('/', [PostPublicController::class, 'index'])->name('index');
+
+        // Hiển thị bài viết theo từng CLB
+        Route::get('/club/{club}', [PostPublicController::class, 'byClub'])->name('by_club');
+
+        // Xem chi tiết bài viết
+        Route::get('/{post}', [PostPublicController::class, 'show'])->name('show');
+
+    });
 });
+
 
 // Routes dành cho user đăng nhập
 Route::middleware(['auth'])->group(function () {
@@ -63,7 +79,7 @@ Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_
     });
 
     // ✅ Thêm route cho logs
-  
+
 
 
     // Dashboard CLB
@@ -106,12 +122,12 @@ Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_
         Route::post('/forms', [RecruitFormController::class, 'storeForm'])->name('recruit_forms.store');
         Route::delete('/forms/{form_id}', [RecruitFormController::class, 'destroyForm'])->name('recruit_forms.destroy');
         Route::post('/forms/{form_id}/set-default', [RecruitFormController::class, 'setDefault'])->name('recruit_forms.set_default');
-        
+
         // Quản lý câu hỏi trong form
         Route::get('/form/{form_id?}', [RecruitFormController::class, 'create'])->name('recruit_form.create');
         Route::post('/form', [RecruitFormController::class, 'store'])->name('recruit_form.store');
         Route::post('/form/question/{question}/toggle', [RecruitFormController::class, 'toggle'])->name('recruit_form.toggle');
-        
+
         // Yêu cầu tham gia
         Route::get('/', [RecruitFormController::class, 'index'])->name('recruit.index');
         Route::post('/reject/{request_id}', [RecruitFormController::class, 'reject'])->name('recruit.reject');
@@ -147,7 +163,7 @@ Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
     Route::get('/export', [ClubFundController::class, 'export'])->name('fund.export');
 });
     // Document routes for client
- 
+
 
 
 
