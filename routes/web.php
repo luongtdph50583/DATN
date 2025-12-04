@@ -524,38 +524,7 @@ Route::post('/event-fund-requests/{id}/complete-disbursement',
     // → Tạo tự động: index, create, store, show, edit, update, destroy
     });
     // ═══════════════════════════════════════════════════════════════════
-// CLUB MANAGER ROUTES – QUẢN LÝ SỰ KIỆN CLB (CHỦ NHIỆM CLB)
-// ═══════════════════════════════════════════════════════════════════
-Route::prefix('club-manager')
-    ->middleware(['auth', 'role:club_manager'])
-    ->as('club.')
-    ->group(function () {
 
-    // Trang chủ quản lý sự kiện
-    Route::get('/events', [App\Http\Controllers\ClubManager\EventController::class, 'index'])
-        ->name('events.index');
-
-    Route::get('/events/create', [App\Http\Controllers\ClubManager\EventController::class, 'create'])
-        ->name('events.create');
-
-    Route::post('/events', [App\Http\Controllers\ClubManager\EventController::class, 'store'])
-        ->name('events.store');
-
-    Route::get('/events/{id}/registrations', [App\Http\Controllers\ClubManager\EventController::class, 'registrations'])
-        ->name('events.registrations');
-
-    Route::post('/registrations/{id}/approve', [App\Http\Controllers\ClubManager\EventController::class, 'approveRegistration'])
-        ->name('registrations.approve');
-
-    Route::post('/registrations/{id}/reject', [App\Http\Controllers\ClubManager\EventController::class, 'rejectRegistration'])
-        ->name('registrations.reject');
-
-    Route::get('/events/{id}/attendance', [App\Http\Controllers\ClubManager\EventController::class, 'attendance'])
-        ->name('events.attendance');
-
-    Route::get('/events/{id}/checkin', [App\Http\Controllers\ClubManager\EventController::class, 'checkin'])
-        ->name('events.checkin');
-});
 // === AUTH ROUTES ===
 require __DIR__ . '/auth.php';
 // Route::prefix('manager/document')

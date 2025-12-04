@@ -22,11 +22,7 @@
     <li><a href="{{ url('admin/posts') }}"><i class="fas fa-newspaper"></i> Posts</a></li>
     <li><a href="{{ url('admin/users') }}"><i class="fas fa-users"></i> Users</a></li>
     <li><a href="{{ url('admin/settings') }}"><i class="fas fa-cogs"></i> Settings</a></li>
-    <li>
-    <a href="{{ route('club.events.index') }}">
-        Quản lý sự kiện
-    </a>
-</li>
+  
 
                 @auth
                     @php
@@ -69,6 +65,12 @@
                                                     href="{{ route('club_manager.recruit.index', ['club_id' => $club->id]) }}">
                                                     <i class="fas fa-users"></i> Tuyển thành viên
                                                 </a></li>
+                                                <li>
+                <a href="{{ route('club_manager.events.index',['club_id' => $club->id]) }}">
+                    <i class="fas fa-calendar-alt"></i>
+                   Quản lý sự kiện 
+                </a>
+            </li>
                                             <li>
                                                 <a href="{{ route('club_manager.fund.index', ['club_id' => $club->id]) }}">
                                                     <i class="fas fa-coins"></i> Quỹ CLB

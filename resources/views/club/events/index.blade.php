@@ -8,9 +8,16 @@
             <h2>Quản lý sự kiện</h2>
             <p class="text-muted">CLB: <strong>{{ $club->name }}</strong></p>
         </div>
-        <a href="{{ route('club.events.create') }}" class="btn btn-primary">
-            Tạo sự kiện
-        </a>
+
+        <div class="d-flex gap-2">
+            <a href="{{ route('club_manager.events.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Tạo sự kiện
+            </a>
+         <a href="{{ route('club_manager.events.requests') }}" class="btn btn-outline-secondary">
+    <i class="fas fa-list me-1"></i> Yêu cầu tạo sự kiện của bạn
+</a>
+
+        </div>
     </div>
 
     @if(session('success'))
@@ -23,36 +30,50 @@
                 <thead class="table-primary">
                     <tr>
                         <th>Sự kiện</th>
-                        <th>Loại</th>
                         <th>Thời gian</th>
                         <th>Đăng ký</th>
+                        <th>Trạng thái</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($events as $event)
-                    <tr>
-                        <td>
-                            <strong>{{ $event->title }}</strong>
-                            @if(!$event->is_published)<span class="badge bg-secondary ms-2">Nháp</span>@endif
-                        </td>
-                        <td>
-                            <span class="badge bg-info">
-                                {{ ['offline'=>'Offline','lien_hoan'=>'Liên hoan','hop'=>'Họp'][$event->type] }}
-                            </span>
-                        </td>
-                        <td>
-                            {{ $event->start_time->format('d/m H:i') }} - 
-                            {{ $event->end_time->format('H:i') }}
-                        </td>
-                        <td>{{ $event->registrations_count }}</td>
-                        <td>
-                            <a href="{{ route('club.events.registrations', $event) }}" class="btn btn-sm btn-outline-primary">Đăng ký</a>
-                            <a href="{{ route('club.events.attendance', $event) }}" class="btn btn-sm btn-success">Điểm danh</a>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td><strong>{{ $event->name }}</strong></td>
+                            <td>
+                                {{ \Carbon\Carbon::parse($event->start_time)->format('d/m H:i') }} - 
+                                {{ \Carbon\Carbon::parse($event->end_time)->format('H:i') }}
+                            </td>
+                            <td>{{ $event->registrations_count ?? 0 }}</td>
+                           <td>
+    @php
+        $now = \Carbon\Carbon::now();
+        $start = \Carbon\Carbon::parse($event->start_time);
+        $end = \Carbon\Carbon::parse($event->end_time);
+    @endphp
+
+    @if($now->lt($start))
+        <span class="badge bg-secondary">Sự kiện chưa diễn ra</span>
+    @elseif($now->between($start, $end))
+        <span class="badge bg-success">Sự kiện đang diễn ra</span>
+    @else
+        <span class="badge bg-dark">Sự kiện đã kết thúc</span>
+    @endif
+</td>
+
+                            <td>
+                               <a href="{{ route('club_manager.events.show', $event->id) }}" 
+   class="btn btn-sm btn-outline-primary">
+    Xem chi tiết
+</a>
+
+                                <a href="#" class="btn btn-sm btn-success">Điểm danh</a>
+                            </td>
+                        </tr>
                     @empty
-                    <tr><td colspan="5" class="text-center py-4">Chưa có sự kiện</td></tr>
+                        <tr>
+                            <td colspan="5" class="text-center py-4">Chưa có sự kiện đã duyệt</td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>

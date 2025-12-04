@@ -214,11 +214,7 @@
                 <div class="text-center py-4 text-muted">
                     <i class="fas fa-file-invoice-dollar fa-3x mb-3 opacity-50"></i>
                     <p>Chưa có đầu mục chi tiêu nào</p>
-                    @if($event->status === 'pending')
-                        <a href="{{ route('admin.events.edit_budget', $event) }}" class="btn btn-sm btn-outline-success">
-                            <i class="fas fa-plus"></i> Thêm ngân sách
-                        </a>
-                    @endif
+
                 </div>
             @endif
         </div>

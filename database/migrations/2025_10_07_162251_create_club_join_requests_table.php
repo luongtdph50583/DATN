@@ -15,15 +15,14 @@ class CreateClubJoinRequestsTable extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
 
             // Trạng thái quy trình xin tham gia CLB
-            $table->enum('status', [
-                'pending',              // 🕓 Sinh viên mới nộp đơn
-                'scheduling_interview', // 📅 CLB đang sắp xếp lịch phỏng vấn
-                'interview',            // 🎤 Đã có lịch phỏng vấn (chưa diễn ra)
-                'interview_completed',  // 📝 Phỏng vấn xong, chờ duyệt
-                'approved',             // ✅ Được chấp nhận vào CLB
-                'rejected',             // ❌ Từ chối
-                'cancelled'             // 🚫 Sinh viên rút đơn hoặc CLB hủy
-            ])->default('pending');
+         $table->enum('status', [
+    'pending_interview',
+    'waiting_attendance',
+    'waiting_approval',
+    'approved',
+    'rejected',
+    'cancelled'
+])->default('pending_interview');
 
 
             // Ghi chú và người xử lý

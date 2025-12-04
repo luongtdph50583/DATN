@@ -204,78 +204,80 @@ public function update(Request $request, Event $event)
 public function approve(Event $event)
 {
     if ($event->status !== 'pending') {
-        return redirect()->back()->with('error', 'Chỉ có thể duyệt sự kiện đang ở trạng thái chờ duyệt!');
+        return back()->with('error', 'Chỉ có thể duyệt sự kiện đang chờ duyệt!');
     }
 
     DB::beginTransaction();
-    try {
-        // 1️⃣ Cập nhật trạng thái sự kiện
-        $event->update([
-            'status' => 'approved',
-        ]);
 
-        // 2️⃣ Nếu có ngân sách yêu cầu thông thường
+    try {
+
+        // 1️⃣ Update trạng thái sự kiện
+        $event->update(['status' => 'approved']);
+
+        // 2️⃣ Tạo yêu cầu quỹ thông thường (nếu có)
         if ($event->budget_requested > 0 && !$event->fundRequest) {
             EventFundRequest::create([
                 'event_id' => $event->id,
                 'requested_by' => Auth::id(),
                 'amount_requested' => $event->budget_requested,
                 'status' => 'pending_disbursement',
-                'note' => 'Tự động tạo khi sự kiện được duyệt.',
+                'note' => 'Yêu cầu ngân sách chung khi duyệt sự kiện.',
             ]);
         }
 
-        // 3️⃣ Nếu có chi phí loại school_fund, tạo yêu cầu quỹ và 1 giao dịch tổng
+        // 3️⃣ Lấy các mục ngân sách school_fund
         $schoolFundItems = $event->budgetItems()->where('type', 'school_fund')->get();
 
         if ($schoolFundItems->isNotEmpty()) {
+
             $totalAmount = $schoolFundItems->sum('estimated_cost');
 
-            // Tạo yêu cầu quỹ tổng cho nhà trường
+           
+
+            // 3.2️⃣ Tạo 1 bản ghi giao dịch tổng
             EventFundRequest::create([
                 'event_id' => $event->id,
                 'requested_by' => Auth::id(),
                 'amount_requested' => $totalAmount,
                 'status' => 'pending_disbursement',
-                'note' => 'Yêu cầu cấp kinh phí từ tất cả chi phí loại school_fund.',
-            ]);
-
-            // Tạo 1 giao dịch quỹ tổng
-            EventFundRequest::create([
-                'fund_id' => $event->club->fund->id ?? null,
-                'event_id' => $event->id,
-                'amount' => $totalAmount,
-                'category' => 'school_fund',
-                'description' => 'Tổng chi phí loại school_fund của sự kiện.',
-                'status' => 'pending_disbursement',
-                'created_by' => Auth::id(),
+                'note' => 'Giao dịch tổng chi phí  của sự kiện.',
             ]);
         }
 
         DB::commit();
-        return redirect()->back()->with('success', 'Duyệt sự kiện thành công và yêu cầu quỹ đã được tạo!');
+        return back()->with('success', 'Duyệt sự kiện thành công.');
+
     } catch (\Exception $e) {
         DB::rollBack();
-        return redirect()->back()->with('error', 'Đã xảy ra lỗi khi duyệt sự kiện: ' . $e->getMessage());
+        return back()->with('error', 'Lỗi: ' . $e->getMessage());
     }
 }
 
 
 
 
-    public function reject(Event $event)
-    {
-        if ($event->status !== 'pending') {
-            return redirect()->back()->with('error', 'Sự kiện không ở trạng thái chờ duyệt!');
-        }
 
-        $event->update(['status' => 'rejected', 'updated_by' => auth()->id()]);
-        return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã bị từ chối!');
-       $event->delete();
-
-             return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã được xóa thành công.');
-
+public function reject(Request $request, Event $event)
+{
+    if ($event->status !== 'pending') {
+        return redirect()->back()->with('error', 'Sự kiện không ở trạng thái chờ duyệt!');
     }
+
+    // Validate lý do từ chối
+    $request->validate([
+        'delete_reason' => 'required|string|max:500',
+    ]);
+
+    // Cập nhật sự kiện
+    $event->update([
+        'status' => 'rejected',
+        'delete_reason' => $request->delete_reason, // lưu lý do vào DB
+        'updated_by' => auth()->id(),
+    ]);
+
+    return redirect()->route('admin.events.index')->with('success', 'Sự kiện đã bị từ chối!');
+}
+
 
 public function getEventsByClub($clubId)
 {

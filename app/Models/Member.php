@@ -40,6 +40,11 @@ class Member extends Model
     {
         return $this->hasMany(ClubMember::class, 'member_id');
     }
+    public function activeClub()
+{
+    return $this->clubMemberships()->wherePivot('status', 'active')->first();
+}
+
     // App/Models/Member.php
 public function clubs()
 {

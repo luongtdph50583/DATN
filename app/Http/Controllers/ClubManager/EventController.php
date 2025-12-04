@@ -4,25 +4,37 @@ namespace App\Http\Controllers\ClubManager;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClubEvent;
+use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\EventAttendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-
+use Illuminate\Support\Facades\DB;
 class EventController extends Controller
 {
     // Danh sách sự kiện
-    public function index(Request $request)
-    {
-        $club = $request->club;
-        $events = ClubEvent::where('club_id', $club->id)
-            ->withCount('registrations')
-            ->latest()
-            ->paginate(10);
+public function index()
+{
+    // Lấy CLB mà user quản lý
+    $club = Auth::user()->managedClubs()->first();
 
-        return view('club.events.index', compact('events', 'club'));
+    if (!$club) {
+        abort(404, 'Bạn không quản lý CLB nào.');
     }
+
+    // Chỉ lấy các sự kiện đã duyệt
+    $events = Event::where('club_id', $club->id)
+                    ->where('status', 'approved')
+                    ->withCount('registrations')
+                    ->orderBy('start_time', 'desc')
+                    ->paginate(10);
+
+    return view('club.events.index', compact('club', 'events'));
+}
+
+
+
 
     // Form tạo sự kiện
     public function create(Request $request)
@@ -31,26 +43,86 @@ class EventController extends Controller
     }
 
     // Lưu sự kiện
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'type' => 'required|in:offline,lien_hoan,hop',
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
-            'location' => 'nullable|string|max:255',
-            'max_participants' => 'nullable|integer|min:1',
-            'description' => 'nullable|string'
+public function store(Request $request)
+{
+
+    $validated = $request->validate([
+    'name' => 'required|string|max:255',
+        'description' => 'nullable|string',
+    'start_time' => ['required', 'date', 'after_or_equal:now'],
+    'end_time' => ['required', 'date', 'after:start_time'],
+    'location' => 'required|string|max:255',
+    'max_participants' => 'nullable|integer|min:1',
+     'is_public' => 'nullable|boolean',
+    'budget_items' => 'nullable|array',
+    'budget_items.*.item_name' => 'required|string|max:255',
+    'budget_items.*.estimated_cost' => 'required|numeric|min:0',
+    'budget_items.*.type' => 'required|in:club_fund,school_fund,other',
+]);
+
+
+    $validated['is_public'] = $request->has('is_public');
+
+    DB::transaction(function () use ($validated) {
+        $member = Auth::user()->member;
+        $club = $member->clubs()->first();
+
+        $event = Event::create([
+            'club_id' => $club->id,
+            'created_by' => Auth::id(),
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'start_time' => $validated['start_time'],
+            'end_time' => $validated['end_time'],
+            'location' => $validated['location'],
+            'max_participants' => $validated['max_participants'] ?? null,
+            'is_public' => $validated['is_public'] ? 1 : 0,
+            'status' => 'pending', // member chỉ gửi yêu cầu
         ]);
 
-        $validated['club_id'] = $request->club->id;
-        $validated['created_by'] = Auth::id();
+        // Tạo chi tiết ngân sách
+        foreach ($validated['budget_items'] as $index => $item) {
+            $event->budgetItems()->create([
+                'item_name' => $item['item_name'],
+                'estimated_cost' => $item['estimated_cost'],
+                'type' => $item['type'],
+                'order' => $index,
+            ]);
+        }
+    });
 
-        ClubEvent::create($validated);
+    return redirect()
+        ->route('club_manager.events.index')
+        ->with('success', 'Gửi yêu cầu tạo sự kiện và ngân sách thành công!');
+}
 
-        return redirect()->route('club.events.index')
-            ->with('success', 'Tạo sự kiện thành công!');
-    }
+public function requests()
+{
+    $club = Auth::user()->managedClubs()->first();
+    if (!$club) abort(404, 'Bạn không quản lý CLB nào.');
+
+    // Lấy các sự kiện đang chờ duyệt
+      $events = Event::where('club_id', $club->id)
+    ->whereIn('status', ['pending', 'rejected'])
+    ->withCount('registrations')
+    ->orderBy('created_at', 'desc')
+    ->paginate(10);
+
+
+    return view('club.events.requests', compact('events', 'club'));
+}
+
+public function show(Event $event)
+{
+    $club = Auth::user()->managedClubs()->first();
+
+  
+
+    $event->load('budgetItems');
+
+    return view('club.events.show', compact('event', 'club'));
+}
+
 
     // Danh sách đăng ký
     public function registrations($id)

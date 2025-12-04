@@ -13,6 +13,7 @@ use App\Http\Controllers\Client\NotificationController;
 use App\Http\Controllers\Client\ClubNotificationController;
 use App\Http\Controllers\Client\ClubFormationRequestController;
 use App\Http\Controllers\Client\JoinClubController;
+use App\Http\Controllers\ClubManager\EventController;
 
 // Trang client home — public, user vẫn vào được
 Route::name('client.')->group(function () {
@@ -118,6 +119,7 @@ Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
     // Duyệt giao dịch
     Route::post('/transactions/{transaction}/approve', [ClubFundController::class, 'approveTransaction'])
         ->name('fund.transactions.approve');
+      
 
     // Trang cập nhật giao dịch (chỉ cần {transaction}, đã có {club_id} trong prefix)
     Route::get('/transactions/{transaction}/edit', [ClubFundController::class, 'edit'])->name('fund.transactions.edit');
@@ -129,7 +131,39 @@ Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
 
     // Export Excel
     Route::get('/export', [ClubFundController::class, 'export'])->name('fund.export');
+
+   
 });
 
+// CLUB MANAGER ROUTES – QUẢN LÝ SỰ KIỆN CLB (CHỦ NHIỆM CLB)
+  // Trang chủ quản lý sự kiện
+    Route::get('/events', [EventController::class, 'index'])
+        ->name('events.index');
+
+   Route::get('requests', [EventController::class, 'requests'])->name('events.requests');
+
+    Route::get('/events/create', [EventController::class, 'create'])
+        ->name('events.create');
+
+    Route::post('/events', [EventController::class, 'store'])
+        ->name('events.store');
+    
+    Route::get('/events/{id}', [EventController::class, 'show'])
+        ->name('events.show');
+
+    Route::get('/events/{id}/registrations', [EventController::class, 'registrations'])
+        ->name('events.registrations');
+
+    Route::post('/registrations/{id}/approve', [EventController::class, 'approveRegistration'])
+        ->name('registrations.approve');
+
+    Route::post('/registrations/{id}/reject', [EventController::class, 'rejectRegistration'])
+        ->name('registrations.reject');
+
+    Route::get('/events/{id}/attendance', [EventController::class, 'attendance'])
+        ->name('events.attendance');
+
+    Route::get('/events/{id}/checkin', [EventController::class, 'checkin'])
+        ->name('events.checkin');
 
 });
