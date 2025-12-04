@@ -32,15 +32,15 @@ return new class extends Migration {
             $table->string('logo')->nullable()->comment('Logo đề xuất');
 
             // Giảng viên đỡ đầu
-            $table->foreignId('advisor_id')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete()
-                ->comment('Giảng viên phụ trách được mời');
+            // $table->foreignId('advisor_id')
+            //     ->nullable()
+            //     ->constrained('users')
+            //     ->nullOnDelete()
+            //     ->comment('Giảng viên phụ trách được mời');
 
-            $table->enum('advisor_status', ['pending', 'approved', 'rejected'])
-                ->default('pending')
-                ->comment('Trạng thái chấp thuận của giảng viên phụ trách');
+            // $table->enum('advisor_status', ['pending', 'approved', 'rejected'])
+            //     ->default('pending')
+            //     ->comment('Trạng thái chấp thuận của giảng viên phụ trách');
 
             // Trạng thái xử lý yêu cầu & người duyệt
             $table->enum('status', ['pending', 'approved', 'rejected'])
@@ -60,7 +60,7 @@ return new class extends Migration {
             $table->integer('member_limit')->nullable()->comment('Số lượng thành viên tối đa');
 
             // 🔹 Thêm type để phân biệt loại yêu cầu
-           
+
             $table->timestamps();
         });
 

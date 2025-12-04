@@ -17,8 +17,8 @@ return new class extends Migration {
             $table->string('field')->nullable();
             $table->integer('member_limit')->nullable();
             $table->unsignedBigInteger('manager_id')->nullable();
-            $table->unsignedBigInteger('advisor_id')->nullable();
-            $table->enum('advisor_status', ['pending', 'approved', 'rejected'])->default('pending');
+            // $table->unsignedBigInteger('advisor_id')->nullable();
+            // $table->enum('advisor_status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
@@ -33,7 +33,7 @@ return new class extends Migration {
             $table->foreign('club_id')->references('id')->on('clubs')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('manager_id')->references('id')->on('users')->onDelete('set null');
-            $table->foreign('advisor_id')->references('id')->on('faculty_members')->onDelete('set null');
+            // $table->foreign('advisor_id')->references('id')->on('faculty_members')->onDelete('set null');
 
         });
     }

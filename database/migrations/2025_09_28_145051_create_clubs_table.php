@@ -29,16 +29,16 @@ class CreateClubsTable extends Migration
                 ->comment('Người quản lý hành chính của CLB');
 
             // Giảng viên đỡ đầu
-            $table->foreignId('advisor_id')
-                ->nullable()
-                ->constrained('users')
-                ->nullOnDelete()
-                ->comment('Giảng viên đỡ đầu');
+            // $table->foreignId('advisor_id')
+            //     ->nullable()
+            //     ->constrained('users')
+            //     ->nullOnDelete()
+            //     ->comment('Giảng viên đỡ đầu');
 
             // ✅ Trạng thái xác nhận của giảng viên đỡ đầu
-            $table->enum('advisor_status', ['pending', 'approved', 'rejected'])
-                ->default('pending')
-                ->comment('Trạng thái phê duyệt của giảng viên đỡ đầu');
+            // $table->enum('advisor_status', ['pending', 'approved', 'rejected'])
+            //     ->default('pending')
+            //     ->comment('Trạng thái phê duyệt của giảng viên đỡ đầu');
 
             // Liên hệ & giới hạn
             $table->string('email')->nullable()->comment('Email liên hệ');
