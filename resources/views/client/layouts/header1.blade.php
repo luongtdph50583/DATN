@@ -102,31 +102,31 @@
                                             <li><a href="about-2.html">About Us 02</a></li>
                                         </ul>
                                     </li>
-                                    <li class="has-dropdown">
-                                        <a href="news.html">
-                                            Pages
-                                        </a>
-                                        <ul class="submenu">
-                                            <li><a href="gallery.html">About Us</a></li>
-                                            <li><a href="club-ranking.html">club rankings</a></li>
-                                            <li><a href="club-line.html">club LineUp</a></li>
-                                            <li><a href="ticket.html">Ticket</a></li>
-                                            <li><a href="404.html">404 Page</a></li>
-                                        </ul>
+                                   <li>
+                                        <a href="{{ route('events.index') }}">Sự Kiện  </a>
                                     </li>
                                     <li>
                                         <a href="{{ route('client.clubs.list') }}">Các Câu Lạc Bộ </a>
                                     </li>
-                                    <li>
-                                        <a href="news-details.html">
-                                            Blog
-                                        </a>
-                                        <ul class="submenu">
-                                            <li><a href="news-grid.html">Blog Grid</a></li>
-                                            <li><a href="news.html">Blog Standard</a></li>
-                                            <li><a href="news-details.html">Blog Details</a></li>
-                                        </ul>
-                                    </li>
+                              <li>
+    <a href="{{ route('client.postpublic.index') }}">
+        Blog
+    </a>
+    @php
+        $clubs = \App\Models\Club::all();
+    @endphp
+    <ul class="submenu {{ $clubs->count() > 7 ? 'submenu-horizontal' : '' }}">
+        @foreach($clubs as $club)
+            <li>
+                <a href="{{ route('client.postpublic.by_club', $club->id) }}">
+                    {{ $club->name }}
+                </a>
+            </li>
+        @endforeach
+    </ul>
+</li>
+
+
                                     <li>
                                         <a href="contact.html">Contact Us</a>
                                     </li>

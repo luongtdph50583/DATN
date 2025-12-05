@@ -22,25 +22,78 @@ class ClubRequestController extends Controller
     public function index($club_id)
     {
         $club = Club::with([
-            'clubMembers.member.user',
+            'clubMembers.member.user',  // ← Đã có
             'advisorFaculty.user'
         ])->findOrFail($club_id);
 
         $this->authorizeClubManager($club);
 
-        // Lấy yêu cầu đang pending nếu có
-        $pendingRequest = ClubRequestUpdate::with(['memberUpdates.user'])
+        // Lấy yêu cầu đang pending
+        $pendingRequest = ClubRequestUpdate::with([
+            'memberUpdates.user',
+            'memberUpdates.oldUser'
+        ])
             ->where('club_id', $club_id)
             ->where('status', 'pending')
             ->where('user_id', Auth::id())
             ->first();
 
-        // Lấy danh sách users để chọn manager/advisor
-        $users = User::where('role', '!=', 'admin')->get();
-        $facultyMembers = FacultyMember::with('user')->get();
+        // Lấy danh sách thành viên CLB với đầy đủ thông tin
+        $clubMembers = $club->clubMembers()
+            ->where('status', 'active')
+            ->with('member.user')
+            ->get()
+            ->map(function ($clubMember) {
+                $user = $clubMember->member->user;
+                $member = $clubMember->member;
 
-        return view('client.pages.club.edit_request', compact('club', 'pendingRequest', 'users', 'facultyMembers'));
+                return [
+                    'id' => $user->id,
+                    'text' => sprintf(
+                        '%s (%s) - %s',
+                        $user->name,
+                        $member->student_code ?? 'N/A',
+                        $user->email
+                    ),
+                    'current_role' => $clubMember->role
+                ];
+            });
+
+        // Lấy BQL hiện tại (eager load đầy đủ member và user)
+        $currentManagers = $club->clubMembers()
+            ->whereIn('role', [
+                'club_manager',
+                'deputy_manager',
+                'secretary',
+                'treasurer',
+                'event_manager',
+                'communication'
+            ])
+            ->with('member.user')  // ← Eager load member và user
+            ->get()
+            ->keyBy('role');
+
+        $managementRoles = [
+            'club_manager' => 'Chủ nhiệm',
+            'deputy_manager' => 'Phó Chủ nhiệm',
+            'secretary' => 'Thư ký',
+            'treasurer' => 'Thủ quỹ',
+            'event_manager' => 'Quản lý sự kiện',
+            'communication' => 'Truyền thông'
+        ];
+
+        $users = User::where('role', '!=', 'admin')->get();
+
+        return view('client.pages.club.edit_request', compact(
+            'club',
+            'pendingRequest',
+            'clubMembers',
+            'currentManagers',
+            'managementRoles',
+            'users'
+        ));
     }
+
 
     /**
      * Lưu đề xuất sửa thông tin CLB
@@ -50,85 +103,174 @@ class ClubRequestController extends Controller
         $club = Club::findOrFail($club_id);
         $this->authorizeClubManager($club);
 
-        // Kiểm tra đã có request pending chưa
+        // CHỐNG DOUBLE REQUEST
         $existingRequest = ClubRequestUpdate::where('club_id', $club_id)
             ->where('status', 'pending')
             ->where('user_id', Auth::id())
             ->first();
 
         if ($existingRequest) {
-            return redirect()->back()
-                ->with('error', 'Bạn đã có một đề xuất đang chờ duyệt. Vui lòng chờ admin xử lý.');
+            return back()->with('error', 'Bạn đã có một đề xuất đang chờ duyệt.');
         }
 
-        $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'slogan' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-            'field' => 'nullable|string|max:255',
-            'member_limit' => 'nullable|integer|min:1',
-            'manager_id' => 'nullable|exists:users,id',
-            'advisor_id' => 'nullable|exists:faculty_members,id',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'rules' => 'nullable|string',
-            'location' => 'nullable|string|max:255',
+        $request->validate([
             'reason' => 'required|string|max:1000',
             'members' => 'nullable|array',
-            'members.*.user_id' => 'nullable|exists:users,id',
-            'members.*.role' => 'required_with:members.*.user_id|in:club_manager,deputy_manager,secretary,treasurer,event_manager,communication,member',
         ]);
 
-        $memberUpdatesPayload = collect($validated['members'] ?? [])
-            ->filter(fn ($member) => !empty($member['user_id']))
-            ->values()
-            ->all();
+        $memberUpdatesPayload = [];
+        $debug = [];
 
-        DB::transaction(function () use ($club_id, $validated, $request, $memberUpdatesPayload) {
-            // Tạo yêu cầu cập nhật
-            $clubRequestUpdate = new ClubRequestUpdate();
-            $clubRequestUpdate->club_id = $club_id;
-            $clubRequestUpdate->user_id = Auth::id();
-            $clubRequestUpdate->name = $validated['name'] ?? null;
-            $clubRequestUpdate->slogan = $validated['slogan'] ?? null;
-            $clubRequestUpdate->description = $validated['description'] ?? null;
-            $clubRequestUpdate->field = $validated['field'] ?? null;
-            $clubRequestUpdate->member_limit = $validated['member_limit'] ?? null;
-            $clubRequestUpdate->manager_id = $validated['manager_id'] ?? null;
-            $clubRequestUpdate->advisor_id = $validated['advisor_id'] ?? null;
-            $clubRequestUpdate->advisor_status = 'pending';
-            $clubRequestUpdate->email = $validated['email'] ?? null;
-            $clubRequestUpdate->phone = $validated['phone'] ?? null;
-            $clubRequestUpdate->rules = $validated['rules'] ?? null;
-            $clubRequestUpdate->location = $validated['location'] ?? null;
-            $clubRequestUpdate->reason = $validated['reason'];
-            $clubRequestUpdate->status = 'pending';
+        // Tránh 1 user bị assign nhiều chức vụ trong 1 đề xuất
+        $incomingAssignedIds = [];
 
-            // Xử lý logo
-            if ($request->hasFile('logo')) {
-                $file = $request->file('logo');
-                $path = $file->store('club_logos', 'public');
-                $clubRequestUpdate->logo = $path;
+        // Các role BQL trong bảng club_members
+        $officerRoles = [
+            'deputy_manager',
+            'secretary',
+            'treasurer',
+            'event_manager',
+            'communication'
+        ];
+
+        foreach (($request->members ?? []) as $roleKey => $item) {
+
+            $role = $item['role'] ?? null;
+            $incoming = $item['user_id'] ?? null;       // user_id gửi từ FE
+            $old = $item['old_user_id'] ?? null;
+
+            $debug[$role] = [
+                'incoming' => $incoming,
+                'old' => $old
+            ];
+
+            // Không thay đổi
+            if ($incoming === "" || $incoming === null) {
+                continue;
             }
 
-            $clubRequestUpdate->save();
+            // REMOVE
+            if ($incoming === "__remove__") {
+                if ($old === null)
+                    continue;
 
-            // Lưu thành viên ban quản lý đề xuất
-            if (!empty($memberUpdatesPayload)) {
-                foreach ($memberUpdatesPayload as $memberData) {
-                    ClubRequestMemberUpdate::create([
-                        'club_request_update_id' => $clubRequestUpdate->id,
-                        'user_id' => $memberData['user_id'],
-                        'role' => $memberData['role'],
-                    ]);
+                $memberUpdatesPayload[] = [
+                    'role' => $role,
+                    'user_id' => null,
+                    'old_user_id' => $old,
+                    'action' => 'remove',
+                ];
+                continue;
+            }
+
+            // Lấy tên user để hiển thị trong thông báo
+            $user = User::find($incoming);
+            $userName = $user ? $user->name : "Người dùng";
+
+            /*
+            |--------------------------------------------------------------------------
+            | 1️⃣ CHECK TRÙNG VAI TRÒ TRONG CHÍNH ĐỀ XUẤT NÀY
+            |--------------------------------------------------------------------------
+            */
+            if (in_array($incoming, $incomingAssignedIds)) {
+                return back()->with('error', "Thành viên '{$userName}' đang được đề xuất vào nhiều chức vụ khác nhau.");
+            }
+            $incomingAssignedIds[] = $incoming;
+
+            /*
+            |--------------------------------------------------------------------------
+            | 1️⃣b CHECK TRÙNG VAI TRÒ TRONG CLB HIỆN TẠI
+            |--------------------------------------------------------------------------
+            */
+            $alreadyOfficerInClub = DB::table('club_members AS cm')
+                ->join('members AS m', 'm.id', '=', 'cm.member_id')
+                ->where('cm.club_id', $club_id)
+                ->where('m.user_id', $incoming)
+                ->whereIn('cm.role', $officerRoles)
+                ->exists();
+
+            if ($alreadyOfficerInClub) {
+                return back()->with('error', "Thành viên '{$userName}' hiện đang giữ chức vụ quản lý trong CLB này.");
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 2️⃣ CHECK NGƯỜI NÀY CÓ ĐANG LÀ QUẢN LÝ Ở CLB KHÁC KHÔNG?
+            |--------------------------------------------------------------------------
+            */
+            if ($role === 'club_manager') {
+                $isManagerElsewhere = Club::where('id', '!=', $club_id)
+                    ->where('manager_id', $incoming)
+                    ->exists();
+
+                if ($isManagerElsewhere) {
+                    return back()->with('error', "Thành viên '{$userName}' đang là Chủ nhiệm của CLB khác.");
                 }
+            } else {
+                $isOfficerElsewhere = DB::table('club_members AS cm')
+                    ->join('members AS m', 'm.id', '=', 'cm.member_id')
+                    ->where('cm.club_id', '!=', $club_id)
+                    ->where('m.user_id', '=', $incoming)
+                    ->whereIn('cm.role', $officerRoles)
+                    ->exists();
+
+                if ($isOfficerElsewhere) {
+                    return back()->with('error', "Thành viên '{$userName}' đang giữ chức vụ quản lý ở CLB khác.");
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | 3️⃣ LƯU PAYLOAD
+            |--------------------------------------------------------------------------
+            */
+            if ($incoming != $old) {
+                $memberUpdatesPayload[] = [
+                    'role' => $role,
+                    'user_id' => $incoming,
+                    'old_user_id' => $old,
+                    'action' => 'assign',
+                ];
+            }
+        }
+
+        logger()->info("DEBUG MEMBER INPUT", $debug);
+        logger()->info("DEBUG MEMBER UPDATES", $memberUpdatesPayload);
+
+        if (empty($memberUpdatesPayload)) {
+            return back()->with('info', 'Không có thay đổi nào.');
+        }
+
+        DB::transaction(function () use ($club_id, $request, $memberUpdatesPayload) {
+            $update = ClubRequestUpdate::create([
+                'club_id' => $club_id,
+                'user_id' => Auth::id(),
+                'status' => 'pending',
+                'reason' => $request->reason,
+            ]);
+
+            foreach ($memberUpdatesPayload as $m) {
+                ClubRequestMemberUpdate::create([
+                    'club_request_update_id' => $update->id,
+                    'role' => $m['role'],
+                    'user_id' => $m['user_id'],
+                    'old_user_id' => $m['old_user_id'],
+                    'action' => $m['action'],
+                ]);
             }
         });
 
         return redirect()->route('club_manager.edit_request.index', ['club_id' => $club_id])
-            ->with('success', 'Đã gửi đề xuất sửa thông tin CLB thành công! Vui lòng chờ admin duyệt.');
+            ->with('success', 'Đã gửi đề xuất thay đổi thành công!');
     }
+
+
+
+
+
+
+
+
 
     /**
      * Kiểm tra quyền quản lý CLB

@@ -158,13 +158,18 @@ $statusMap = [
                                 </select>
                             </div>
                         <div class="mb-2">
-<label class="form-label">Thời gian phỏng vấn <span class="text-danger">*</span></label>
+                            <label class="form-label">Thời gian phỏng vấn <span class="text-danger">*</span></label>
                             <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm"
                                 value="{{ optional($request->interview_scheduled_at)->format('Y-m-d\TH:i') }}"
                                 min="{{ now()->format('Y-m-d\TH:i') }}" required>
                         </div>
 
-                            
+                            <div class="mb-2">
+                                <label class="form-label">Địa điểm <span class="text-danger">*</span></label>
+                                <input type="text" name="location" class="form-control form-control-sm"
+                                    value="{{ $request->interview_location }}" placeholder="Nhập địa điểm phỏng vấn"
+                                    required>
+                            </div>
                             <div class="mb-2">
                                 <label class="form-label">Ghi chú gửi ứng viên</label>
                                 <textarea name="interview_note" class="form-control" rows="2"

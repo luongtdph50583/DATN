@@ -43,7 +43,7 @@ class ClubController extends Controller
             // Lấy thông tin CLB, kèm số lượng bài viết & sự kiện đã duyệt
             $club = Club::with([
                 'manager',
-                'advisorFaculty.user' // Giảng viên đỡ đầu
+                // 'advisorFaculty.user' // Giảng viên đỡ đầu
             ])->withCount([
                         'posts as total_posts' => function ($query) {
                             $query->where('status', 'approved')

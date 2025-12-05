@@ -17,8 +17,8 @@
         </div>
 
         <div class="mb-3">
-            <label>File Excel / Chứng từ (tùy chọn)</label>
-            <input type="file" name="excel_file" class="form-control" accept=".xlsx,.xls,.csv,.jpg,.jpeg,.png,.pdf">
+            <label>File Excel / Chứng từ (Bắt Buộc)</label>
+            <input type="file" name="excel_file" class="form-control" accept=".xlsx,.xls,.csv,.jpg,.jpeg,.png,.pdf" required>
             @if($transaction->excel_file)
                 <small class="text-muted">File hiện tại: <a href="{{ asset('storage/'.$transaction->excel_file) }}" target="_blank">Xem</a></small>
             @endif

@@ -230,7 +230,7 @@
 
 
             <!-- Thông tin giảng viên đỡ đầu -->
-            <div class="card mb-4 shadow-sm border-secondary">
+            {{-- <div class="card mb-4 shadow-sm border-secondary">
                 <div class="card-header bg-warning text-white fw-bold">Giảng viên phụ trách</div>
                 <div class="card-body">
                     @if($club->advisorFaculty)
@@ -249,7 +249,7 @@
                         <em>Chưa có giảng viên phụ trách</em>
                     @endif
                 </div>
-            </div>
+            </div> --}}
             {{-- Thông tin tổng số bài viết & sự kiện --}}
             <div class="card mb-4 shadow-sm border-primary">
                 <div class="card-header bg-info text-white fw-bold">Thông tin hoạt động CLB</div>

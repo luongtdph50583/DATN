@@ -3,7 +3,7 @@
 @section('title', 'Quản lý bài viết')
 
 @section('card-header')
-Tin tức & Bài viết
+    Tin tức & Bài viết
 @endsection
 
 @section('card-body')
@@ -21,15 +21,38 @@ Tin tức & Bài viết
         </a>
     </div>
 
-    {{-- Tìm kiếm bài viết --}}
-    <div class="mb-4">
-        <label for="searchPost" class="form-label fw-semibold">Tìm kiếm bài viết</label>
-        <input type="text" id="searchPost" class="form-control" placeholder="Nhập tiêu đề hoặc người đăng...">
-    </div>
+    {{-- Form lọc --}}
+    <form method="GET" action="{{ route('admin.posts.index') }}" class="mb-3">
+        <div class="row">
+            <div class="col-md-3">
+                <input type="text" name="keyword" value="{{ request('keyword') }}" class="form-control"
+                    placeholder="Tìm theo tiêu đề hoặc người đăng...">
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-control">
+                    <option value="">-- Trạng thái --</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ duyệt</option>
+                    <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Đã duyệt</option>
+                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Từ chối</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="is_visible" class="form-control">
+                    <option value="">-- Hiển thị --</option>
+                    <option value="1" {{ request('is_visible') == '1' ? 'selected' : '' }}>Hiển thị</option>
+                    <option value="0" {{ request('is_visible') == '0' ? 'selected' : '' }}>Ẩn</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+                <a href="{{ route('admin.posts.index') }}" class="btn btn-secondary">Reset</a>
+            </div>
+        </div>
+    </form>
 
     {{-- Bảng danh sách bài viết --}}
     <div class="table-responsive">
-        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <table class="table table-bordered" width="100%" cellspacing="0">
             <thead>
                 <tr>
                     <th>#</th>
@@ -41,10 +64,10 @@ Tin tức & Bài viết
                     <th>Hành động</th>
                 </tr>
             </thead>
-            <tbody id="postTableBody">
+            <tbody>
                 @forelse($posts as $index => $post)
                     <tr>
-                        <td>{{ $index + 1 }}</td>
+                        <td>{{ ($posts->currentPage() - 1) * $posts->perPage() + $index + 1 }}</td>
                         <td>{{ $post->title }}</td>
                         <td>{{ $post->user->name ?? 'Không xác định' }}</td>
                         <td>{{ $post->created_at->format('d/m/Y') }}</td>
@@ -72,16 +95,9 @@ Tin tức & Bài viết
                                 <i class="fas fa-eye"></i>
                             </a>
 
-                            @if($post->status === 'pending')
-                                        {{-- Sửa --}}
-                                        <a href="{{ route('admin.posts.edit', $post->id) }}" class="btn btn-primary btn-sm me-1"
-                                            title="Sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-
-                                        {{-- Duyệt --}}
-                                    <!-- Nút Duyệt -->
-                                <!-- Nút Duyệt -->
+                            {{-- Nếu đang chờ duyệt --}}
+                            @if ($post->status === 'pending')
+                                {{-- Duyệt --}}
                                 <form action="{{ route('admin.posts.approve', $post->id) }}" method="POST" class="d-inline me-1">
                                     @csrf
                                     @method('PUT')
@@ -90,25 +106,28 @@ Tin tức & Bài viết
                                     </button>
                                 </form>
 
-                                <!-- Nút Từ chối -->
-                                <button type="button" class="btn btn-danger btn-sm me-1" onclick="toggleRejectForm({{ $post->id }})" title="Từ chối">
+                                {{-- Từ chối --}}
+                                <button type="button" class="btn btn-danger btn-sm me-1" onclick="toggleRejectForm({{ $post->id }})"
+                                    title="Từ chối">
                                     <i class="fas fa-times-circle"></i>
                                 </button>
 
-                                        <form id="rejectForm-{{ $post->id }}" action="{{ route('admin.posts.reject', $post->id) }}"
-                                            method="POST" class="mt-2" style="display: none;">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="input-group" style="max-width: 400px;">
-                                                <input type="text" name="rejection_reason" class="form-control"
-                                                    placeholder="Lý do từ chối..." required>
-                                                <button type="submit" class="btn btn-danger" title="Xác nhận từ chối">
-                                                    <i class="bi bi-send"></i>
-                                                </button>
-                                            </div>
-                                        </form>
-                            @elseif($post->status === 'approved')
-                                {{-- Sửa --}}
+                                <form id="rejectForm-{{ $post->id }}" action="{{ route('admin.posts.reject', $post->id) }}"
+                                    method="POST" class="mt-2" style="display: none;">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="input-group" style="max-width: 400px;">
+                                        <input type="text" name="rejection_reason" class="form-control"
+                                            placeholder="Lý do từ chối..." required>
+                                        <button type="submit" class="btn btn-danger" title="Xác nhận từ chối">
+                                            <i class="bi bi-send"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            @endif
+
+                            {{-- Chỉ hiển thị nút Sửa khi status = approved --}}
+                            @if ($post->status === 'approved')
                                 <a href="{{ route('admin.posts.edit', $post->id) }}" class="btn btn-primary btn-sm me-1"
                                     title="Sửa">
                                     <i class="fas fa-edit"></i>
@@ -116,15 +135,14 @@ Tin tức & Bài viết
                             @endif
 
                             {{-- Xóa --}}
-                            <form id="delete-form-{{ $post->id }}" action="{{ route('admin.posts.destroy', $post->id) }}"
-                                method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete({{ $post->id }})"
-                                    title="Xóa">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                        <form id="delete-form-{{ $post->id }}" action="{{ route('admin.posts.destroy', $post->id) }}" method="POST"
+                            class="d-inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete({{ $post->id }})" title="Xóa">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
                         </td>
                     </tr>
                 @empty
@@ -138,30 +156,39 @@ Tin tức & Bài viết
         </table>
     </div>
 
-
+    {{-- Phân trang --}}
+    <div class="d-flex justify-content-center">
+        {{ $posts->appends(request()->query())->links() }}
+    </div>
 @endsection
-
 
 @push('scripts')
     <script>
-        // Xác nhận xóa bài viết kèm lý do
         function confirmDelete(postId) {
+            // Bước 1: xác nhận xoá
+            if (!confirm("Bạn có chắc chắn muốn xóa bài viết này?")) {
+                return;
+            }
+
+            // Bước 2: prompt nhập lý do xoá
             const reason = prompt("Nhập lý do xóa bài viết:");
             if (!reason || reason.trim() === "") {
                 alert("Bạn phải nhập lý do xóa.");
                 return;
             }
 
+            // Bước 3: gắn lý do vào form và submit
             const form = document.getElementById(`delete-form-${postId}`);
             if (!form) {
                 alert("Không tìm thấy form xóa.");
                 return;
             }
 
-            // Thêm input ẩn để gửi lý do
+            // Xóa input cũ nếu có
             let input = form.querySelector('input[name="reason"]');
             if (input) input.remove();
 
+            // Tạo input ẩn mới
             input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'reason';
@@ -177,121 +204,5 @@ Tin tức & Bài viết
             if (!form) return;
             form.style.display = form.style.display === 'none' ? 'block' : 'none';
         }
-
-        // Tìm kiếm bài viết động
-        document.addEventListener('DOMContentLoaded', () => {
-            const searchInput = document.getElementById('searchPost');
-            const tbody = document.getElementById('postTableBody');
-            if (!searchInput || !tbody) return;
-
-            searchInput.addEventListener('input', () => {
-                const keyword = searchInput.value.trim();
-
-                fetch('{{ route('admin.posts.filter') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ keyword })
-                })
-                    .then(res => res.json())
-                    .then(res => {
-                        tbody.innerHTML = '';
-
-                        if (!res.data || res.data.length === 0) {
-                            tbody.innerHTML = `
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
-                                    <i class="fas fa-info-circle me-1"></i> Không có bài viết phù hợp.
-                                </td>
-                            </tr>`;
-                            return;
-                        }
-
-                        res.data.forEach((post, index) => {
-                            // Trạng thái tiếng Việt
-                            let statusText = '';
-                            let statusClass = '';
-                            if (post.status === 'approved') {
-                                statusText = 'Đã duyệt';
-                                statusClass = 'success';
-                            } else if (post.status === 'rejected') {
-                                statusText = 'Từ chối';
-                                statusClass = 'danger';
-                            } else {
-                                statusText = 'Chờ duyệt';
-                                statusClass = 'secondary';
-                            }
-
-                            // Hiển thị
-                            const visibleBadge = `<span class="badge bg-${post.is_visible ? 'info' : 'dark'}">
-                            ${post.is_visible ? 'Hiển thị' : 'Ẩn'}</span>`;
-
-                            // Actions
-                            let actions = `<div class="d-flex gap-1 flex-wrap">
-                            <a href="/admin/posts/${post.id}" class="btn btn-warning btn-sm" title="Xem">
-                                <i class="fas fa-eye"></i> Xem
-                            </a>`;
-
-                            if (post.status === 'pending') {
-                                actions += `
-                            <a href="/admin/posts/${post.id}/edit" class="btn btn-primary btn-sm" title="Sửa">
-                                <i class="fas fa-edit"></i> Sửa
-                            </a>
-                            <form action="/admin/posts/${post.id}/approve" method="POST" class="d-inline">
-                                @csrf
-                                @method('PUT')
-                                <button type="submit" class="btn btn-success btn-sm" title="Duyệt">
-                                    <i class="bi bi-check-circle me-1"></i> Duyệt
-                                </button>
-                            </form>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="toggleRejectForm(${post.id})" title="Từ chối">
-                                <i class="bi bi-x-circle me-1"></i> Từ chối
-                            </button>
-                            <form id="rejectForm-${post.id}" action="/admin/posts/${post.id}/reject" method="POST" class="mt-2" style="display:none;">
-                                @csrf
-                                @method('PUT')
-                                <div class="input-group" style="max-width:400px;">
-                                    <input type="text" name="rejection_reason" class="form-control" placeholder="Lý do từ chối..." required>
-                                    <button type="submit" class="btn btn-danger">
-                                        <i class="bi bi-send me-1"></i> Xác nhận
-                                    </button>
-                                </div>
-                            </form>`;
-                            } else if (post.status === 'approved') {
-                                actions += `
-                            <a href="/admin/posts/${post.id}/edit" class="btn btn-primary btn-sm" title="Sửa">
-                                <i class="fas fa-edit"></i> Sửa
-                            </a>`;
-                            }
-
-                            // Xóa luôn có
-                            actions += `
-                            <form id="delete-form-${post.id}" action="/admin/posts/${post.id}" method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(${post.id})" title="Xóa">
-                                    <i class="fas fa-trash"></i> Xóa
-                                </button>
-                            </form>
-                        </div>`; // kết thúc d-flex
-
-                            tbody.innerHTML += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td>${post.title}</td>
-                                <td>${post.user_name || 'Không xác định'}</td>
-                                <td>${new Date(post.created_at).toLocaleDateString('vi-VN')}</td>
-                                <td><span class="badge bg-${statusClass}">${statusText}</span></td>
-                                <td>${visibleBadge}</td>
-                                <td>${actions}</td>
-                            </tr>`;
-                        });
-                    })
-                    .catch(err => console.error('Lỗi tìm kiếm bài viết:', err));
-            });
-        });
     </script>
 @endpush
-

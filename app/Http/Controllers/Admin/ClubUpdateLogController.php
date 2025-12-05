@@ -11,11 +11,15 @@ class ClubUpdateLogController extends Controller
     public function index()
     {
         $logs = ClubUpdateLog::with(['club', 'admin', 'proposer'])
+            ->whereHas('club', function ($q) {
+                $q->whereNull('deleted_at'); // chỉ lấy CLB chưa xoá mềm
+            })
             ->orderByDesc('created_at')
             ->paginate(20);
 
         return view('admin.club_update_logs.index', compact('logs'));
     }
+
 
     public function show(ClubUpdateLog $log)
     {

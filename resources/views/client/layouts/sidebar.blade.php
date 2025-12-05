@@ -17,12 +17,12 @@
             </div>
 
             <!-- Sidebar Menu -->
-      <ul class="admin-menu list-unstyled">
-    <li><a href="{{ url('admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-    <li><a href="{{ url('admin/posts') }}"><i class="fas fa-newspaper"></i> Posts</a></li>
-    <li><a href="{{ url('admin/users') }}"><i class="fas fa-users"></i> Users</a></li>
-    <li><a href="{{ url('admin/settings') }}"><i class="fas fa-cogs"></i> Settings</a></li>
-  
+            <ul class="admin-menu list-unstyled">
+                <li><a href="{{ url('admin/dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="{{ url('admin/posts') }}"><i class="fas fa-newspaper"></i> Posts</a></li>
+                <li><a href="{{ url('admin/users') }}"><i class="fas fa-users"></i> Users</a></li>
+                <li><a href="{{ url('admin/settings') }}"><i class="fas fa-cogs"></i> Settings</a></li>
+
 
                 @auth
                     @php
@@ -41,7 +41,8 @@
                             <ul class="collapse list-unstyled" id="managedClubsSubmenu">
                                 @foreach ($managedClubs as $club)
                                     <li class="submenu-item" style="position: relative;">
-                                        <a href="javascript:void(0)" class="club-toggle" onclick="event.preventDefault(); toggleClubSubmenu(this);">
+                                        <a href="javascript:void(0)" class="club-toggle"
+                                            onclick="event.preventDefault(); toggleClubSubmenu(this);">
                                             <i class="fas fa-circle"></i> {{ $club->name }}
                                             <i class="fas fa-chevron-down ms-auto" style="float: right;"></i>
                                         </a>
@@ -57,21 +58,25 @@
                                                     href="{{ route('club_manager.edit_request.index', ['club_id' => $club->id]) }}">
                                                     <i class="fas fa-edit"></i> Đề xuất sửa CLB
                                                 </a></li>
-                                            <li><a
-                                                    href="{{ route('club_manager.interviews.index', ['club_id' => $club->id]) }}">
-                                                    <i class="fas fa-calendar-check"></i> Phỏng vấn
-                                                </a></li>
-                                            <li><a
-                                                    href="{{ route('club_manager.recruit.index', ['club_id' => $club->id]) }}">
-                                                    <i class="fas fa-users"></i> Tuyển thành viên
-                                                </a></li>
-                                                <li>
-                <a href="{{ route('club_manager.events.index',['club_id' => $club->id]) }}">
-                    <i class="fas fa-calendar-alt"></i>
-                   Quản lý sự kiện 
-                </a>
-            </li>
+                                            {{-- <li><a
+                                                                                                                                                                                                                        href="{{ route('club_manager.interviews.index', ['club_id' => $club->id]) }}">
+                                                                                                                                                                                                                        <i class="fas fa-calendar-check"></i> Phỏng vấn
+                                                                                                                                                                                                                    </a></li> --}}
                                             <li>
+                                                <a
+                                                    href="{{ route('club_manager.recruit_forms.list', ['club_id' => $club->id]) }}">
+                                                    <i class="fas fa-users"></i>Form tuyển thành viên
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a
+                                                    href="{{ route('club_manager.events.index', ['club_id' => $club->id]) }}">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    Quản lý sự kiện
+                                                </a>
+                                            </li>
+                                            <li>
+
                                                 <a href="{{ route('club_manager.fund.index', ['club_id' => $club->id]) }}">
                                                     <i class="fas fa-coins"></i> Quỹ CLB
                                                 </a>
@@ -80,6 +85,11 @@
                                                     href="{{ route('club_manager.notifications.create', ['club_id' => $club->id]) }}">
                                                     <i class="fas fa-bell"></i> Thông báo CLB
                                                 </a></li>
+                                            <a href="{{ route('club_manager.club.documents.index', [$club->id]) }}">
+                                                <i class="fas fa-folder-open"></i> Quản lý tài liệu
+                                            </a>
+
+
                                         </ul>
                                     </li>
                                 @endforeach
@@ -116,6 +126,36 @@
                             @csrf
                         </form>
                     </li>
+                    @guest
+                        <li>
+                            <a href="{{ route('login') }}">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </a>
+                        </li>
+
+                        {{-- Hiển thị CLB cho khách --}}
+                        @php
+                            $clubs = \App\Models\Club::all(); // hoặc chỉ lấy CLB nổi bật
+                        @endphp
+                        @if ($clubs->count() > 0)
+                            <li class="menu-section">
+                                <a href="#guestClubsSubmenu" data-bs-toggle="collapse" aria-expanded="false"
+                                    class="dropdown-toggle">
+                                    <i class="fas fa-users"></i> Các CLB
+                                </a>
+                                <ul class="collapse list-unstyled" id="guestClubsSubmenu">
+                                    @foreach ($clubs as $club)
+                                        <li>
+                                            <a href="{{ route('club.view', ['club_id' => $club->id]) }}">
+                                                <i class="fas fa-circle"></i> {{ $club->name }}
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </li>
+                        @endif
+                    @endguest
+
                 @endauth
 
                 @guest
@@ -138,6 +178,36 @@
                     <li><i class="far fa-phone"></i> <a href="tel:+11002345909">+11002345909</a></li>
                 </ul>
             </div>
+            @guest
+                <li>
+                    <a href="{{ route('login') }}">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                </li>
+
+                {{-- Hiển thị CLB cho khách --}}
+                @php
+                    $clubs = \App\Models\Club::all(); // hoặc chỉ lấy CLB nổi bật
+                @endphp
+                @if ($clubs->count() > 0)
+                    <li class="menu-section">
+                        <a href="#guestClubsSubmenu" data-bs-toggle="collapse" aria-expanded="false"
+                            class="dropdown-toggle">
+                            <i class="fas fa-users"></i> Các CLB
+                        </a>
+                        <ul class="collapse list-unstyled" id="guestClubsSubmenu">
+                            @foreach ($clubs as $club)
+                                <li>
+                                    {{-- <a href="{{ route('club.view', ['club_id' => $club->id]) }}"> --}}
+                                    <i class="fas fa-circle"></i> {{ $club->name }}
+                                    {{-- </a> --}}
+                                </li>
+                            @endforeach
+                        </ul>
+                    </li>
+                @endif
+            @endguest
+
         </div>
     </div>
 </div>
@@ -149,7 +219,7 @@
     .admin-menu .submenu-item {
         position: relative;
     }
-    
+
     .admin-menu .submenu-item .submenu {
         display: none;
         position: relative;
@@ -165,19 +235,19 @@
         transform: none;
         transition: none;
     }
-    
+
     .admin-menu .submenu-item:hover .submenu,
     .admin-menu .submenu-item .submenu.show {
         display: block !important;
     }
-    
+
     .admin-menu .submenu-item .club-toggle {
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .admin-menu .submenu-item .submenu li a {
         padding-left: 20px;
         font-size: 14px;

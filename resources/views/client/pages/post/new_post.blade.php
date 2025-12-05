@@ -132,136 +132,143 @@
     </div>
 @endsection
 
-@push('scripts')
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
 
-    <script>
-        let clubPostEditorInstance = null;
+<script>
+    let clubPostEditorInstance = null;
 
-        document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
 
-            // === CKEditor ===
-            if (typeof ClassicEditor !== 'undefined') {
-                ClassicEditor.create(document.querySelector('#clubPostEditor'), {
-                    toolbar: [
-                        'heading', '|', 'bold', 'italic', 'link',
-                        '|', 'bulletedList', 'numberedList',
-                        '|', 'blockQuote', 'insertTable',
-                        '|', 'undo', 'redo'
-                    ],
-                    simpleUpload: {
-                        uploadUrl: "{{ route('club_manager.posts.upload_image', ['club_id' => $club->id]) }}",
-                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                        withCredentials: true
-                    }
-                }).then(editor => {
-                    clubPostEditorInstance = editor;
-
-                    // Validate before submit
-                    document.getElementById('clubPostForm').addEventListener('submit', function (e) {
-                        clubPostEditorInstance.updateSourceElement(); // đồng bộ nội dung
-                        const content = document.getElementById('clubPostEditor').value.trim();
-                        if (!content) {
-                            e.preventDefault();
-                            alert('Nội dung không được để trống.');
-                            clubPostEditorInstance.editing.view.focus();
-                        }
-                    });
-
-                }).catch(error => console.error(error));
+        ClassicEditor.create(document.querySelector('#clubPostEditor'), {
+            toolbar: [
+                'heading', '|', 'bold', 'italic', 'link',
+                '|', 'bulletedList', 'numberedList',
+                '|', 'blockQuote', 'insertTable',
+                '|', 'undo', 'redo'
+            ],
+            simpleUpload: {
+                uploadUrl: "{{ route('club_manager.posts.upload_image', ['club_id' => $club->id]) }}",
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
             }
+        })
+            .then(editor => {
+                clubPostEditorInstance = editor;
 
-            // === Select2 ===
-            if (typeof $.fn.select2 !== 'undefined') {
-                $('select[data-select2="true"]').each(function () {
-                    const $el = $(this);
-                    const config = {
-                        width: '100%',
-                        placeholder: $el.data('placeholder') || $el.attr('placeholder') || '',
-                        allowClear: $el.data('allow-clear') === true || $el.data('allow-clear') === 'true',
-                        language: {
-                            noResults: () => "Không tìm thấy kết quả",
-                            searching: () => "Đang tìm kiếm..."
-                        }
-                    };
-
-                    if ($el.data('ajax-url')) {
-                        config.ajax = {
-                            url: $el.data('ajax-url'),
-                            dataType: 'json',
-                            delay: 250,
-                            data: function (params) {
-                                return { q: params.term || '', page: params.page || 1 };
-                            },
-                            processResults: function (data) {
-                                return { results: data.results || data.data || [] };
-                            },
-                            cache: true
-                        };
-                    } else {
-                        config.minimumResultsForSearch = 0;
-                    }
-
-                    $el.select2(config);
+                // AUTO HEIGHT
+                editor.editing.view.document.on('change:data', () => {
+                    const editable = editor.ui.view.editable.element;
+                    editable.style.height = "auto";
+                    editable.style.height = editable.scrollHeight + "px";
                 });
-            }
+
+                // VALIDATE submit
+                document.getElementById('clubPostForm').addEventListener('submit', function (e) {
+                    clubPostEditorInstance.updateSourceElement();
+                    const content = document.getElementById('clubPostEditor').value.trim();
+                    if (!content) {
+                        e.preventDefault();
+                        alert('Nội dung không được để trống.');
+                        clubPostEditorInstance.editing.view.focus();
+                    }
+                });
+            })
+            .catch(error => console.error(error));
+
+
+        // SELECT2
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('select[data-select2="true"]').each(function () {
+                $(this).select2({
+                    width: '100%',
+                    placeholder: $(this).data('placeholder') || '',
+                    allowClear: true,
+                    language: {
+                        noResults: () => "Không tìm thấy kết quả",
+                        searching: () => "Đang tìm kiếm..."
+                    }
+                });
+            });
+        }
+
+    });
+
+
+    // === UPLOAD FILE & CHÈN VÀO EDITOR ===
+   // ... phần khác giữ nguyên
+
+// === Upload file & chèn vào editor ===
+async function uploadAndInsertFile() {
+    if (!clubPostEditorInstance) {
+        alert('Editor chưa sẵn sàng.');
+        return;
+    }
+
+    const fileInput = document.getElementById('fileUpload');
+    const file = fileInput.files[0];
+    const status = document.getElementById('uploadStatus');
+    const postId = document.getElementById('postId')?.value;
+
+    if (!file) {
+        status.textContent = '⚠️ Vui lòng chọn file trước.';
+        return;
+    }
+
+    status.textContent = '⏳ Đang tải lên...';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    if (postId) formData.append('post_id', postId);
+    formData.append('related_type', 'post');
+
+    try {
+        let response = await fetch("{{ route('club_manager.posts.upload_file', ['club_id' => $club->id]) }}", {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+            body: formData
         });
 
-        // === Upload file & insert vào editor ===
-        async function uploadAndInsertFile() {
-            if (!clubPostEditorInstance) {
-                alert('Trình soạn thảo chưa sẵn sàng.');
-                return;
-            }
+        const data = await response.json();
 
-            const fileInput = document.getElementById('fileUpload');
-            const file = fileInput.files[0];
-            const status = document.getElementById('uploadStatus');
-            const postId = document.getElementById('postId').value;
-
-            if (!file) {
-                status.textContent = '⚠️ Vui lòng chọn file trước.';
-                return;
-            }
-
-            status.textContent = '⏳ Đang tải lên...';
-
-            const formData = new FormData();
-            formData.append('upload', file);
-            formData.append('post_id', postId);
-
-            try {
-                const response = await fetch("{{ route('club_manager.posts.upload_file', ['club_id' => $club->id]) }}", {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                });
-                const data = await response.json();
-
-                if (data.url) {
-                    const fileType = file.type.split('/')[0];
-                    let insertHtml = '';
-
-                    if (fileType === 'image') insertHtml = `<img src="${data.url}" alt="${data.name}" style="max-width:100%;height:auto;">`;
-                    else if (fileType === 'video') insertHtml = `<video controls style="max-width:100%;"><source src="${data.url}" type="${file.type}"></video>`;
-                    else if (fileType === 'audio') insertHtml = `<audio controls><source src="${data.url}" type="${file.type}"></audio>`;
-                    else insertHtml = `<a href="${data.url}" download>📎 ${data.name}</a>`;
-
-                    clubPostEditorInstance.model.change(writer => {
-                        const insertPosition = clubPostEditorInstance.model.document.selection.getFirstPosition();
-                        const viewFragment = clubPostEditorInstance.data.processor.toView(insertHtml);
-                        const modelFragment = clubPostEditorInstance.data.toModel(viewFragment);
-                        writer.insert(modelFragment, insertPosition);
-                    });
-
-                    status.textContent = '✅ Đã tải lên và chèn vào nội dung!';
-                    fileInput.value = '';
-                } else {
-                    status.textContent = '❌ Lỗi: ' + (data.error?.message || 'Không thể tải lên file.');
-                }
-            } catch (error) {
-                status.textContent = '❌ Lỗi: ' + error.message;
-            }
+        if (!data.url) {
+            status.textContent = '❌ Upload thất bại.';
+            return;
         }
-    </script>
-@endpush
+
+        const url = data.url;
+        const name = data.name || file.name;
+        const type = data.type || file.type;
+
+        let htmlToInsert = '';
+
+        if (type.includes('image')) {
+            htmlToInsert = `<p><img src="${url}" alt="${name}" style="max-width:100%;height:auto;"></p>`;
+        } else if (type.includes('video')) {
+            htmlToInsert = `<p>🎬 <a href="${url}" target="_blank">${name}</a></p>`;
+        } else if (type.includes('audio')) {
+            htmlToInsert = `<p>🎵 <a href="${url}" target="_blank">${name}</a></p>`;
+        } else {
+            htmlToInsert = `<p>📎 <a href="${url}" target="_blank">${name}</a></p>`;
+        }
+
+        // DÙNG model.insertContent để chèn an toàn + nhúng hợp lệ
+        clubPostEditorInstance.model.change( writer => {
+            const viewFragment = clubPostEditorInstance.data.processor.toView( htmlToInsert );
+            const modelFragment = clubPostEditorInstance.data.toModel( viewFragment );
+
+            clubPostEditorInstance.model.insertContent( modelFragment );
+
+            // Sau khi chèn, thêm 1 đoạn paragraph trống để xuống dòng / không dính ảnh
+            writer.insertElement( 'paragraph', clubPostEditorInstance.model.document.selection.getFirstPosition() );
+        });
+
+        status.textContent = '✅ Upload & chèn thành công!';
+        fileInput.value = '';
+
+    } catch (err) {
+        status.textContent = '❌ Lỗi: ' + err.message;
+    }
+}
+
+</script>
+
+

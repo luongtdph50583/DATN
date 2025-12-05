@@ -30,7 +30,7 @@ class ClubRequestController extends Controller
         $request = ClubRequest::with([
             'user',                        // Người đề xuất
             'clubRequestMembers.user.member', // Thành viên/ban quản lý + thông tin member
-            'advisorFaculty.user',            // Giảng viên đỡ đầu + thông tin user
+            // 'advisorFaculty.user',            // Giảng viên đỡ đầu + thông tin user
         ])->findOrFail($id);
 
         return view('admin.club_requests.show', compact('request'));
@@ -117,19 +117,22 @@ public function handleRequest(Request $request, $id)
             $clubRequest->delete();
 
             // Gửi thông báo/email
-            $batchId = uniqid();
-            SendNotificationJob::dispatch(
-                $creatorUser->id,
-                "Yêu cầu thành lập CLB được duyệt",
-                "Yêu cầu của bạn về CLB '{$club->name}' đã được duyệt.",
-                'both',
-                $batchId,
-                false
-            );
+                $batchId = uniqid();
+                SendNotificationJob::dispatch(
+                    $creatorUser->id,           // user_id (người nhận)
+                    "Yêu cầu thành lập CLB được duyệt",  // title
+                    "Yêu cầu của bạn về CLB '{$club->name}' đã được duyệt.",  // content (HTML)
+                    'both',                     // send_via
+                    $batchId,                   // batch_id
+                    false,                      // force
+                    null,                       // content_text (null = tự động convert)
+                    [],                         // context
+                    auth()->id()                // sender_id (người gửi hiện tại)
+                );
         });
 
         return redirect()->route('admin.club_requests.index')
-            ->with('success', 'Yêu cầu đã được duyệt và chuyển thành CLB.');
+            ->with('success', 'Yêu cầu đã được duyệt .');
 
     } else {
         // rejected
@@ -139,17 +142,20 @@ public function handleRequest(Request $request, $id)
         $clubRequest->save();
 
         $batchId = uniqid();
-        SendNotificationJob::dispatch(
-            $creatorUser->id,
-            "Yêu cầu thành lập CLB bị từ chối",
-            "Yêu cầu của bạn về CLB '{$clubRequest->name}' đã bị từ chối. Lý do: {$note}",
-            'both',
-            $batchId,
-            false
-        );
+            SendNotificationJob::dispatch(
+                $creatorUser->id,           // user_id (người nhận)
+                "Yêu cầu thành lập CLB bị từ chối",  // title
+                "Yêu cầu của bạn về CLB '{$clubRequest->name}' đã bị từ chối. Lý do: {$note}",  // content (HTML)
+                'both',                     // send_via
+                $batchId,                   // batch_id
+                false,                      // force
+                null,                       // content_text (null = tự động convert)
+                [],                         // context
+                auth()->id()                // sender_id (người gửi - người từ chối)
+            );
 
         return redirect()->route('admin.club_requests.index')
-            ->with('success', 'Yêu cầu đã bị từ chối và lưu lại.');
+            ->with('success', 'Yêu cầu đã bị từ chối.');
     }
 }
 

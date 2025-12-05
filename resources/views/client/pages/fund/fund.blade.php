@@ -14,26 +14,29 @@
                 <p class="display-6 text-success">{{ number_format($fund?->balance ?? 0, 0, ',', '.') }} đ</p>
             </div>
         </div>
-       <div class="col-md-3">
-    <div class="card shadow-sm text-center py-2">
-        <h6>Tổng thu</h6>
-        <p class="display-6 text-primary">
-            {{ number_format($transactions->where('type','income')->sum('collected_amount'),0,',','.') }} đ
-        </p>
-    </div>
-</div>
-<div class="col-md-3">
-    <div class="card shadow-sm text-center py-2">
-        <h6>Tổng chi</h6>
-        <p class="display-6 text-danger">
-            {{ number_format($transactions->where('type','expense')->sum('amount'),0,',','.') }} đ
-        </p>
-    </div>
-</div>
-
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center py-2">
+                <h6>Tổng thu</h6>
+                <p class="display-6 text-primary">
+                    {{ number_format($transactions->where('type','income')->sum('collected_amount'),0,',','.') }} đ
+                </p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center py-2">
+                <h6>Tổng chi</h6>
+                <p class="display-6 text-danger">
+                    {{ number_format($transactions->where('type','expense')->sum('amount'),0,',','.') }} đ
+                </p>
+            </div>
+        </div>
         <div class="col-md-3 d-flex align-items-center justify-content-center">
-            <button class="btn btn-sm btn-primary me-2" data-bs-toggle="collapse" data-bs-target="#addTransactionForm">Thu tiền</button>
-            <button class="btn btn-sm btn-warning" data-bs-toggle="collapse" data-bs-target="#expenseTransactionForm">Chi tiền</button>
+            <button class="btn btn-sm btn-primary me-2" data-bs-toggle="collapse" data-bs-target="#addTransactionForm">
+                Thu tiền
+            </button>
+            <button class="btn btn-sm btn-warning" data-bs-toggle="collapse" data-bs-target="#expenseTransactionForm">
+                Chi tiền
+            </button>
         </div>
     </div>
 
@@ -54,12 +57,12 @@
                 </div>
                 <div class="col-md-2 d-grid">
                     <a href="{{ route('club_manager.fund.export', $club->id) }}" class="btn btn-outline-success mt-1">
-                        <i class="fas fa-file-excel"></i> Xuất Excel
+                        Xuất Excel
                     </a>
                 </div>
                 <div class="col-md-2 d-grid">
                     <a href="{{ route('club_manager.fund.index', $club->id) }}" class="btn btn-outline-secondary mt-1">
-                        <i class="fas fa-undo"></i> Reset
+                        Reset
                     </a>
                 </div>
             </form>
@@ -77,12 +80,11 @@
                     <label>Số tiền dự kiến</label>
                     <input type="number" name="amount" class="form-control" step="0.01" required>
                 </div>
-    <div class="mb-4">
-    <label class="form-label fw-bold">Ghi chú / Nội dung</label>
-    <textarea name="description" id="editor" class="form-control" rows="8">
-        {{ old('description', $transaction?->description ?? '') }}
-    </textarea>
-</div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Ghi chú / Nội dung</label>
+                    <textarea name="description" id="editor-income" class="form-control" rows="8">{{ old('description') }}</textarea>
+                </div>
 
                 <div class="mb-2">
                     <label>Danh mục thu</label>
@@ -98,23 +100,17 @@
                 <div class="mb-2">
                     <label>Khoảng thời gian thu</label>
                     <div class="row">
-                        <div class="col">
-                            <input type="date" name="start_date" class="form-control" placeholder="Từ ngày">
-                        </div>
-                        <div class="col">
-                            <input type="date" name="end_date" class="form-control" placeholder="Đến ngày">
-                        </div>
+                        <div class="col"><input type="date" name="start_date" class="form-control"></div>
+                        <div class="col"><input type="date" name="end_date" class="form-control"></div>
                     </div>
                 </div>
 
-              <div class="mb-2">
-    <label>Hình ảnh chứng từ (tùy chọn)</label>
-    <input type="file" name="receipt" class="form-control" accept="image/*">
-</div>
+                <div class="mb-2">
+                    <label>Hình ảnh chứng từ (tùy chọn)</label>
+                    <input type="file" name="receipt" class="form-control" accept="image/*">
+                </div>
 
-               
-
-                <button type="submit" class="btn btn-success">Thêm giao dịch</button>
+                <button type="submit" class="btn btn-success">Thêm giao dịch thu</button>
             </form>
         </div>
     </div>
@@ -130,12 +126,11 @@
                     <label>Số tiền chi</label>
                     <input type="number" name="amount" class="form-control" step="0.01" required>
                 </div>
-<div class="mb-4">
-    <label class="form-label fw-bold">Ghi chú / Nội dung</label>
-    <textarea name="description" id="editor" class="form-control" rows="8">
-        {{ old('description', $transaction?->description ?? '') }}
-    </textarea>
-</div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Ghi chú / Nội dung</label>
+                    <textarea name="description" id="editor-expense" class="form-control" rows="8">{{ old('description') }}</textarea>
+                </div>
 
                 <div class="mb-2">
                     <label>Loại chi</label>
@@ -155,7 +150,7 @@
                     </select>
                 </div>
 
-                <div class="mb-2" id="customCategoryWrapper">
+                <div class="mb-2" id="customCategoryWrapper" style="display:none;">
                     <label>Danh mục chi khác</label>
                     <input type="text" name="custom_category" class="form-control" placeholder="Nhập danh mục chi khác">
                 </div>
@@ -165,7 +160,7 @@
                     <input type="file" name="receipt" class="form-control" accept="image/*" required>
                 </div>
 
-                <button type="submit" class="btn btn-danger">Thêm giao dịch</button>
+                <button type="submit" class="btn btn-danger">Thêm giao dịch chi</button>
             </form>
         </div>
     </div>
@@ -175,7 +170,7 @@
         <div class="card-body">
             <h5 class="card-title mb-3">Lịch sử giao dịch</h5>
             <div class="table-responsive">
-                <table class="table table-striped table-hover">
+                <table class="table table-striped table-hover align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
@@ -186,237 +181,184 @@
                             <th>Người tạo</th>
                             <th>Trạng thái</th>
                             <th>Ngày</th>
-                            <th>Hành động</th>
+                            <th class="text-center">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($transactions as $transaction)
                         <tr>
                             <td>{{ $transaction->id }}</td>
-                            <td>{{ $transaction->type === 'income' ? 'Thu' : 'Chi' }}</td>
+                            <td>
+                                <span class="badge {{ $transaction->type === 'income' ? 'bg-success' : 'bg-danger' }}">
+                                    {{ $transaction->type === 'income' ? 'Thu' : 'Chi' }}
+                                </span>
+                            </td>
                             <td>{{ number_format($transaction->amount,0,',','.') }} đ</td>
                             <td>{{ number_format($transaction->collected_amount ?? 0,0,',','.') }} đ</td>
-                            @php
-$categoryLabels = [
-    'membership_fee' => 'Hội phí',
-    'donation' => 'Đóng góp',
-    'other' => 'Khác',
-    'event_expense' => 'Chi cho sự kiện',
-];
-@endphp
-
-<td>
-    @if($transaction->custom_category)
-        {{ $transaction->custom_category }}
-    @elseif($transaction->category)
-        {{ $categoryLabels[$transaction->category] ?? $transaction->category }}
-    @else
-        -
-    @endif
-</td>
+                            <td>
+                                @php
+                                    $labels = [
+                                        'membership_fee' => 'Hội phí',
+                                        'donation' => 'Đóng góp',
+                                        'other' => 'Khác',
+                                        'event_expense' => 'Chi cho sự kiện',
+                                    ];
+                                @endphp
+                                {{ $transaction->custom_category ?? ($labels[$transaction->category] ?? $transaction->category ?? '-') }}
+                            </td>
                             <td>{{ $transaction->creator->name ?? '-' }}</td>
                             <td>
                                 @switch($transaction->status)
-                                    @case('pending')
-                                        <span class="badge bg-warning">Chờ duyệt</span>
-                                        @break
-                                    @case('approved')
-                                        <span class="badge bg-primary">Đã duyệt</span>
-                                        @break
-                                    @case('in_progress')
-                                        <span class="badge bg-info text-dark">Đang thu/chi</span>
-                                        @break
-                                    @case('completed')
-                                        <span class="badge bg-success">Hoàn tất</span>
-                                        @break
+                                    @case('pending')   <span class="badge bg-warning">Chờ duyệt</span> @break
+                                    @case('approved')  <span class="badge bg-primary">Đã duyệt</span> @break
+                                    @case('in_progress') <span class="badge bg-info text-dark">Đang thu/chi</span> @break
+                                    @case('completed') <span class="badge bg-success">Hoàn tất</span> @break
+                                    @default <span class="badge bg-secondary">{{ ucfirst($transaction->status) }}</span>
                                 @endswitch
                             </td>
                             <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-                            <td>
-    @if($transaction->status === 'pending')
-        <form action="{{ route('club_manager.fund.transactions.approve', [$club->id, $transaction->id]) }}" method="POST" class="d-inline">
-            @csrf
-            <button type="submit" class="btn btn-sm btn-primary">Duyệt</button>
-        </form>
-    @elseif($transaction->status === 'approved')
-        <a href="{{ route('club_manager.fund.transactions.edit', [$club->id, $transaction->id]) }}" class="btn btn-sm btn-info">Cập nhật thu</a>
-    @endif
-    <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#transactionModal{{ $transaction->id }}">
-        Xem chi tiết
-    </button>
-</td>
+                            <td class="text-nowrap text-center">
 
+                                {{-- DUYỆT KHOẢN THU --}}
+                                @if($transaction->type === 'income' && $transaction->status === 'pending')
+                                    <form action="{{ route('club_manager.approve.income', [$club->id, $transaction->id]) }}"
+                                          method="POST" class="d-inline">
+                                        @csrf
+                                        @method('POST')
+                                        <button type="submit" class="btn btn-sm btn-primary"
+                                                onclick="return confirm('Xác nhận DUYỆT khoản thu này?')">
+                                            Duyệt
+                                        </button>
+                                    </form>
+                                @elseif($transaction->type === 'income' && $transaction->status === 'approved')
+                                    <a href="{{ route('club_manager.fund.transactions.edit', [$club->id, $transaction->id]) }}"
+                                       class="btn btn-sm btn-info">Cập nhật thu</a>
+                                @endif
+
+                                {{-- DUYỆT KHOẢN CHI --}}
+                                @if($transaction->type === 'expense' && $transaction->status === 'pending')
+                                    <form action="{{ route('club_manager.approve.expense', [$club->id, $transaction->id]) }}"
+                                          method="POST" class="d-inline">
+                                        @csrf
+                                        @method('POST')
+                                        <button type="submit" class="btn btn-sm btn-warning"
+                                                onclick="return confirm('Duyệt khoản CHI sẽ trừ tiền quỹ ngay lập tức!\nBạn có chắc chắn?')">
+                                            Duyệt chi
+                                        </button>
+                                    </form>
+                                @endif
+
+                                {{-- Xem chi tiết --}}
+                                <button type="button" class="btn btn-sm btn-secondary ms-1"
+                                        data-bs-toggle="modal" data-bs-target="#transactionModal{{ $transaction->id }}">
+                                    Chi tiết
+                                </button>
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted">Chưa có giao dịch nào</td>
+                            <td colspan="9" class="text-center text-muted py-4">Chưa có giao dịch nào</td>
                         </tr>
                         @endforelse
                     </tbody>
-                    
                 </table>
-                @foreach($transactions as $transaction)
-<div class="modal fade" id="transactionModal{{ $transaction->id }}" tabindex="-1" aria-labelledby="transactionModalLabel{{ $transaction->id }}" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="transactionModalLabel{{ $transaction->id }}">Chi tiết giao dịch #{{ $transaction->id }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-borderless">
-            <tr>
-                <th>Loại:</th>
-                <td>{{ $transaction->type === 'income' ? 'Thu' : 'Chi' }}</td>
-            </tr>
-            <tr>
-                <th>Số tiền dự kiến:</th>
-                <td>{{ number_format($transaction->amount,0,',','.') }} đ</td>
-            </tr>
-            <tr>
-                <th>Số tiền thực tế:</th>
-                <td>{{ number_format($transaction->collected_amount ?? 0,0,',','.') }} đ</td>
-            </tr>
-           <tr>
-    <th>Ghi chú:</th>
-    <td>{{ $transaction->description }}</td>
-</tr>
-            <tr>
-                <th>Danh mục:</th>
-                <td>{{ $transaction->custom_category ?? $transaction->category ?? '-' }}</td>
-            </tr>
-            <tr>
-                <th>Người tạo:</th>
-                <td>{{ $transaction->creator->name ?? '-' }}</td>
-            </tr>
-            <tr>
-                <th>Trạng thái:</th>
-                <td>
-                    @switch($transaction->status)
-                        @case('pending') Chờ duyệt @break
-                        @case('approved') Đã duyệt @break
-                        @case('completed') Hoàn tất @break
-                        @case('in_progress') Đang thu/chi @break
-                    @endswitch
-                </td>
-            </tr>
-            <tr>
-                <th>Ngày tạo:</th>
-                <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-            </tr>
-           <tr>
-    <th>Excel / Chứng từ:</th>
-    <td>
-        @if($transaction->excel_file)
-            <a href="{{ asset('storage/'.$transaction->excel_file) }}" target="_blank" 
-               style="color: #0d6efd; text-decoration: underline;">
-                Xem file Excel
-            </a>
-        @else
-            -
-        @endif
-        @if($transaction->receipt)
-            <br>
-            <a href="{{ asset('storage/'.$transaction->receipt) }}" target="_blank" 
-               style="color: #0d6efd; text-decoration: underline;">
-                Xem ảnh
-            </a>
-        @endif
-    </td>
-</tr>
-
-            @if($transaction->event_id)
-            <tr>
-                <th>Sự kiện liên quan:</th>
-                <td>{{ $transaction->event->name ?? '-' }}</td>
-            </tr>
-            @endif
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-      </div>
-    </div>
-  </div>
-</div>
-@endforeach
-
             </div>
         </div>
     </div>
 
+    {{-- Modal chi tiết --}}
+    @foreach($transactions as $transaction)
+    <div class="modal fade" id="transactionModal{{ $transaction->id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chi tiết giao dịch #{{ $transaction->id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-borderless">
+                        <tr><th width="180">Loại:</th><td>{{ $transaction->type === 'income' ? 'Thu' : 'Chi' }}</td></tr>
+                        <tr><th>Số tiền dự kiến:</th><td>{{ number_format($transaction->amount,0,',','.') }} đ</td></tr>
+                        <tr><th>Số tiền thực tế:</th><td>{{ number_format($transaction->collected_amount ?? 0,0,',','.') }} đ</td></tr>
+                        <tr><th>Ghi chú:</th><td>{!! nl2br(e($transaction->description ?? '-')) !!}</td></tr>
+                        <tr><th>Danh mục:</th><td>{{ $transaction->custom_category ?? ($labels[$transaction->category] ?? $transaction->category ?? '-') }}</td></tr>
+                        <tr><th>Người tạo:</th><td>{{ $transaction->creator->name ?? '-' }}</td></tr>
+                        <tr><th>Trạng thái:</th><td>
+                            @switch($transaction->status)
+                                @case('pending') Chờ duyệt @break
+                                @case('approved') Đã duyệt @break
+                                @case('completed') Hoàn tất @break
+                                @case('in_progress') Đang thu/chi @break
+                                @default {{ ucfirst($transaction->status) }}
+                            @endswitch
+                        </td></tr>
+                        <tr><th>Ngày tạo:</th><td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td></tr>
+                        @if($transaction->event_id)
+                        <tr><th>Sự kiện liên quan:</th><td>{{ $transaction->event->name ?? '-' }}</td></tr>
+                        @endif
+                        <tr>
+                            <th>Chứng từ:</th>
+                            <td>
+                                @if($transaction->receipt)
+                                    <a href="{{ asset('storage/'.$transaction->receipt) }}" target="_blank" class="text-decoration-underline">
+                                        Xem ảnh chứng từ
+                                    </a>
+                                @else
+                                    Không có
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endforeach
 </div>
+
+{{-- CKEditor --}}
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/translations/vi.js"></script>
-
 <script>
-    ClassicEditor
-        .create(document.querySelector('#editor'), {
-            language: 'vi',
-            toolbar: [
-                'heading', '|',
-                'bold', 'italic', 'underline', '|',
-                'bulletedList', 'numberedList', '|',
-                'outdent', 'indent', '|',
-                'link', 'blockQuote', 'insertTable', '|',
-                'undo', 'redo'
-            ],
-            heading: {
-                options: [
-                    { model: 'paragraph', title: 'Đoạn văn', class: 'ck-heading_paragraph' },
-                    { model: 'heading2', view: 'h2', title: 'Tiêu đề 2', class: 'ck-heading_heading2' },
-                    { model: 'heading3', view: 'h3', title: 'Tiêu đề 3', class: 'ck-heading_heading3' }
-                ]
-            },
-            table: {
-                contentToolbar: [ 'tableColumn', 'tableRow', 'mergeTableCells' ]
-            }
-            // Không có simpleUpload → không thể chèn ảnh → đúng như bạn muốn!
-        })
-        .then(editor => {
-            console.log('Editor đã sẵn sàng!');
-        })
-        .catch(error => {
-            console.error(error);
-        });
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Collapse form thu/chi
-    var thuForm = document.getElementById('addTransactionForm');
-    var chiForm = document.getElementById('expenseTransactionForm');
+    document.addEventListener('DOMContentLoaded', function () {
+        // Tạo 2 editor riêng cho 2 form
+        ClassicEditor.create(document.querySelector('#editor-income'), { language: 'vi' }).catch(err => console.error(err));
+        ClassicEditor.create(document.querySelector('#editor-expense'), { language: 'vi' }).catch(err => console.error(err));
 
-    thuForm.addEventListener('show.bs.collapse', function () {
-        var bsChi = bootstrap.Collapse.getInstance(chiForm);
-        if (bsChi) bsChi.hide();
-    });
-    chiForm.addEventListener('show.bs.collapse', function () {
-        var bsThu = bootstrap.Collapse.getInstance(thuForm);
-        if (bsThu) bsThu.hide();
-    });
+        // Toggle form thu/chi
+        const thuForm = document.getElementById('addTransactionForm');
+        const chiForm = document.getElementById('expenseTransactionForm');
+        thuForm.addEventListener('show.bs.collapse', () => bootstrap.Collapse.getInstance(chiForm)?.hide());
+        chiForm.addEventListener('show.bs.collapse', () => bootstrap.Collapse.getInstance(thuForm)?.hide());
 
-    // Hiển thị custom category khi Thu chọn Khác
-    var incomeCategory = document.getElementById('income_category');
-    var incomeCustom = document.querySelector('input[name="custom_category"]');
-    incomeCategory.addEventListener('change', function(){
-        incomeCustom.style.display = this.value === 'other' ? 'block' : 'none';
-    });
-
-    // Hiển thị event hoặc custom category khi Chi
-    var expenseCategory = document.getElementById('expenseCategory');
-    var eventWrapper = document.getElementById('eventSelectWrapper');
-    var customWrapper = document.getElementById('customCategoryWrapper');
-    function toggleExpenseFields() {
-        if(expenseCategory.value === 'event_expense') {
-            eventWrapper.style.display = 'block';
-            customWrapper.style.display = 'none';
-        } else {
-            eventWrapper.style.display = 'none';
-            customWrapper.style.display = 'block';
+        // Custom category thu
+        const incomeCat = document.getElementById('income_category');
+        const incomeCustom = incomeCat?.closest('form')?.querySelector('input[name="custom_category"]');
+        if (incomeCat && incomeCustom) {
+            incomeCat.addEventListener('change', () => {
+                incomeCustom.style.display = incomeCat.value === 'other' ? 'block' : 'none';
+                incomeCustom.required = incomeCat.value === 'other';
+            });
         }
-    }
-    toggleExpenseFields();
-    expenseCategory.addEventListener('change', toggleExpenseFields);
-});
+
+        // Expense category toggle
+        const expenseCat = document.getElementById('expenseCategory');
+        const eventWrapper = document.getElementById('eventSelectWrapper');
+        const customWrapper = document.getElementById('customCategoryWrapper');
+        function toggleExpense() {
+            if (expenseCat.value === 'event_expense') {
+                eventWrapper.style.display = 'block';
+                customWrapper.style.display = 'none';
+            } else {
+                eventWrapper.style.display = 'none';
+                customWrapper.style.display = 'block';
+            }
+        }
+        expenseCat?.addEventListener('change', toggleExpense);
+        toggleExpense();
+    });
 </script>
 @endsection

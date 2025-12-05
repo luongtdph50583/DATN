@@ -48,6 +48,8 @@ class User extends Authenticatable
     {
         return $this->hasOne(Member::class);
     }
+  
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -140,6 +142,10 @@ class User extends Authenticatable
         ])->get();
     }
 
+public function eventRegistrations()
+{
+    return $this->hasMany(EventRegistration::class, 'user_id');
+}
 
 
 

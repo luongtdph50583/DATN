@@ -21,9 +21,9 @@
     <link rel="stylesheet" href="{{ asset('assets1/css/swiper-bundle.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets1/css/nice-select.css') }}">
     <link rel="stylesheet" href="{{ asset('assets1/css/main.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    {{-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" /> --}}
 </head>
-
+@stack('css')
 <body>
 
     <!-- Preloader Start -->
@@ -71,9 +71,9 @@
     @include('client.layouts.sidebar')
 
     @php
-        $clientNotifications = Auth::check()
-            ? Auth::user()->unreadNotifications()->latest()->limit(5)->get()
-            : collect();
+$clientNotifications = Auth::check()
+    ? Auth::user()->unreadNotifications()->latest()->limit(5)->get()
+    : collect();
     @endphp
 
     <!-- Header -->
@@ -105,7 +105,7 @@
     <script src="{{ asset('assets1/js/SplitText.min.js') }}"></script>
     <script src="{{ asset('assets1/js/splitType.js') }}"></script>
     <script src="{{ asset('assets1/js/main.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    {{-- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script> --}}
     <script>
         $(function () {
             if (typeof $.fn.select2 === 'undefined') {
@@ -126,7 +126,7 @@
                         }
                     }
                 };
-                
+
                 // Nếu có data-ajax-url thì dùng AJAX search
                 if ($el.data('ajax-url')) {
                     config.ajax = {
@@ -150,7 +150,7 @@
                     // Nếu không có AJAX, thêm search trong options
                     config.minimumResultsForSearch = 0; // Luôn hiển thị search box
                 }
-                
+
                 $el.select2(config);
             });
         });
@@ -161,7 +161,7 @@
         function toggleClubSubmenu(element) {
             const submenu = element.nextElementSibling;
             const icon = element.querySelector('.fa-chevron-down');
-            
+
             if (submenu) {
                 if (submenu.style.display === 'none' || submenu.style.display === '') {
                     submenu.style.display = 'block';

@@ -112,10 +112,10 @@ class Event extends Model
         return $this->media()->where('file_type', 'document');
     }
 
-    public function registrations(): HasMany
-    {
-        return $this->hasMany(EventRegistration::class);
-    }
+public function registrations()
+{
+    return $this->hasMany(EventRegistration::class, 'event_id');
+}
 
     public function transactions(): HasMany
     {

@@ -89,84 +89,86 @@ if ($request->hasFile('receipt')) {
     }
 
 
-public function approveTransaction($club_id, FundTransaction $transaction)
+
+
+
+public function approveIncome($club_id, FundTransaction $transaction)
 {
     $user = auth()->user();
 
-    // Chỉ duyệt khoản thu
+    // Chỉ xử lý khoản THU
     if ($transaction->type !== 'income') {
         return back()->with('error', 'Chỉ có thể duyệt khoản thu!');
     }
 
+    // Nếu đã duyệt trước đó
     if ($transaction->status === 'approved') {
-        return back()->with('info', 'Giao dịch đã được duyệt trước đó.');
+        return back()->with('info', 'Khoản thu đã được duyệt trước đó.');
     }
 
-    // Duyệt + cộng quỹ
+    // ===============================
+    // BƯỚC 1: DUYỆT KHOẢN THU + CỘNG VÀO QUỸ (nếu cần cộng ở đây)
+    // ===============================
     $transaction->update([
         'status'       => 'approved',
         'approved_by'  => $user->id,
         'approved_at'  => now(),
     ]);
 
- 
+    // Nếu muốn cộng tiền vào quỹ câu lạc bộ ngay tại đây:
+    // $club = \App\Models\Club::findOrFail($club_id);
+    // $club->increment('fund_balance', $transaction->amount);
 
-
+    // ===============================
+    // BƯỚC 2: Gửi thông báo cho tất cả thành viên active
+    // ===============================
     $recipients = \App\Models\ClubMember::query()
         ->where('club_id', $club_id)
         ->where('status', 'active')
-        ->with('user')                   
-        ->get()                           
-        ->pluck('user')                  
-        ->filter(fn($user) => $user?->email && $user?->email_verified_at)
+        ->with('user')
+        ->get()
+        ->pluck('user')
+        ->filter(fn($u) => $u?->email && $u?->email_verified_at)
         ->values();
-
-   
 
     if ($recipients->isNotEmpty()) {
         Notification::send($recipients, new IncomeTransactionApprovedNotification($transaction));
-        
+
         \Log::info('Sent income approval notification', [
             'transaction_id' => $transaction->id,
-            'recipients' => $recipients->pluck('email')->toArray()
+            'recipients'      => $recipients->pluck('email')->toArray(),
         ]);
     }
 
-    return back()->with('success', 'Khoản thu đã được duyệt và thông báo đã gửi!');
+    return back()->with('success', 'Khoản thu đã được duyệt! Thông báo đã gửi đến các thành viên.');
 }
 
-public function approveExpense($club_id, FundTransaction $transaction)
+public function approveExpense($id)
 {
-    $user = auth()->user();
+    $transaction = FundTransaction::findOrFail($id);
 
-    // Chỉ duyệt khoản chi
     if ($transaction->type !== 'expense') {
-        return back()->with('error', 'Đây không phải khoản chi!');
+        return back()->with('error', 'Đây không phải giao dịch chi.');
     }
 
-    // Không duyệt nếu đã duyệt
-    if ($transaction->status === 'approved') {
-        return back()->with('info', 'Khoản chi này đã được duyệt trước đó.');
+    $club = Club::findOrFail($transaction->club_id);
+
+    // Kiểm tra số dư
+    if ($club->fund_balance < $transaction->amount) {
+        return back()->with('error', 'Quỹ không đủ để duyệt khoản chi.');
     }
 
-    // Cập nhật trạng thái duyệt
-    $transaction->update([
-        'status'       => 'approved',
-        'approved_by'  => $user->id,
-        'approved_at'  => now(),
-    ]);
+    // Trừ quỹ
+    $club->fund_balance -= $transaction->amount;
+    $club->save();
 
-    // Trừ quỹ CLB
-    $fund = Fund::firstOrCreate(['club_id' => $club_id], ['balance' => 0]);
-    if ($fund->balance < $transaction->amount) {
-        return back()->with('error', 'Quỹ CLB không đủ để thực hiện khoản chi này!');
-    }
-    $fund->decrement('balance', $transaction->amount);
+    // Cập nhật trạng thái giao dịch
+    $transaction->status = 'approved';
+    $transaction->save();
 
-
-
-    return back()->with('success', 'Khoản chi đã được duyệt, trừ quỹ và thông báo đã gửi!');
+    return back()->with('success', 'Đã duyệt khoản chi và cập nhật quỹ.');
 }
+
 
 
     public function edit($club_id, FundTransaction $transaction)

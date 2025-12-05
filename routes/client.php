@@ -1,55 +1,94 @@
 <?php
 
-use App\Http\Controllers\Client\ClubFundController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Client\PostPublicController;
 use App\Http\Controllers\Client\HomeController;
+use App\Http\Controllers\Client\ClubFundController;
 use App\Http\Controllers\Client\ClubPostController;
-use App\Http\Controllers\Client\ClubRequestController;
-use App\Http\Controllers\Client\ClubMemberRequestController;
+use App\Http\Controllers\Client\JoinClubController;
 use App\Http\Controllers\Client\InterviewController;
-use App\Http\Controllers\Client\RecruitFormController;
 use App\Http\Controllers\Client\ClubMemberController;
+use App\Http\Controllers\Client\ClubRequestController;
+use App\Http\Controllers\Client\RecruitFormController;
+use App\Http\Controllers\Client\ClubDocumentController;
 use App\Http\Controllers\Client\NotificationController;
 use App\Http\Controllers\Client\ClubNotificationController;
+use App\Http\Controllers\Client\ClubMemberRequestController;
+use App\Http\Controllers\Client\DocumentUpdateLogController;
 use App\Http\Controllers\Client\ClubFormationRequestController;
-use App\Http\Controllers\Client\JoinClubController;
+use App\Http\Controllers\Client\EventJoinController as ClientEventJoinController;
 use App\Http\Controllers\ClubManager\EventController;
 
 // Trang client home — public, user vẫn vào được
 Route::name('client.')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
-   Route::get('/clubs', [HomeController::class, 'showClubs'])->name('clubs.list');
- Route::get('/clubs/{club}', [HomeController::class, 'show'])->name('clubs.show');
+    Route::get('/clubs', [HomeController::class, 'showClubs'])->name('clubs.list');
+    Route::get('/clubs/{club}', [HomeController::class, 'show'])->name('clubs.show');
+
+    Route::prefix('postpublic')->name('postpublic.')->group(function () {
+
+        // Hiển thị danh sách bài viết (random CLB nếu chưa chọn)
+        Route::get('/', [PostPublicController::class, 'index'])->name('index');
+
+        // Hiển thị bài viết theo từng CLB
+        Route::get('/club/{club}', [PostPublicController::class, 'byClub'])->name('by_club');
+
+        // Xem chi tiết bài viết
+        Route::get('/{post}', [PostPublicController::class, 'show'])->name('show');
+
+    });
 });
+
 
 // Routes dành cho user đăng nhập
-Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth'])->group(function () {
 
-    Route::prefix('club')->name('club.member.')->group(function () {
-        Route::get('/{club_id}/view', [ClubMemberController::class, 'view'])->name('view');
-        Route::get('/{club_id}/join', [ClubMemberController::class, 'showJoinForm'])->name('join');
-        Route::post('/{club_id}/join', [ClubMemberController::class, 'submitJoinRequest'])->name('join.submit');
+        Route::prefix('club')->name('club.member.')->group(function () {
+            Route::get('/{club_id}/view', [ClubMemberController::class, 'view'])->name('view');
+            Route::get('/{club_id}/join', [ClubMemberController::class, 'showJoinForm'])->name('join');
+            Route::post('/{club_id}/join', [ClubMemberController::class, 'submitJoinRequest'])->name('join.submit');
+        });
+
+        Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+        Route::get('/formation-request/create', [ClubFormationRequestController::class, 'create'])
+            ->name('formation_request.create');
+
+        // Xử lý gửi yêu cầu
+        Route::post('/formation-request/store', [ClubFormationRequestController::class, 'store'])
+            ->name('formation_request.store');
+
+    Route::get('/formation-request', [ClubFormationRequestController::class, 'index'])->name('formation-request.index');
+        Route::get('/formation-request/{request}', [ClubFormationRequestController::class, 'show'])->name('formation-request.show');
+        // Đăng ký tham gia CLB
+    Route::get('clubs/{club}/join', [JoinClubController::class, 'showForm'])->name('clubs.join.form');
+    Route::post('clubs/{club}/join', [JoinClubController::class, 'submitForm'])->name('clubs.join.submit');
+
+           Route::get('/events', [ClientEventJoinController::class, 'index'])
+    ->name('events.index');
+
+            Route::get('/events/{id}', [ClientEventJoinController::class, 'show'])->name('events.show');
+    Route::post('/events/{id}/join', [ClientEventJoinController::class, 'join'])
+        ->name('events.join');
+
     });
-
-    Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-
-     Route::get('/formation-request/create', [ClubFormationRequestController::class, 'create'])
-        ->name('formation_request.create');
-
-    // Xử lý gửi yêu cầu
-    Route::post('/formation-request/store', [ClubFormationRequestController::class, 'store'])
-        ->name('formation_request.store');
-
- Route::get('/formation-request', [ClubFormationRequestController::class, 'index'])->name('formation-request.index');
-    Route::get('/formation-request/{request}', [ClubFormationRequestController::class, 'show'])->name('formation-request.show');
-    // Đăng ký tham gia CLB
- Route::get('clubs/{club}/join', [JoinClubController::class, 'showForm'])->name('clubs.join.form');
-Route::post('clubs/{club}/join', [JoinClubController::class, 'submitForm'])->name('clubs.join.submit');
-
-});
 
 // Dashboard user bình thường — chỉ client mới vào được
 Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_manager'])->group(function () {
+
+    Route::prefix('/{club_id}/documents')->middleware('auth')->name('club.documents.')->group(function () {
+        Route::get('/', [ClubDocumentController::class, 'index'])->name('index');
+        Route::get('/create', [ClubDocumentController::class, 'create'])->name('create');
+        Route::get('/{id}', [ClubDocumentController::class, 'view'])->name('view');
+        Route::get('/{id}/edit', [ClubDocumentController::class, 'edit'])->name('edit');
+        Route::post('/store', [ClubDocumentController::class, 'store'])->name('store');
+        Route::put('/{id}', [ClubDocumentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ClubDocumentController::class, 'destroy'])->name('destroy');
+    });
+
+    // ✅ Thêm route cho logs
+
+
 
     // Dashboard CLB
     // Route::get('/dashboard/{club_id}', [ClubManagerController::class, 'dashboard'])->name('dashboard');
@@ -91,23 +130,25 @@ Route::prefix('club-manager')->name('club_manager.')->middleware(['auth', 'club_
         Route::post('/forms', [RecruitFormController::class, 'storeForm'])->name('recruit_forms.store');
         Route::delete('/forms/{form_id}', [RecruitFormController::class, 'destroyForm'])->name('recruit_forms.destroy');
         Route::post('/forms/{form_id}/set-default', [RecruitFormController::class, 'setDefault'])->name('recruit_forms.set_default');
-        
+
         // Quản lý câu hỏi trong form
         Route::get('/form/{form_id?}', [RecruitFormController::class, 'create'])->name('recruit_form.create');
         Route::post('/form', [RecruitFormController::class, 'store'])->name('recruit_form.store');
         Route::post('/form/question/{question}/toggle', [RecruitFormController::class, 'toggle'])->name('recruit_form.toggle');
-        
+
         // Yêu cầu tham gia
         Route::get('/', [RecruitFormController::class, 'index'])->name('recruit.index');
         Route::post('/reject/{request_id}', [RecruitFormController::class, 'reject'])->name('recruit.reject');
         Route::post('/approve/{member_id}', [RecruitFormController::class, 'approve'])->name('recruit.approve');
     });
 
-    Route::prefix('{club_id}/notifications')->name('notifications.')->group(function () {
-        Route::get('/create', [ClubNotificationController::class, 'create'])->name('create');
-        Route::post('/', [ClubNotificationController::class, 'store'])->name('store');
-    });
-
+    Route::prefix('{club_id}/notifications')
+        ->name('notifications.')
+        ->group(function () {
+            Route::get('/create', [ClubNotificationController::class, 'create'])->name('create');
+            Route::post('/', [ClubNotificationController::class, 'store'])->name('store');
+            Route::get('/fetch-club-members', [ClubNotificationController::class, 'fetchClubMembers'])->name('fetchClubMembers');
+        });
     // Quỹ CLB
 Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
     // Trang tổng quỹ + lịch sử giao dịch
@@ -119,6 +160,15 @@ Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
     // Duyệt giao dịch
     Route::post('/transactions/{transaction}/approve', [ClubFundController::class, 'approveTransaction'])
         ->name('fund.transactions.approve');
+
+   // DUYỆT KHOẢN THU – PHẢI ĐÚNG TÊN NÀY
+    Route::post('/approve-income/{transaction}', [ClubFundController::class, 'approveIncome'])
+        ->name('approve.income');
+
+    // DUYỆT KHOẢN CHI – PHẢI ĐÚNG TÊN NÀY
+    Route::post('/approve-expense/{transaction}', [ClubFundController::class, 'approveExpense'])
+        ->name('approve.expense');
+
       
 
     // Trang cập nhật giao dịch (chỉ cần {transaction}, đã có {club_id} trong prefix)
@@ -134,6 +184,9 @@ Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
 
    
 });
+    // Document routes for client
+
+
 
 // CLUB MANAGER ROUTES – QUẢN LÝ SỰ KIỆN CLB (CHỦ NHIỆM CLB)
   // Trang chủ quản lý sự kiện
@@ -150,6 +203,7 @@ Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
     
     Route::get('/events/{id}', [EventController::class, 'show'])
         ->name('events.show');
+
 
     Route::get('/events/{id}/registrations', [EventController::class, 'registrations'])
         ->name('events.registrations');

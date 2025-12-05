@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Client;
 
-use App\Http\Controllers\Controller;
-use App\Jobs\SendNotificationJob;
 use App\Models\Club;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Jobs\SendNotificationJob;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use App\Jobs\SendNotificationJobClient;
 
 class ClubNotificationController extends Controller
 {
@@ -28,13 +29,13 @@ class ClubNotificationController extends Controller
         $club = Club::with('clubMembers.member.user')->findOrFail($club_id);
         $this->authorizeClubManager($club);
 
+        // Lấy danh sách thành viên kèm role
         $members = $club->clubMembers
             ->map(function ($membership) {
                 $user = $membership->member?->user;
                 if (!$user) {
                     return null;
                 }
-
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -45,12 +46,24 @@ class ClubNotificationController extends Controller
             ->filter()
             ->values();
 
+        // Các role trong CLB
+        $memberRoles = [
+            'club_manager' => 'Chủ nhiệm CLB',
+            'deputy_manager' => 'Phó chủ nhiệm',
+            'secretary' => 'Thư ký',
+            'treasurer' => 'Thủ quỹ',
+            'event_manager' => 'Quản lý sự kiện',
+            'communication' => 'Truyền thông',
+            'member' => 'Thành viên thường',
+        ];
+
         return view('client.pages.club.notifications', [
             'club' => $club,
-            'memberRoles' => $this->memberRoles,
+            'memberRoles' => $memberRoles,
             'members' => $members,
         ]);
     }
+
 
     public function store(Request $request, $club_id)
     {
@@ -67,6 +80,7 @@ class ClubNotificationController extends Controller
             'user_ids.*' => 'integer',
         ]);
 
+        // Xác định danh sách người nhận trong CLB
         $recipientIds = $this->resolveRecipients(
             $club_id,
             $validated['target'],
@@ -85,7 +99,7 @@ class ClubNotificationController extends Controller
         $batchId = Str::uuid()->toString();
 
         foreach ($recipientIds as $userId) {
-            SendNotificationJob::dispatch(
+            SendNotificationJobClient::dispatch(
                 $userId,
                 $validated['title'],
                 $htmlContent,
@@ -98,7 +112,52 @@ class ClubNotificationController extends Controller
 
         return redirect()
             ->route('club_manager.notifications.create', ['club_id' => $club_id])
-            ->with('success', 'Thông báo đang được gửi đến các thành viên CLB.');
+            ->with('success', 'Thông báo đã được đưa vào hàng đợi để gửi đến thành viên CLB.');
+    }
+
+    public function fetchClubMembers(Request $request, $club_id)
+    {
+        $club = Club::with('clubMembers.member.user')
+            ->findOrFail($club_id);
+
+        $this->authorizeClubManager($club);
+
+        $query = $club->clubMembers()
+            ->join('members', 'club_members.member_id', '=', 'members.id')
+            ->join('users', 'members.user_id', '=', 'users.id')
+            ->where('users.status', 'active');
+
+        // Nếu có tìm kiếm theo tên/email
+        if ($search = $request->get('q')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%");
+            });
+        }
+
+        // Nếu lọc theo role
+        if ($role = $request->get('role')) {
+            $query->where('club_members.role', $role);
+        }
+
+        // Nếu load theo danh sách id cụ thể
+        if ($ids = $request->get('ids')) {
+            $query->whereIn('users.id', (array) $ids);
+        }
+
+        $results = $query->select('users.id', 'users.name', 'users.email', 'club_members.role')
+            ->orderBy('users.name')
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'id' => $row->id,
+                    'text' => "{$row->name} ({$row->email}) - {$row->role}",
+                ];
+            });
+
+        return response()->json([
+            'results' => $results,
+        ]);
     }
 
     protected function resolveRecipients(int $clubId, string $target, ?string $role, array $userIds): Collection
@@ -110,9 +169,9 @@ class ClubNotificationController extends Controller
             ->where('users.status', 'active');
 
         return match ($target) {
-            'role' => $this->filterByRole($query, $role)->pluck('users.id'),
-            'custom' => $this->filterByCustomUsers($query, $userIds)->pluck('users.id'),
-            default => $query->pluck('users.id'),
+            'role' => $this->filterByRole($query, $role)->distinct()->pluck('users.id'),
+            'custom' => $this->filterByCustomUsers($query, $userIds)->distinct()->pluck('users.id'),
+            default => $query->distinct()->pluck('users.id'),
         };
     }
 
@@ -121,8 +180,7 @@ class ClubNotificationController extends Controller
         if ($role && array_key_exists($role, $this->memberRoles)) {
             return $query->where('club_members.role', $role);
         }
-
-        return $query;
+        return $query->whereRaw('1 = 0'); // role không hợp lệ thì không trả ai
     }
 
     protected function filterByCustomUsers($query, array $userIds)
@@ -131,9 +189,9 @@ class ClubNotificationController extends Controller
         if (empty($ids)) {
             return $query->whereRaw('1 = 0');
         }
-
         return $query->whereIn('users.id', $ids);
     }
+
 
     protected function sanitizeHtml(string $html): string
     {

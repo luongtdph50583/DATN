@@ -29,7 +29,20 @@
             <label for="to_date" class="form-label">Đến ngày</label>
             <input type="date" id="to_date" name="to_date" class="form-control" value="{{ $filters['to_date'] ?? '' }}">
         </div>
-        <div class="col-sm-12 col-md-6 d-flex gap-2">
+        {{-- ✅ Thêm filter người gửi --}}
+    <div class="col-sm-6 col-md-3">
+        <label for="sender_id" class="form-label">Người gửi</label>
+        <select id="sender_id" name="sender_id" class="form-select">
+            <option value="">-- Tất cả --</option>
+            <option value="0" {{ ($filters['sender_id'] ?? '') === '0' ? 'selected' : '' }}>System</option>
+            @foreach($senders as $sender)
+                <option value="{{ $sender->id }}" {{ ($filters['sender_id'] ?? '') == $sender->id ? 'selected' : '' }}>
+                    {{ $sender->display_name }} {{-- ✅ Sử dụng display_name --}}
+                </option>
+            @endforeach
+        </select>
+    </div>
+        <div class="col-sm-12 col-md-3 d-flex gap-2">
             <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel"></i> Lọc</button>
             <a href="{{ route('admin.notifications.index') }}" class="btn btn-outline-secondary">Đặt lại</a>
         </div>
@@ -52,6 +65,8 @@
                     </th>
                     <th scope="col">Tiêu đề</th>
                     <th scope="col">Người nhận</th>
+                    {{-- ✅ Thêm cột người gửi --}}
+                    <th scope="col">Người gửi</th>
                     <th scope="col">Kênh gửi</th>
                     <th scope="col">Thời gian</th>
                     <th scope="col" style="width: 10%">Thao tác</th>
@@ -66,14 +81,26 @@
                         </td>
                         <td>{{ $item['title'] ?? '(Không có tiêu đề)' }}</td>
                         <td>{{ $item['user'] ?? 'Không xác định' }}</td>
+                        {{-- ✅ Hiển thị người gửi --}}
+                        <td>
+                            @if(!empty($item['sender']))
+                                <span class="badge bg-info text-dark">
+                                    <i class="bi bi-person-fill"></i> {{ $item['sender'] }}
+                                </span>
+                            @else
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-robot"></i> System
+                                </span>
+                            @endif
+                        </td>
                         <td>
                             @forelse ($item['channels'] as $channel => $status)
                                 @php
-                                    $badgeClass = match ($status) {
-                                        'sent' => 'bg-success',
-                                        'failed' => 'bg-danger',
-                                        default => 'bg-secondary',
-                                    };
+        $badgeClass = match ($status) {
+            'sent' => 'bg-success',
+            'failed' => 'bg-danger',
+            default => 'bg-secondary',
+        };
                                 @endphp
                                 <span class="badge {{ $badgeClass }}">{{ $channel }}: {{ $status }}</span>
                             @empty
@@ -109,6 +136,14 @@
                                 </div>
                                 <div class="modal-body">
                                     <p><strong>Người nhận:</strong> {{ $item['user'] ?? 'Không xác định' }}</p>
+                                    {{-- ✅ Thêm thông tin người gửi trong modal --}}
+                                    <p><strong>Người gửi:</strong>
+                                        @if(!empty($item['sender']))
+                                            <span class="badge bg-info text-dark">{{ $item['sender'] }}</span>
+                                        @else
+                                            <span class="badge bg-secondary">System</span>
+                                        @endif
+                                    </p>
                                     <p><strong>Thời gian:</strong>
                                         {{ \Carbon\Carbon::parse($item['created_at'])->format('d/m/Y H:i') }}</p>
                                     <p><strong>Kênh gửi:</strong>
@@ -132,7 +167,7 @@
                     </div>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted">Chưa có thông báo nào</td>
+                        <td colspan="7" class="text-center text-muted">Chưa có thông báo nào</td>
                     </tr>
                 @endforelse
             </tbody>

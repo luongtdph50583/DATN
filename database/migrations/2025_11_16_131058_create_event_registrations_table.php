@@ -17,8 +17,8 @@ return new class extends Migration
     $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
     $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
     $table->timestamp('registered_at')->useCurrent();
-    
-    
+
+
     $table->enum('attendance_status', ['pending', 'attended', 'absent'])->default('pending');
 
     $table->unique(['event_id', 'user_id']);

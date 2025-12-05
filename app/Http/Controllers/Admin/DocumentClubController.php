@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Club;
+use App\Models\Media;
 use App\Models\Document;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Jobs\SendNotificationJob;
+use App\Models\DocumentUpdateLog;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -192,7 +194,7 @@ class DocumentClubController extends Controller
             'description' => 'nullable|string',
             'file' => 'nullable|file|mimes:pdf,doc,docx,xlsx,jpeg,png,jpg,svg,mp3,wav,mp4',
             'clb_id' => 'required|exists:clubs,id',
-            'access_level' => 'required|array', // Multi-select
+            'access_level' => 'required|array',
             'access_level.*' => 'in:public,guest,member,communication,event_manager,secretary,treasurer,deputy_manager,club_manager,admin',
             'tags' => 'nullable|string',
         ]);
@@ -242,10 +244,28 @@ class DocumentClubController extends Controller
             $data['file_type'] = $extension;
         }
 
+        // Cập nhật document
         $document->update($data);
 
-        return redirect()->route('admin.documentclub.index')->with('success', 'Tài liệu đã được cập nhật thành công ✅');
+        // ✅ Lưu log thay đổi
+        DocumentUpdateLog::create([
+            'document_id' => $document->id,
+            'changed_by' => auth()->id(),
+            'changes' => [
+                'title' => $request->title,
+                'description' => $request->description,
+                'clb_id' => $request->clb_id,
+                'tags' => $request->tags,
+                'access_level' => $request->access_level,
+                'file' => $request->hasFile('file') ? 'updated' : 'unchanged',
+            ],
+        ]);
+
+        return redirect()
+            ->route('admin.documentclub.index')
+            ->with('success', 'Tài liệu đã được cập nhật thành công ✅ và đã lưu log.');
     }
+
 
 
     public function edit($id)
@@ -256,25 +276,90 @@ class DocumentClubController extends Controller
         return view('admin.documentclub.edit', compact('document', 'clubs'));
     }
     // Xóa tài liệu
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $document = Document::findOrFail($id);
+        $reason = $request->input('reason', 'Vi phạm nội quy');
 
-        // (Tùy chọn) Xóa file vật lý nếu bạn muốn
-        if ($document->file_path && Storage::disk('public')->exists($document->file_path)) {
-            Storage::disk('public')->delete($document->file_path);
-        }
+        // ✅ Xóa mềm media liên quan
+        Media::where('related_type', 'document')
+            ->where('related_id', $document->id)
+            ->delete(); // chỉ gán deleted_at
 
-        // Xóa mềm: Laravel sẽ gán deleted_at
+        // ✅ Không xóa file vật lý — giữ nguyên để khôi phục
+        // Nếu muốn xóa file thì thêm đoạn Storage::delete()
+
+        // ✅ Xóa mềm tài liệu
         $document->delete();
 
-        return redirect()->route('admin.documentclub.index')->with('success', 'Tài liệu đã được đưa vào thùng rác 🗑️');
+        // ✅ Lưu log xóa
+        DocumentUpdateLog::create([
+            'document_id' => $document->id,
+            'changed_by' => auth()->id(),
+            'changes' => [
+                'deleted' => [null, 'deleted'],
+                'delete_reason' => $reason,
+            ],
+        ]);
+
+        // ✅ Gửi thông báo cho chủ nhiệm CLB hoặc người upload
+        if ($document->uploader) {
+            $batchId = 'document_deleted_' . $document->id . '_' . Str::random(6);
+
+            dispatch(new SendNotificationJob(
+                userId: $document->uploader->id,
+                title: 'Tài liệu bị xóa',
+                content: "Tài liệu \"{$document->title}\" đã bị xóa. Lý do: {$reason}",
+                sendVia: 'both',
+                batchId: $batchId,
+                force: false
+            ));
+        }
+
+        return redirect()->route('admin.documentclub.index')
+            ->with('success', 'Đã xóa tài liệu, lưu log và gửi thông báo cho chủ nhiệm.');
     }
-    public function trash()
+
+    public function trash(Request $request)
     {
-        $trashedDocuments = Document::onlyTrashed()->with('club', 'uploader')->latest()->get();
-        return view('admin.trash.documentclub.index', compact('trashedDocuments'));
+        $query = Document::onlyTrashed()->with(['club', 'uploader']);
+
+        // ✅ Lọc theo từ khóa (tiêu đề hoặc mô tả)
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'like', "%{$keyword}%")
+                    ->orWhere('description', 'like', "%{$keyword}%");
+            });
+        }
+
+        // ✅ Lọc theo CLB
+        if ($request->filled('club_id')) {
+            $query->where('clb_id', $request->club_id);
+        }
+
+        // ✅ Lọc theo người tải lên
+        if ($request->filled('uploader')) {
+            $query->whereHas('uploader', function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->uploader}%");
+            });
+        }
+
+        // ✅ Lọc theo tag
+        if ($request->filled('tag')) {
+            $query->where('tags', 'like', "%{$request->tag}%");
+        }
+
+        // Phân trang + giữ tham số lọc
+        $trashedDocuments = $query->orderBy('deleted_at', 'desc')->paginate(10);
+        $trashedDocuments->appends($request->query());
+
+        // Nạp danh sách CLB để hiển thị dropdown lọc
+        $clubs = Club::orderBy('name')->get();
+
+        return view('admin.trash.documentclub.index', compact('trashedDocuments', 'clubs'));
     }
+
 
     public function restore($id)
     {
@@ -315,6 +400,15 @@ class DocumentClubController extends Controller
         $document = Document::with('club', 'uploader')->findOrFail($id);
         return view('admin.documentclub.show', compact('document'));
     }
+    public function showTrash($id)
+    {
+        $document = Document::onlyTrashed()
+            ->with(['club', 'uploader'])
+            ->findOrFail($id);
+
+        return view('admin.trash.documentclub.show', compact('document'));
+    }
+
     public function search(Request $request)
     {
 

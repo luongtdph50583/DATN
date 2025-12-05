@@ -4129,112 +4129,150 @@ span {
 .header-main .main-menu ul li:last-child {
   margin-inline-end: 0;
 }
+/* Link menu cha */
 .header-main .main-menu ul li a {
-  display: inline-block;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--white);
-  font-family: "Chakra Petch", sans-serif;
-  padding: 20px 0;
-  text-align: left;
-  position: relative;
-  text-transform: uppercase;
-  transition: all 0.4s ease-in-out;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    font-family: "Chakra Petch", sans-serif;
+    padding: 20px 0;
+    text-align: left;
+    position: relative;
+    text-transform: uppercase;
+    transition: all 0.4s ease-in-out;
 }
+
 .header-main .main-menu ul li a i {
-  margin-left: 4px;
-  font-size: 14px;
+    margin-left: 4px;
+    font-size: 14px;
 }
+
 .header-main .main-menu ul li a:hover {
-  color: var(--theme) !important;
+    color: var(--theme) !important;
 }
+
+/* Submenu mặc định (dọc) */
 .header-main .main-menu ul li .submenu {
-  position: absolute;
-  top: 115%;
-  inset-inline-start: 0;
-  min-width: 240px;
-  background: var(--white);
-  padding: 20px 0;
-  z-index: 99999;
-  visibility: hidden;
-  opacity: 0;
-  transform-origin: top center;
-  color: var(--header);
-  transform: translateY(-10px);
-  transition: all 0.4s ease-in-out;
-  border-top: 6px solid var(--theme);
-  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    position: absolute;
+    top: 115%;
+    inset-inline-start: 0;
+    min-width: 240px;
+    background: var(--white);
+    padding: 20px 0;
+    z-index: 99999;
+    visibility: hidden;
+    opacity: 0;
+    transform-origin: top center;
+    color: var(--header);
+    transform: translateY(-10px);
+    transition: all 0.4s ease-in-out;
+    border-top: 6px solid var(--theme);
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
 }
+
+.header-main .main-menu ul li:hover>.submenu {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Item trong submenu */
 .header-main .main-menu ul li .submenu li {
-  display: block;
-  width: 100%;
-  margin: 0;
+    display: block;
+    width: 100%;
+    margin: 0;
 }
+
 .header-main .main-menu ul li .submenu li a {
-  position: relative;
-  z-index: 11;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--header);
-  line-height: 38px;
-  padding: 0px 0px 0px 32px;
-  padding-right: 22px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    position: relative;
+    z-index: 11;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--header);
+    line-height: 38px;
+    padding: 0px 0px 0px 32px;
+    padding-right: 22px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
+
 .header-main .main-menu ul li .submenu li a::before {
-  content: "";
-  position: absolute;
-  width: 0px;
-  height: 2px;
-  background: var(--theme);
-  left: 14px;
-  bottom: 18px;
-  transition: all 0.4s ease-in-out;
+    content: "";
+    position: absolute;
+    width: 0px;
+    height: 2px;
+    background: var(--theme);
+    left: 14px;
+    bottom: 18px;
+    transition: all 0.4s ease-in-out;
 }
+
 .header-main .main-menu ul li .submenu li a:hover {
-  color: var(--theme) !important;
+    color: var(--theme) !important;
 }
+
 .header-main .main-menu ul li .submenu li:last-child a {
-  border: none;
+    border: none;
 }
+
+/* Submenu cấp 2 */
 .header-main .main-menu ul li .submenu li .submenu {
-  inset-inline-start: 100%;
-  top: 0;
-  visibility: hidden;
-  opacity: 0;
+    inset-inline-start: 100%;
+    top: 0;
+    visibility: hidden;
+    opacity: 0;
 }
-.header-main .main-menu ul li .submenu li:hover > a {
-  color: var(--theme) !important;
-  margin-left: 10px;
+
+.header-main .main-menu ul li .submenu li:hover>a {
+    color: var(--theme) !important;
+    margin-left: 10px;
 }
-.header-main .main-menu ul li .submenu li:hover > a::before {
-  width: 10px;
+
+.header-main .main-menu ul li .submenu li:hover>a::before {
+    width: 10px;
 }
-.header-main .main-menu ul li .submenu li:hover > a::after {
-  color: var(--theme);
+
+.header-main .main-menu ul li .submenu li:hover>a::after {
+    color: var(--theme);
 }
-.header-main .main-menu ul li .submenu li:hover > .submenu {
-  -webkit-transform: translateY(1);
-  -moz-transform: translateY(1);
-  -ms-transform: translateY(1);
-  -o-transform: translateY(1);
-  transform: translateY(1);
-  visibility: visible;
-  opacity: 1;
+
+.header-main .main-menu ul li .submenu li:hover>.submenu {
+    transform: translateY(1);
+    visibility: visible;
+    opacity: 1;
 }
-.header-main .main-menu ul li .submenu li.has-dropdown > a::after {
-  position: absolute;
-  top: 50%;
-  inset-inline-end: 25px;
-  -webkit-transform: translateY(-50%);
-  -moz-transform: translateY(-50%);
-  -ms-transform: translateY(-50%);
-  -o-transform: translateY(-50%);
-  transform: translateY(-50%);
-  color: var(--theme);
+
+.header-main .main-menu ul li .submenu li.has-dropdown>a::after {
+    position: absolute;
+    top: 50%;
+    inset-inline-end: 25px;
+    transform: translateY(-50%);
+    color: var(--theme);
+}
+
+/* --- Bổ sung: submenu ngang khi dài quá --- */
+.header-main .main-menu ul li .submenu-horizontal {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    width: 600px;
+    /* hoặc 100% nếu muốn full ngang */
+    padding: 15px;
+}
+
+.header-main .main-menu ul li .submenu-horizontal li {
+    width: auto;
+}
+
+.header-main .main-menu ul li .submenu-horizontal li a {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 28px;
+    padding: 5px 10px;
+    text-transform: none;
 }
 .header-main .main-menu ul li .has-homemenu {
   width: 800px;
@@ -4342,6 +4380,7 @@ span {
   opacity: 1;
   transform: translateY(0px);
 }
+
 .header-main .header-right {
   gap: 30px;
 }
