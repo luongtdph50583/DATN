@@ -23,7 +23,7 @@
     <div class="container">
         <div class="mega-menu-wrapper">
             <div class="header-main">
-                <a href="{{ route('client.home') }}" class="logo">
+                <a href="#" class="logo">
                     <img src="{{ asset('assets1/img/logo/theme-logo.svg') }}" alt="{{ config('app.name') }}">
                 </a>
                 <div class="header-left">
@@ -212,7 +212,7 @@
                                     {{ __('Vai trò:') }} {{ __(Auth::user()->role ?? 'member') }}
                                 </span>
                               <a class="dropdown-item" href="{{ route('profile.show') }}">{{ __('Trang cá nhân') }}</a>
-                              <a class="dropdown-item" href="{{ route('formation-request.index') }}">{{ __('Yêu cầu của bạn ') }}</a>
+                              <a class="dropdown-item" href="#">{{ __('Yêu cầu của bạn ') }}</a>
 
                                 @php($managedClub = Auth::user()->getManagedClubs()->first())
                                 @if($managedClub)

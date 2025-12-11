@@ -35,20 +35,22 @@ class CreateClubMembersTable extends Migration
             ])->default('member')->comment('Vai trò trong CLB');
 
             // Trạng thái & ghi chú
-            $table->enum('status', ['active', 'inactive', 'banned'])
+            $table->enum('status', ['active', 'inactive', 'left'])
                 ->default('active')
                 ->comment('Trạng thái thành viên trong CLB');
             $table->text('note')->nullable()->comment('Ghi chú: thành tích, cảnh cáo, v.v.');
 
             $table->timestamp('joined_at')->useCurrent()->comment('Ngày tham gia');
+            $table->timestamp('left_at')->nullable()->comment('Ngày rời CLB'); // thêm trường mới
+
             $table->timestamps(); // created_at, updated_at
 
             // Tránh trùng lặp thành viên trong cùng CLB
             $table->unique(['club_id', 'member_id']);
             $table->timestamp('appointed_at')->nullable()->comment('Ngày bổ nhiệm làm ban quản lý');
-
         });
     }
+
 
     public function down()
     {

@@ -7,7 +7,7 @@
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
                                     <img src="{{ $assetBase }}/img/home-2/instagram/insta-1.jpg" alt="Instagram 1">
-                                    <a href="{{ route('client.home') }}" class="gt-icon">
+                                    <a href="#" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
@@ -15,7 +15,7 @@
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
                                     <img src="{{ $assetBase }}/img/home-2/instagram/insta-2.jpg" alt="Instagram 2">
-                                    <a href="{{ route('client.home') }}" class="gt-icon">
+                                    <a href="#" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
@@ -23,7 +23,7 @@
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
                                     <img src="{{ $assetBase }}/img/home-2/instagram/insta-3.jpg" alt="Instagram 3">
-                                    <a href="{{ route('client.home') }}" class="gt-icon">
+                                    <a href="#" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
@@ -31,7 +31,7 @@
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
                                     <img src="{{ $assetBase }}/img/home-2/instagram/insta-4.jpg" alt="Instagram 4">
-                                    <a href="{{ route('client.home') }}" class="gt-icon">
+                                    <a href="#" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
@@ -39,7 +39,7 @@
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
                                     <img src="{{ $assetBase }}/img/home-2/instagram/insta-5.jpg" alt="Instagram 5">
-                                    <a href="{{ route('client.home') }}" class="gt-icon">
+                                    <a href="#" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
@@ -47,7 +47,7 @@
                             <div class="swiper-slide">
                                 <div class="footer-instagram-image">
                                     <img src="{{ $assetBase }}/img/home-2/instagram/insta-6.jpg" alt="Instagram 6">
-                                    <a href="{{ route('client.home') }}" class="gt-icon">
+                                    <a href="#" class="gt-icon">
                                             <i class="fa-brands fa-instagram"></i>
                                         </a>
                                 </div>
@@ -57,7 +57,7 @@
                 </div>
                 <div class="footer-logo-item wow fadeInUp" data-wow-delay=".5s">
                     <img src="{{ $assetBase }}/img/home-2/left-gradient.png" alt="Gradient" class="border-img">
-                    <a href="{{ route('client.home') }}">
+                    <a href="#">
                         <img src="{{ $assetBase }}/img/home-2/logo.svg" alt="{{ config('app.name') }}">
                     </a>
                     <img src="{{ $assetBase }}/img/home-2/right-gradient.png" alt="Gradient" class="border-img">

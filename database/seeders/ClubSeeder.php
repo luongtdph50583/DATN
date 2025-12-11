@@ -58,8 +58,6 @@ class ClubSeeder extends Seeder
                 'logo' => null, // Có thể thêm sau
                 'status' => 'active',
                 'manager_id' => $manager->id,
-                'advisor_id' => null, // Có thể gán sau
-                'advisor_status' => 'pending',
                 'email' => strtolower(str_replace(' ', '', $name)) . '@club.edu.vn',
                 'phone' => '0' . $faker->numberBetween(300000000, 999999999),
                 'member_limit' => $faker->numberBetween(15, 150),

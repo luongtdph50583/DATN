@@ -26,12 +26,52 @@ return new class extends Migration {
             // Kế hoạch hoạt động 3 tháng đầu
             $table->text('plan')->nullable()->comment('Kế hoạch hoạt động trong 3 tháng đầu');
 
+            // 🔹 THÊM: File kế hoạch 3 tháng (bắt buộc theo form)
+            $table->string('plan_file')->nullable()->comment('File kế hoạch 3 tháng đầu (PDF/DOC)');
+
             // Thông tin liên hệ
             $table->string('email')->nullable()->comment('Email liên hệ');
             $table->string('phone')->nullable()->comment('Số điện thoại liên hệ');
             $table->string('logo')->nullable()->comment('Logo đề xuất');
 
-            // Giảng viên đỡ đầu
+            // 🔹 THÊM: Ban chủ nhiệm (6 vị trí quan trọng)
+            $table->foreignId('club_manager_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->comment('Chủ nhiệm CLB');
+
+            $table->foreignId('deputy_manager_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->comment('Phó chủ nhiệm CLB');
+
+            $table->foreignId('secretary_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->comment('Thư ký CLB');
+
+            $table->foreignId('treasurer_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->comment('Thủ quỹ CLB');
+
+            $table->foreignId('event_manager_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->comment('Quản lý sự kiện CLB');
+
+            $table->foreignId('communication_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->comment('Phụ trách truyền thông CLB');
+
+            // Giảng viên đỡ đầu (giữ nguyên - có thể dùng sau)
             // $table->foreignId('advisor_id')
             //     ->nullable()
             //     ->constrained('users')
@@ -42,28 +82,36 @@ return new class extends Migration {
             //     ->default('pending')
             //     ->comment('Trạng thái chấp thuận của giảng viên phụ trách');
 
-            // Trạng thái xử lý yêu cầu & người duyệt
-            $table->enum('status', ['pending', 'approved', 'rejected'])
+            // 🔹 CẢI TIẾN: Trạng thái xử lý yêu cầu (thêm 'confirmed')
+            $table->enum('status', ['pending', 'confirmed', 'approved', 'rejected'])
                 ->default('pending')
-                ->comment('Trạng thái xử lý yêu cầu');
+                ->comment('Trạng thái: pending=chờ xác nhận thành viên, confirmed=đã xác nhận đủ, approved=admin đã duyệt, rejected=bị từ chối');
+
             $table->foreignId('handled_by')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete()
-                ->comment('Người duyệt yêu cầu');
+                ->comment('Admin duyệt yêu cầu');
 
             $table->text('note')->nullable()->comment('Ghi chú của người duyệt');
 
+            // 🔹 THÊM: Lý do từ chối (riêng biệt với note)
+            $table->text('rejection_reason')->nullable()->comment('Lý do từ chối cụ thể');
 
-            // 🔹 Thêm rule và member_limit
+            // Quy tắc và giới hạn thành viên
             $table->text('rule')->nullable()->comment('Quy tắc của CLB');
             $table->integer('member_limit')->nullable()->comment('Số lượng thành viên tối đa');
 
-            // 🔹 Thêm type để phân biệt loại yêu cầu
+            // 🔹 THÊM: Thông tin PDF đã sinh
+            $table->string('pdf_file')->nullable()->comment('Đường dẫn file PDF đơn đã tạo');
+            $table->timestamp('pdf_generated_at')->nullable()->comment('Thời điểm tạo PDF');
+
+            // 🔹 THÊM: Timestamp phê duyệt/từ chối
+            $table->timestamp('approved_at')->nullable()->comment('Thời điểm phê duyệt');
+            $table->timestamp('rejected_at')->nullable()->comment('Thời điểm từ chối');
 
             $table->timestamps();
         });
-
     }
 
 

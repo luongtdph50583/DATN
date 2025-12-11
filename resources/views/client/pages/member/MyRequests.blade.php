@@ -22,13 +22,13 @@
             </div>
 
             <div>
-                <span class="badge 
+                <span class="badge
                     {{ $req->status == 'pending' ? 'bg-warning text-dark' : ($req->status == 'approved' ? 'bg-success' : 'bg-danger') }}">
                     {{ ucfirst($req->status) }}
                 </span>
 
                 @if($req->type == 'formation')
-                    <a href="{{ route('formation-request.show', $req) }}" class="btn btn-sm btn-primary ms-2">Xem chi tiết</a>
+                    {{-- <a href="{{ route('formation-request.show', $req) }}" class="btn btn-sm btn-primary ms-2">Xem chi tiết</a> --}}
                 @elseif($req->type == 'join')
                     <a href="#" class="btn btn-sm btn-primary ms-2">Xem chi tiết</a>
                 @endif

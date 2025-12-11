@@ -22,18 +22,19 @@ class CreateClubLeaveRequestsTable extends Migration
                 ->onDelete('cascade')
                 ->comment('Người gửi yêu cầu rời CLB');
 
-            // Trạng thái duyệt yêu cầu
-            $table->enum('status', ['pending', 'approved', 'rejected'])
+            // Trạng thái xử lý yêu cầu
+            $table->enum('status', ['pending', 'approved', 'expired'])
                 ->default('pending')
-                ->comment('Trạng thái xử lý yêu cầu');
+                ->comment('Trạng thái xử lý yêu cầu rời CLB');
 
-            // Người xử lý yêu cầu
+            // Người xử lý yêu cầu (có thể null nếu hệ thống tự động)
             $table->foreignId('handled_by')
                 ->nullable()
                 ->constrained('users')
                 ->nullOnDelete()
                 ->comment('Người duyệt yêu cầu rời CLB');
 
+            // Thời điểm gửi và xử lý
             $table->timestamp('requested_at')
                 ->useCurrent()
                 ->comment('Thời điểm gửi yêu cầu');
@@ -41,6 +42,10 @@ class CreateClubLeaveRequestsTable extends Migration
             $table->timestamp('handled_at')
                 ->nullable()
                 ->comment('Thời điểm xử lý yêu cầu');
+
+            $table->timestamp('expired_at')
+                ->nullable()
+                ->comment('Thời điểm hết hạn xử lý (nếu có)');
 
             // Lý do & ghi chú
             $table->text('reason')->nullable()->comment('Lý do rời CLB');
