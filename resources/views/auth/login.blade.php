@@ -1,53 +1,95 @@
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+@extends('client.layouts.app')
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+@section('title', 'Đăng nhập hệ thống CLB')
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+@section('content')
+<div class="container py-5">
+    
+    <div class="row justify-content-center">
+        <div class="col-md-6">
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
+            {{-- Thông báo session --}}
+            @if (session('status'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('status') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             @endif
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-        {{-- Link chuyển sang đăng ký --}}
-<div class="mt-4 text-center">
-    <a href="{{ route('register') }}"
-       class="underline text-sm text-gray-600 hover:text-gray-900">
-        Chưa có tài khoản? Đăng ký ngay
-    </a>
-</div>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    
+                    <h3 class="fw-bold mb-3 text-center">
+                        🔐 Đăng nhập tài khoản
+                    </h3>
 
-    </form>
+                    <form method="POST" action="{{ route('login') }}">
+                        @csrf
+
+                        {{-- Email --}}
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input
+                                type="email"
+                                name="email"
+                                class="form-control @error('email') is-invalid @enderror"
+                                value="{{ old('email') }}"
+                                required
+                                autofocus
+                            >
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Password --}}
+                        <div class="mb-3">
+                            <label class="form-label">Mật khẩu</label>
+                            <input
+                                type="password"
+                                name="password"
+                                class="form-control @error('password') is-invalid @enderror"
+                                required
+                            >
+                            @error('password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Remember --}}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                            <label class="form-check-label" for="remember">
+                                Ghi nhớ đăng nhập
+                            </label>
+                        </div>
+
+                        {{-- Actions --}}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            @if(Route::has('password.request'))
+                                <a href="{{ route('password.request') }}">
+                                    Quên mật khẩu?
+                                </a>
+                            @endif
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">
+                             Đăng nhập
+                        </button>
+
+                    </form>
+
+                    <hr>
+
+                    <p class="text-center mb-0">
+                        Chưa có tài khoản?
+                        <a href="{{ route('register') }}">Đăng ký ngay</a>
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+@endsection

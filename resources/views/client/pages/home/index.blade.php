@@ -10,14 +10,7 @@
     @include('client.pages.home.video')
 
 
-    <!-- News Section Start -->
-    <!--end news-->
-    @include('client.pages.home.news')
 
-
-    <!-- Playing Ranking Section Start -->
-    <!--end play ranking-->
-    @include('client.pages.home.news')
 
 
     <!-- Team Section Start -->

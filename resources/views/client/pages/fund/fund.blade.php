@@ -6,7 +6,7 @@
 <div class="container py-4">
     <h3 class="mb-4">Quản lý quỹ CLB: {{ $club->name }}</h3>
 
-    {{-- Tổng quỹ & thống kê --}}
+    {{-- Tổng quỹ & thống kê --}}   
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card shadow-sm text-center py-2">
@@ -26,8 +26,8 @@
             <div class="card shadow-sm text-center py-2">
                 <h6>Tổng chi</h6>
                 <p class="display-6 text-danger">
-                    {{ number_format($transactions->where('type','expense')->sum('amount'),0,',','.') }} đ
-                </p>
+    {{ number_format($totalApprovedExpense, 0, ',', '.') }} đ
+</p>
             </div>
         </div>
         <div class="col-md-3 d-flex align-items-center justify-content-center">

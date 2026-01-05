@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FundTransaction extends Model
 {
-    protected $fillable = [
-        'club_id', 'type', 'amount', 'description', 'category',
-        'status', 'created_by', 'approved_by', 'receipt', 'event_id',
-    ];
+ protected $fillable = [
+    'club_id', 'type', 'amount', 'collected_amount', 'description', 'category',
+    'status', 'created_by', 'approved_by', 'receipt', 'event_id',
+];
+
 
     protected $casts = [
         'amount' => 'decimal:2',

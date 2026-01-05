@@ -31,77 +31,11 @@
                         <div class="main-menu">
                             <nav id="mobile-menu">
                                 <ul>
-                                    <li class="has-dropdown active menu-thumb">
-                                        <a href="index.html">
-                                            Home
-                                        </a>
-                                        <ul class="submenu has-homemenu">
-                                            <li>
-                                                <div class="homemenu-items">
-                                                    <div class="homemenu">
-                                                        <div class="homemenu-thumb">
-                                                            <img src="{{ asset('assets1/img/header/home-1.jpg') }}" alt="img">
-                                                            <div class="demo-button">
-                                                                <a href="index.html" class="gt-theme-btn">Demo page</a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="homemenu-content text-center">
-                                                            <h4 class="homemenu-title">
-                                                                Football
-                                                            </h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="homemenu">
-                                                        <div class="homemenu-thumb mb-15">
-                                                            <img src="{{ asset('assets1/img/header/home-2.jpg') }}" alt="img">
-                                                            <div class="demo-button">
-                                                                <a href="index-2.html" class="gt-theme-btn">Demo
-                                                                    page</a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="homemenu-content text-center">
-                                                            <h4 class="homemenu-title">
-                                                                Basketball
-                                                            </h4>
-                                                        </div>
-                                                    </div>
-                                                    <div class="homemenu">
-                                                        <div class="homemenu-thumb mb-15">
-                                                            <img src="{{ asset('assets1/img/header/home-3.jpg') }}" alt="img">
-                                                            <div class="demo-button">
-                                                                <a href="index-3.html" class="gt-theme-btn">Demo
-                                                                    page</a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="homemenu-content text-center">
-                                                            <h4 class="homemenu-title">
-                                                                Rugby Club
-                                                            </h4>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                    <li class="has-dropdown active d-xl-none">
-                                        <a href="index.html" class="border-none">
-                                            Home
-                                        </a>
-                                        <ul class="submenu">
-                                            <li><a href="index.html">Football</a></li>
-                                            <li><a href="index-2.html">Basketball</a></li>
-                                            <li><a href="index-3.html">Rugby Club</a></li>
-                                        </ul>
-                                    </li>
+                                 
                                     <li>
-                                        <a href="about.html">
-                                            About Us
-                                        </a>
-                                        <ul class="submenu">
-                                            <li><a href="about.html">About Us</a></li>
-                                            <li><a href="about-2.html">About Us 02</a></li>
-                                        </ul>
+                                        <a href="{{ route('client.home') }}">Trang Chủ </a>
                                     </li>
+                                    
                                    <li>
                                         <a href="{{ route('events.index') }}">Sự Kiện  </a>
                                     </li>
@@ -110,7 +44,7 @@
                                     </li>
                               <li>
     <a href="{{ route('client.postpublic.index') }}">
-        Blog
+       Bài Viết
     </a>
     @php
         $clubs = \App\Models\Club::all();
@@ -128,7 +62,7 @@
 
 
                                     <li>
-                                        <a href="contact.html">Contact Us</a>
+                                           <a href="{{ route('client.contact.index') }}">Liên Hệ </a>
                                     </li>
                                 </ul>
                             </nav>
