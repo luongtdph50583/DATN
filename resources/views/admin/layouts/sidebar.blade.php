@@ -143,40 +143,6 @@
                 </div>
             </li>
 
-                <!-- Quản lý tài liệu CLB -->
-            <li class="nav-item">
-                <a class="nav-link menu-link collapsed" data-bs-toggle="collapse" href="#tailieu" role="button"
-                    aria-expanded="false" aria-controls="tailieu">
-                    <i class="ri-folder-3-line"></i> <span>Quản lý tài liệu CLB</span>
-                </a>
-                <div class="collapse" id="tailieu">
-                    <ul class="nav nav-sm flex-column">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.documentclub.index') }}" class="nav-link">
-                                <i class="ri-file-text-line"></i> Danh sách
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.documentclub.create') }}" class="nav-link">
-                                <i class="ri-add-box-line"></i> Thêm mới
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.documentclub.trash') }}" class="nav-link">
-                                <i class="ri-delete-bin-line"></i> Tài liệu đã xóa
-                            </a>
-                        </li>
-                        {{-- ✅ thêm mục lịch sử cập nhật --}}
-                        <li class="nav-item">
-                            <a href="{{ route('admin.document_update_logs.index') }}" class="nav-link">
-                                <i class="ri-history-line"></i> Lịch sử cập nhật
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-            </li>
-
             <!-- Nội dung -->
             <li class="menu-title"><i class="ri-article-line"></i> <span data-key="t-components">Nội dung</span></li>
 

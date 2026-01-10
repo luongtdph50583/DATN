@@ -2,7 +2,6 @@
     <thead>
         <tr>
             <th>STT</th>
-            <th>Avatar</th>
             <th>Tên</th>
             <th>Mã sinh viên</th>
             <th>Tuổi</th>
@@ -14,9 +13,7 @@
         @forelse($members as $index => $member)
             <tr>
                 <td>{{ $index + 1 }}</td>
-                <td>
-                    <img src="{{ $member->user->avatar ?? asset('default-avatar.png') }}" width="40" class="rounded-circle">
-                </td>
+              
                 <td>{{ $member->user->name }}</td>
                 <td>{{ $member->user->memberInfo->student_code ?? '-' }}</td>
                 <td>
