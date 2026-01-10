@@ -33,6 +33,7 @@ class ClubMember extends Model
     {
         return $this->belongsTo(User::class, 'member_id');
     }
+    
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id');
@@ -52,6 +53,16 @@ protected static function boot()
     {
         return $this->belongsTo(Member::class, 'user_id', 'user_id');
     }
-
+  public function memberProfile()
+    {
+        return $this->hasOneThrough(
+            Member::class,
+            User::class,
+            'id',        // khóa chính user.id
+            'user_id',   // khóa ngoại members.user_id
+            'member_id', // khóa ngoại club_members.member_id trỏ tới users.id
+            'id'         // khóa chính của User
+        );
+    }
 
 }

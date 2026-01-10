@@ -36,7 +36,6 @@ return new class extends Migration
                 'interview_location',
                 'interview_note',
                 'interview_result',
-                'interview_score',
                 'interview_completed_at'
             ]);
         });

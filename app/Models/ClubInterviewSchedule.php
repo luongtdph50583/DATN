@@ -18,14 +18,12 @@ class ClubInterviewSchedule extends Model
         'status',
         'note',
         'interview_result',
-        'score',
         'completed_at',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
         'completed_at' => 'datetime',
-        'score' => 'integer',
     ];
 
     /**

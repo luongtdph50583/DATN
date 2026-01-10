@@ -250,10 +250,7 @@
                                 <option value="cancelled">Hủy</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Điểm số (0-100)</label>
-                            <input type="number" name="interview_score" class="form-control" min="0" max="100" step="1" placeholder="Nhập điểm phỏng vấn">
-                        </div>
+                       
                         <div class="mb-3">
                             <label class="form-label">Nhận xét / Đánh giá</label>
                             <textarea name="interview_feedback" class="form-control" rows="3" placeholder="Nhập nhận xét về ứng viên..."></textarea>

@@ -12,30 +12,30 @@
                                     </div>
                                 </li>
                                 <li class="box-list">
-                                    #Hardwork
+                                    #ChămChỉ
                                 </li>
                                 <li class="box-list">
-                                    #dedication
+                                    #NhiệtHuyết
                                 </li>
                             </ul>
                             <ul class="mt-3">
                                 <li class="box-list">
-                                    #success
+                                    #ThànhCông
                                 </li>
                                 <li class="box-list">
-                                    #CHAMPION24
+                                    #CộngĐồngCLB
                                 </li>
                             </ul>
                         </div>
                         <h3 class="hero_title tv_hero_title hero_title_1">
-                            <span>experience</span> the <br> quantified progress
+                            <span>Trải nghiệm</span> tiến trình phát triển cá nhân
                         </h3>
                     </div>
                 </div>
                 <div class="col-lg-4 wow fadeInUp" data-wow-delay=".3s">
                     <div class="feature-progress-thumb">
                         <img src="assets1/img/home-2/video-image.jpg" alt="img">
-                        <a href="https://www.youtube.com/watch?v=Cn4G2lZ_g2I" class="video-btn ripple video-popup">
+                        <a href="#" class="video-btn ripple video-popup">
                             <i class="fa-duotone fa-play"></i>
                         </a>
                     </div>
@@ -43,6 +43,7 @@
             </div>
         </div>
     </div>
+
     <div class="about-section-2 section-padding pb-0">
         <div class="vec-shape">
             <img src="assets1/img/home-2/about/vec-shape.png" alt="img">
@@ -69,30 +70,30 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="col-lg-6">
                         <div class="about-content">
                             <div class="section-title mb-0">
-                                <h6 class="wow fadeInUp">About club</h6>
+                                <h6 class="wow fadeInUp">Về CLB</h6>
                                 <h2 class="hero_title tv_hero_title hero_title_1">
-                                    built on Grit, Bonded by <span>Basketball</span>
+                                    Xây dựng trên tinh thần <span>Đam Mê</span> và Gắn Kết
                                 </h2>
                             </div>
                             <p class="about-text wow fadeInUp" data-wow-delay=".3s">
-                                Our club thrives on determination, discipline, and heart. Together,
-                                we train, compete, and grow — forming unbreakable bonds through every challenge on the
-                                court. This is where true basketball
-                                spirit lives.
+                                Các CLB của chúng tôi tập trung vào quyết tâm, kỷ luật và tinh thần hợp tác. 
+                                Mỗi thành viên đều có cơ hội học hỏi, rèn luyện kỹ năng và kết nối với những người cùng đam mê, bất kể lĩnh vực là thể thao, nghệ thuật hay học thuật.
                             </p>
-                            <h5 class="wow fadeInUp" data-wow-delay=".5s">GREATNESS STARTS HERE.</h5>
+                            <h5 class="wow fadeInUp" data-wow-delay=".5s">KHỞI ĐẦU TỪ ĐAM MÊ.</h5>
                             <div class="text-area wow fadeInUp" data-wow-delay=".7s">
                                 <h3>/05:01</h3>
-                                <p>Player -To- Cooch Ratio</p>
+                                <p>Tỷ lệ thành viên - huấn luyện viên</p>
                             </div>
-                            <a href="team.html" class="theme-btn wow fadeInUp" data-wow-delay=".8s">
-                                Join the club <i class="fa-solid fa-arrow-up-right"></i>
+                            <a href="#" class="theme-btn wow fadeInUp" data-wow-delay=".8s">
+                                Tham gia CLB <i class="fa-solid fa-arrow-up-right"></i>
                             </a>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>

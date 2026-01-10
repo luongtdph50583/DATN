@@ -409,14 +409,12 @@ class ClubMemberRequestController extends Controller
     {
         $data = $req->validate([
             'interview_result' => 'required|in:pass,fail,completed,no_show,cancelled',
-            'interview_score' => 'nullable|integer|min:0|max:100',
             'interview_feedback' => 'nullable|string|max:1000',
         ]);
 
         // Chuyển request sang giai đoạn duyệt
         $request->status = 'waiting_approval';
         $request->interview_result = $data['interview_result']; // pass | fail
-        $request->interview_score = $data['interview_score'];
         $request->interview_note = $data['interview_feedback'] ?? $request->interview_note;
         $request->interview_completed_at = now();
         $request->note = $req->input('note');
@@ -439,7 +437,6 @@ class ClubMemberRequestController extends Controller
         if ($schedule) {
             $schedule->update([
                 'status' => $scheduleStatus, // giá trị hợp lệ cho ENUM
-                'score' => $data['interview_score'],
                 'note' => $data['interview_feedback'] ?? $schedule->note,
                 'completed_at' => now(),
             ]);
@@ -662,7 +659,6 @@ class ClubMemberRequestController extends Controller
 
         $data = $req->validate([
             'interview_result' => 'required|in:pass,fail,completed,no_show,cancelled',
-            'interview_score' => 'nullable|integer|min:0|max:100',
             'interview_feedback' => 'nullable|string|max:1000',
         ]);
 
@@ -678,7 +674,6 @@ class ClubMemberRequestController extends Controller
 
                 $request->status = 'waiting_approval';
                 $request->interview_result = $data['interview_result'];
-                $request->interview_score = $data['interview_score'];
                 $request->interview_note = $data['interview_feedback'] ?? $request->interview_note;
                 $request->interview_completed_at = now();
                 $request->handled_by = Auth::id();
@@ -688,7 +683,6 @@ class ClubMemberRequestController extends Controller
                 if ($schedule) {
                     $schedule->update([
                         'status' => $data['interview_result'],
-                        'score' => $data['interview_score'],
                         'note' => $data['interview_feedback'] ?? $schedule->note,
                         'completed_at' => now(),
                     ]);

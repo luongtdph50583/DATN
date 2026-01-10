@@ -23,6 +23,7 @@ class ClubRequest extends Model
         'phone',
         'logo',
         'advisor_id',
+        'approval_document',
         'advisor_status',
         'status',
         'handled_by',

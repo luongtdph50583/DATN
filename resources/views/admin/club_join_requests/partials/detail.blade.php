@@ -106,7 +106,6 @@
                     <p class="mb-1"><strong>Kết quả:</strong>
                         {{ $request->interview_result ? ucfirst($request->interview_result) : 'Chưa có' }}
                     </p>
-                    <p class="mb-1"><strong>Điểm số:</strong> {{ $request->interview_score ?? '—' }}</p>
                     <p class="mb-0"><strong>Ghi chú:</strong> {{ $request->interview_note ?? '—' }}</p>
                 </div>
             </div>
@@ -183,12 +182,7 @@
                                     </option>
                                 </select>
                             </div>
-                            <div class="mb-2">
-                                <label class="form-label">Điểm số (0-100)</label>
-                                <input type="number" name="interview_score" class="form-control form-control-sm" min="0"
-                                    max="100" step="1" value="{{ $request->interview_score }}"
-                                    placeholder="Nhập điểm phỏng vấn">
-                            </div>
+                          
                             <div class="mb-2">
                                 <label class="form-label">Nhận xét / Đánh giá</label>
                                 <textarea name="interview_feedback" class="form-control" rows="3"

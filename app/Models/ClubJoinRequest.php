@@ -24,7 +24,6 @@ class ClubJoinRequest extends Model
         'interview_location',      // Địa điểm phỏng vấn
         'interview_note',          // Ghi chú phỏng vấn
         'interview_result',        // Kết quả phỏng vấn
-        'interview_score',         // Điểm phỏng vấn
         'interview_completed_at',  // Thời gian hoàn thành phỏng vấn
     ];
 
@@ -33,7 +32,7 @@ class ClubJoinRequest extends Model
         'handled_at' => 'datetime',
         'interview_scheduled_at' => 'datetime',
         'interview_completed_at' => 'datetime',
-        'interview_score' => 'integer',
+       
     ];
 
     public function club()

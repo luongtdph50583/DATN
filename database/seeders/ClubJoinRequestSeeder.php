@@ -56,7 +56,6 @@ class ClubJoinRequestSeeder extends Seeder
                 'interview_location' => null,
                 'interview_note' => null,
                 'interview_result' => null,
-                'interview_score' => null,
                 'interview_completed_at' => null,
             ];
 

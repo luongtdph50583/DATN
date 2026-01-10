@@ -1,7 +1,7 @@
 <section class="hero-section parallaxie hero-2 bg-cover"
     style="background-image: url('assets1/img/home-2/hero/hero-bg.jpg');">
     <h2 class="stoke-title">
-        BASKETBALL
+        CÂU LẠC BỘ
     </h2>
     <div class="vec-shape1">
         <img src="assets1/img/home-2/hero/vec-1.png" alt="img">
@@ -15,21 +15,19 @@
             </div>
             <div class="col-xxl-6 col-xl-8 col-lg-8">
                 <div class="hero-content">
-                    <h6 class="wow fadeInUp">Official Club of Champions</h6>
+                    <h6 class="wow fadeInUp">Nơi Gắn Kết Niềm Đam Mê Và Tài Năng</h6>
                     <h1 class="hero_title tv_hero_title hero_title_1">
-                        We Don’t Just Play
-                        <span>Basketball</span> — We Live It
+                        Tham Gia Các <span>CLB</span> — Khám Phá Tài Năng & Niềm Đam Mê
                     </h1>
                     <p class="wow fadeInUp" data-wow-delay=".3s">
-                        At our club, basketball isn’t just a game — it’s a way of life. From early morning drills to
-                        game-winning shots, we breathe the sport. Every moment on the court fuels our passion and unity.
+                        Tại các CLB của chúng tôi, bạn có thể tham gia nhiều lĩnh vực khác nhau, từ thể thao, nghệ thuật, đến học thuật và công nghệ. Mỗi CLB đều mang đến cơ hội học hỏi, rèn luyện kỹ năng và kết nối với những người cùng đam mê.
                     </p>
                     <div class="hero-btn wow fadeInUp" data-wow-delay=".5s">
-                        <a href="team.html" class="theme-btn">
-                            Join the Team <i class="fa-solid fa-arrow-up-right"></i>
+                        <a href="#" class="theme-btn">
+                            Khám Phá CLB <i class="fa-solid fa-arrow-up-right"></i>
                         </a>
-                        <a href="club-ranking.html" class="theme-btn bg-white">
-                            View Match Schedule <i class="fa-solid fa-arrow-up-right"></i>
+                        <a href="#" class="theme-btn bg-white">
+                            Xem Lịch Hoạt Động <i class="fa-solid fa-arrow-up-right"></i>
                         </a>
                     </div>
                 </div>

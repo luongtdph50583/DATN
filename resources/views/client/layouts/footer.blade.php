@@ -2,25 +2,7 @@
 <footer class="footer-section-2 fix bg-cover" style="background-image: url('{{ $assetBase }}/img/home-2/footer-bg.jpg');">
     <div class="container">
 
-        {{-- Instagram preview --}}
-        <div class="footer-instagram-wrapper wow fadeInUp" data-wow-delay=".3s">
-            <div class="swiper footer-instagram-slider">
-                <div class="swiper-wrapper">
-
-                    @for($i=1;$i<=6;$i++)
-                        <div class="swiper-slide">
-                            <div class="footer-instagram-image">
-                                <img src="{{ $assetBase }}/img/home-2/instagram/insta-{{ $i }}.jpg" alt="Instagram {{ $i }}">
-                                <a href="{{ route('client.home') }}" class="gt-icon">
-                                    <i class="fa-brands fa-instagram"></i>
-                                </a>
-                            </div>
-                        </div>
-                    @endfor
-
-                </div>
-            </div>
-        </div>
+     
 
         {{-- Logo --}}
         <div class="footer-logo-item wow fadeInUp" data-wow-delay=".5s">

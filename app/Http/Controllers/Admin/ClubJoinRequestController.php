@@ -214,13 +214,11 @@ class ClubJoinRequestController extends Controller
     {
         $data = $req->validate([
             'interview_result' => 'required|in:completed,no_show,cancelled',
-            'interview_score' => 'nullable|integer|min:0|max:100',
             'interview_feedback' => 'nullable|string|max:1000',
         ]);
 
         $request->status = 'interview_completed';
         $request->interview_result = $data['interview_result'];
-        $request->interview_score = $data['interview_score'];
         $request->interview_note = $data['interview_feedback'] ?? $request->interview_note;
         $request->interview_completed_at = now();
         $request->note = $req->input('note');
@@ -231,7 +229,6 @@ class ClubJoinRequestController extends Controller
         if ($schedule) {
             $schedule->update([
                 'status' => $data['interview_result'],
-                'score' => $data['interview_score'],
                 'note' => $data['interview_feedback'] ?? $schedule->note,
                 'completed_at' => now(),
             ]);
@@ -245,9 +242,7 @@ class ClubJoinRequestController extends Controller
         };
 
         $message = "{$resultLabel}.";
-        if (!is_null($data['interview_score'])) {
-            $message .= ' Điểm phỏng vấn: ' . $data['interview_score'];
-        }
+        
         if (!empty($data['interview_feedback'])) {
             $message .= ' Nhận xét: ' . $data['interview_feedback'];
         }
@@ -259,7 +254,6 @@ class ClubJoinRequestController extends Controller
             'interview_result',
             [
                 'interview_result' => $data['interview_result'],
-                'interview_score' => $data['interview_score'],
             ]
         );
     }

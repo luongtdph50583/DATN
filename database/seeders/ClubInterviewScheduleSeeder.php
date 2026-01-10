@@ -50,7 +50,6 @@ class ClubInterviewScheduleSeeder extends Seeder
                 'status' => $status,
                 'note' => $request->interview_note ?? $faker->optional(0.6)->sentence(),
                 'interview_result' => $request->interview_note ?? ($status === 'completed' ? $faker->optional(0.7)->paragraph(1) : null),
-                'score' => $request->interview_score ?? ($status === 'completed' ? $faker->numberBetween(60, 100) : null),
                 'completed_at' => $request->interview_completed_at ?? ($status === 'completed' ? $faker->dateTimeBetween('-1 month', 'now') : null),
             ]);
         }

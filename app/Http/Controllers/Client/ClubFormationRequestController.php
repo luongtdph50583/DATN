@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
  use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use App\Models\User;
+
 class ClubFormationRequestController extends Controller
 {
    
@@ -62,7 +64,11 @@ public function index()
      */
     public function create()
     {
-        return view('client.pages.member.formation_requestClub');
+         $advisors = User::whereHas('facultyMember', function ($q) {
+        $q->where('verified', true)
+          ->where('status', 'active');
+    })->get();
+        return view('client.pages.member.formation_requestClub', compact('advisors'));
     }
 
     /**
@@ -100,6 +106,7 @@ public function index()
         'phone' => 'nullable|string|max:20',
         'logo' => 'nullable|image|max:2048',
         'advisor_id' => 'nullable|exists:users,id',
+         'approval_document' => 'required|file|mimes:pdf,doc,docx,jpg,png|max:5120',
         'rule' => 'nullable|string',
         'member_limit' => 'nullable|integer|min:1',
     ]);
@@ -115,6 +122,7 @@ public function index()
     $clubRequest->plan = $request->plan;
     $clubRequest->email = $request->email;
     $clubRequest->phone = $request->phone;
+     $clubRequest->approval_document = $request->approval_document;
     $clubRequest->advisor_id = $request->advisor_id;
     $clubRequest->rule = $request->rule;
     $clubRequest->member_limit = $request->member_limit;

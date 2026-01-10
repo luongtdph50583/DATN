@@ -47,6 +47,12 @@
                                         </a>
 
                                         <ul class="submenu list-unstyled ms-3" style="display:none;">
+                                      <li>
+    <a href="{{ route('club_manager.showmember', ['club' => $club->id]) }}">
+        <i class="fas fa-file-alt"></i> Quản lý thành viên 
+    </a>
+</li>
+
                                             <li>
                                                 <a href="{{ route('club_manager.posts.index', ['club_id' => $club->id]) }}">
                                                     <i class="fas fa-file-alt"></i> Quản lý bài viết

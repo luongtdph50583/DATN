@@ -142,7 +142,7 @@ class ClubFundController extends Controller
         return back()->with('success', 'Khoản thu đã được duyệt! Thông báo đã gửi đến các thành viên.');
     }
 
-  public function approveExpense($club_id, FundTransaction $transaction)
+ public function approveExpense($club_id, FundTransaction $transaction)
 {
     if ($transaction->type !== 'expense') {
         return back()->with('error', 'Đây không phải giao dịch chi.');
@@ -150,13 +150,25 @@ class ClubFundController extends Controller
 
     $club = Club::findOrFail($club_id);
 
-    if ($club->fund_balance < $transaction->amount) {
+    // Lấy quỹ thực sự
+    $fund = $club->fund; // quan hệ hasOne Fund
+
+    if (!$fund) {
+        return back()->with('error', 'Quỹ của CLB chưa được tạo.');
+    }
+
+    $fundBalance = (float) $fund->balance;
+    $transactionAmount = (float) $transaction->amount;
+
+    if ($fundBalance < $transactionAmount) {
         return back()->with('error', 'Quỹ không đủ để duyệt khoản chi.');
     }
 
-    $club->fund_balance -= $transaction->amount;
-    $club->save();
+    // Trừ quỹ
+    $fund->balance = $fundBalance - $transactionAmount;
+    $fund->save();
 
+    // Cập nhật transaction
     $transaction->update([
         'status' => 'approved',
         'approved_by' => auth()->id(),
@@ -165,6 +177,7 @@ class ClubFundController extends Controller
 
     return back()->with('success', 'Đã duyệt khoản chi và cập nhật quỹ.');
 }
+
 
 
 

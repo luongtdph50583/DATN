@@ -17,7 +17,9 @@ use App\Http\Controllers\Client\ClubNotificationController;
 use App\Http\Controllers\Client\ClubMemberRequestController;
 use App\Http\Controllers\Client\DocumentUpdateLogController;
 use App\Http\Controllers\Client\ClubFormationRequestController;
+use App\Http\Controllers\Client\ClubLeaveController;
 use App\Http\Controllers\Client\EventJoinController as ClientEventJoinController;
+use App\Http\Controllers\Client\MemberClubController;
 use App\Http\Controllers\ClubManager\EventController;
 
 // Trang client home — public, user vẫn vào được
@@ -56,6 +58,9 @@ Route::post('/contact', [ContactController::class, 'store'])
             Route::get('/{club_id}/view', [ClubMemberController::class, 'view'])->name('view');
             Route::get('/{club_id}/join', [ClubMemberController::class, 'showJoinForm'])->name('join');
             Route::post('/{club_id}/join', [ClubMemberController::class, 'submitJoinRequest'])->name('join.submit');
+            Route::post('/{club}/leave', [ClubLeaveController::class, 'store'])
+    ->name('leave');
+
         });
 
         Route::post('/notifications/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
@@ -194,9 +199,14 @@ Route::prefix('club/{club_id}/fund')->middleware('auth')->group(function () {
    
 });
     // Document routes for client
-
-
-
+//Trang chi tiet thanh vien
+Route::get('/club/{club}/members', [MemberClubController::class, 'index'])
+    ->name('showmember');
+    Route::get('/club/{club}/members/search', [MemberClubController::class, 'search'])
+    ->name('members.search');
+  Route::get('/club/{club}/members/{member}', [MemberClubController::class, 'show'])
+        ->name('members.show');
+        
 // CLUB MANAGER ROUTES – QUẢN LÝ SỰ KIỆN CLB (CHỦ NHIỆM CLB)
   // Trang chủ quản lý sự kiện
     Route::get('/events', [EventController::class, 'index'])

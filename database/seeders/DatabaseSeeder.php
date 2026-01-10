@@ -21,12 +21,7 @@ class DatabaseSeeder extends Seeder
         // DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $this->call([
-            UserSeeder::class,
-            MemberSeeder::class,
-            ClubSeeder::class,
-            ClubMemberSeeder::class,
-            PostAndCommentSeeder::class,
-            // Các seeders khác nếu có
+           FacultyMemberSeeder::class,
         ]);
 
         $this->command->info('✅ Seed dữ liệu hoàn tất!');

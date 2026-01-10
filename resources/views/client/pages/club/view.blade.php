@@ -156,6 +156,70 @@
                 </div>
             </div>
         </div>
+        @php
+    use App\Models\ClubLeaveRequest;
+
+    $hasPendingLeave = ClubLeaveRequest::where('club_id', $club->id)
+        ->where('user_id', $user->id)
+        ->where('status', 'pending')
+        ->exists();
+@endphp
+
+@if($isMember && !$hasPendingLeave)
+    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#leaveClubModal">
+        <i class="fas fa-sign-out-alt me-1"></i> Rời CLB
+    </button>
+@elseif($hasPendingLeave)
+    <span class="badge bg-warning text-dark">
+        <i class="fas fa-clock me-1"></i> Đang chờ duyệt rời CLB
+    </span>
+@endif
+
     </div>
+    <!-- Modal Rời CLB -->
+<div class="modal fade" id="leaveClubModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('club.member.leave', $club->id) }}">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        Xác nhận rời CLB
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p>
+                        Bạn có chắc chắn muốn <strong>rời khỏi CLB {{ $club->name }}</strong> không?
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Lý do rời CLB <span class="text-danger">*</span>
+                        </label>
+                        <textarea
+                            name="reason"
+                            class="form-control"
+                            rows="4"
+                            required
+                            placeholder="Nhập lý do rời câu lạc bộ..."
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Hủy
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        Xác nhận rời CLB
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 

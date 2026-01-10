@@ -83,8 +83,21 @@ $clientNotifications = Auth::check()
     @if($clientNotifications->isNotEmpty())
         @include('client.layouts.notification-banner', ['notifications' => $clientNotifications])
     @endif
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
 
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
     @yield('content')
+
 
     <!-- Footer -->
     @include('client.layouts.footer')

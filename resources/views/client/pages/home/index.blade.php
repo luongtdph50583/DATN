@@ -13,14 +13,7 @@
 
 
 
-    <!-- Team Section Start -->
-    <!--team-->
-    @include('client.pages.home.team')
 
-
-    <!-- Basketball Leagues Section Start -->
-    <!--end basketball leagues-->
-    @include('client.pages.home.basketball_leagues')
 
 
     <!-- Sponsor Section Start -->
