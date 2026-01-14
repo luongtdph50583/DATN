@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendNotificationJobClient
 ;
+use App\Notifications\InterviewScheduledNotification;
 use Carbon\Carbon;
 
 class ClubMemberRequestController extends Controller
@@ -21,7 +22,7 @@ class ClubMemberRequestController extends Controller
     /**
      * Hiển thị danh sách yêu cầu tham gia CLB
      */
-    public function index(Request $req, $club_id)
+    public function index(Request $req, $club_id)   
     {
         $club = Club::findOrFail($club_id);
         $this->authorizeClubManager($club);
@@ -380,7 +381,11 @@ class ClubMemberRequestController extends Controller
         $request->note = $req->input('note');
         $request->handled_by = Auth::id();
         $request->save();
-
+        $request->user->notify(
+    new InterviewScheduledNotification(
+        $request->load(['club', 'interviewer'])
+    )
+);
         $message = "CLB {$request->club->name} đã lên lịch phỏng vấn cho bạn vào {$scheduledAt->format('d/m/Y H:i')} tại {$data['location']}.";
         if (!empty($data['interview_note'])) {
             $message .= ' Ghi chú: ' . $data['interview_note'];

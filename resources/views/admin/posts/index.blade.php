@@ -126,13 +126,7 @@
                                 </form>
                             @endif
 
-                            {{-- Chỉ hiển thị nút Sửa khi status = approved --}}
-                            @if ($post->status === 'approved')
-                                <a href="{{ route('admin.posts.edit', $post->id) }}" class="btn btn-primary btn-sm me-1"
-                                    title="Sửa">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            @endif
+                          
 
                             {{-- Xóa --}}
                         <form id="delete-form-{{ $post->id }}" action="{{ route('admin.posts.destroy', $post->id) }}" method="POST"
