@@ -6,7 +6,19 @@
     <h3>Chi tiết thành viên: {{ $clubMember->member->user->name }}</h3>
     <div class="row mt-4">
         <div class="col-md-3 text-center">
-            <img src="{{ $clubMember->member->user->avatar ?? asset('default-avatar.png') }}" class="rounded-circle w-100 mb-3">
+            @php
+    $avatar = $clubMember->member->user->avatar ?? null;
+
+    if ($avatar && !Str::startsWith($avatar, 'http')) {
+        $avatar = Storage::url($avatar);
+    }
+
+    $avatar = $avatar ?? asset('default-avatar.png');
+@endphp
+
+<img src="{{ $avatar }}" class="rounded-circle mb-3" width="80" height="80">
+
+
             <p><strong>Role trong CLB:</strong> {{ ucfirst($clubMember->role) }}</p>
             <p><strong>Trạng thái:</strong> {{ ucfirst($clubMember->status) }}</p>
             <p><strong>Ngày tham gia:</strong> {{ \Carbon\Carbon::parse($clubMember->joined_at)->format('d/m/Y') }}</p>

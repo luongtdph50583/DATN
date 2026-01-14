@@ -175,8 +175,7 @@
                         <tr>
                             <th>#</th>
                             <th>Loại</th>
-                            <th>Số tiền dự kiến</th>
-                            <th>Số tiền thực tế</th>
+                            <th>Số tiền </th>
                             <th>Danh mục</th>
                             <th>Người tạo</th>
                             <th>Trạng thái</th>
@@ -194,7 +193,6 @@
                                 </span>
                             </td>
                             <td>{{ number_format($transaction->amount,0,',','.') }} đ</td>
-                            <td>{{ number_format($transaction->collected_amount ?? 0,0,',','.') }} đ</td>
                             <td>
                                 @php
                                     $labels = [
